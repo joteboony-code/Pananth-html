@@ -4301,7 +4301,7 @@ function renderAll() {
   const monthText = getMonthText();
   const billingMeta = getBillingMetaFromPaymentMonth(getMonthKey());
   updatePaymentMonthDisplay();
-  document.getElementById('monthBadge').textContent = `รอบบิล ${billingMeta.billingMonthText} / รับชำระ ${billingMeta.paymentMonthText}`;
+  document.getElementById('monthBadge').textContent = `รอบบิล ${billingMeta.billingMonthText}`;
 
   let total = 0, paid = 0, unpaid = 0, vacant = 0, totalDueAmount = 0;
   let bdRent = 0, bdElec = 0, bdWater = 0, bdTrash = 0, bdWifi = 0;
