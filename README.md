@@ -8,6 +8,13 @@ Deploy this repo to the Cloudflare frontend Worker/Page:
 https://pananth.joteboony.workers.dev
 ```
 
+GitHub Actions deploy target:
+
+```text
+Worker name: pananth
+Assets directory: public
+```
+
 Important:
 
 - This repo is for the frontend `index.html` only.
