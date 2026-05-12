@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.40</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.41</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.40'
+        createdFrom: 'web-v15.4.2.41'
       })
     });
 
@@ -6896,7 +6896,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.40'
+        createdFrom: 'web-v15.4.2.41'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -9592,90 +9592,5 @@ document.head.appendChild(s);
 })();
 </script>
 <!-- ===== END PANANTH v15.4.2.37 duplicate arrears repair ===== -->
-<!-- ===== PANANTH v15.4.2.38 billing history label repair ===== -->
-<script>
-(function(){
-  let __pananthBillingHistoryRepairRunning = false;
-
-  function pananthGetCurrentBillingHistoryLabelRepairCandidate() {
-    try {
-      const history = JSON.parse(localStorage.getItem('pananth_history') || '{}');
-      if (!history || typeof history !== 'object' || Array.isArray(history)) return null;
-      if (typeof getMonthKey !== 'function' || typeof getBillingMetaFromPaymentMonth !== 'function') return null;
-
-      const activePaymentMonthKey = getMonthKey();
-      const billingMeta = getBillingMetaFromPaymentMonth(activePaymentMonthKey);
-      const wrongKey = String(billingMeta?.paymentMonthText || '').trim();
-      const correctKey = String(billingMeta?.billingMonthText || '').trim();
-
-      if (!wrongKey || !correctKey || wrongKey === correctKey) return null;
-      if (!Object.prototype.hasOwnProperty.call(history, wrongKey)) return null;
-      if (Object.prototype.hasOwnProperty.call(history, correctKey)) return null;
-
-      return { history, wrongKey, correctKey };
-    } catch(e) {
-      console.log('pananth history label repair scan failed:', e);
-      return null;
-    }
-  }
-
-  async function pananthRepairCurrentBillingHistoryLabel() {
-    if (__pananthBillingHistoryRepairRunning) return;
-    __pananthBillingHistoryRepairRunning = true;
-
-    try {
-      const candidate = pananthGetCurrentBillingHistoryLabelRepairCandidate();
-      if (!candidate) return;
-
-      const { history, wrongKey, correctKey } = candidate;
-      const ok = confirm(
-        'พบประวัติรอบบิลที่น่าจะถูกบันทึกชื่อเดือนผิด\\n\\n' +
-        'ตอนนี้เก็บเป็น: ' + wrongKey + '\\n' +
-        'ควรเป็นรอบบิล: ' + correctKey + '\\n\\n' +
-        'กด ตกลง เพื่อย้ายประวัติไปชื่อเดือนที่ถูกต้อง'
-      );
-      if (!ok) return;
-
-      history[correctKey] = history[wrongKey];
-      delete history[wrongKey];
-      localStorage.setItem('pananth_history', JSON.stringify(history));
-
-      try {
-        await fetch(WORKER_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'saveHistory', data: history }),
-        });
-      } catch(syncErr) {
-        console.log('history billing label repair sync failed:', syncErr);
-      }
-
-      try {
-        const dashboard = document.getElementById('dashboardPage');
-        if (dashboard && dashboard.classList.contains('open') && typeof openDashboard === 'function') openDashboard();
-      } catch(e) {}
-
-      alert('✅ ย้ายประวัติจาก "' + wrongKey + '" เป็น "' + correctKey + '" แล้วครับ');
-    } catch(e) {
-      console.log('pananth history label repair failed:', e);
-      alert('ซ่อมชื่อประวัติรอบบิลไม่สำเร็จ: ' + (e?.message || e));
-    } finally {
-      __pananthBillingHistoryRepairRunning = false;
-    }
-  }
-
-  window.pananthRepairCurrentBillingHistoryLabel = pananthRepairCurrentBillingHistoryLabel;
-
-  function schedulePananthBillingHistoryRepair(){
-    setTimeout(() => {
-      try { pananthRepairCurrentBillingHistoryLabel(); } catch(e) {}
-    }, 2400);
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedulePananthBillingHistoryRepair);
-  else schedulePananthBillingHistoryRepair();
-})();
-</script>
-<!-- ===== END PANANTH v15.4.2.38 billing history label repair ===== -->
 </body>
 </html>
