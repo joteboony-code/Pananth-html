@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.38</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.40</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.38'
+        createdFrom: 'web-v15.4.2.40'
       })
     });
 
@@ -6896,7 +6896,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.38'
+        createdFrom: 'web-v15.4.2.40'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -7757,7 +7757,10 @@ async function openMonthlyReport() {
 
   const payments = getPaymentHistoryLocal();
   const expenses = getExpensesLocal();
-  const monthText = getMonthText();
+  // v15.4.2.40: หน้าสรุปสิ้นเดือนต้องแสดง "รอบบิล" ไม่ใช่เดือนรับชำระ
+  const billingMeta = getBillingMetaFromPaymentMonth(getMonthKey());
+  const billingMonthText = billingMeta.billingMonthText || getTenantBillingText() || getMonthText();
+  const paymentMonthText = billingMeta.paymentMonthText || getMonthText();
 
   let dueTotal = 0, fullTotal = 0, paidPartialTotal = 0, oldDebtTotal = 0;
   let paidCount = 0, unpaidCount = 0, vacantCount = 0;
@@ -7811,8 +7814,8 @@ async function openMonthlyReport() {
 
   const html = `
     <div style="background:white;border-radius:12px;padding:14px;margin-bottom:14px;border:1.5px solid var(--border);">
-      <div style="font-family:Kanit,sans-serif;font-size:18px;font-weight:900;color:var(--primary);">📊 สรุปสิ้นเดือน — รอบบิล ${monthText}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px;">คำนวณจากยอดเต็ม ยอดค้างเก่า ยอดจ่ายบางส่วน และยอดคงเหลือปัจจุบัน</div>
+      <div style="font-family:Kanit,sans-serif;font-size:18px;font-weight:900;color:var(--primary);">📊 สรุปสิ้นเดือน — รอบบิล ${billingMonthText}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">คำนวณจากยอดเต็ม ยอดค้างเก่า ยอดจ่ายบางส่วน และยอดคงเหลือปัจจุบัน</div>\n      <div style="font-size:11px;color:var(--muted);margin-top:2px;">รับชำระใน ${paymentMonthText}</div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;">
