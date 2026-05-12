@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.36</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.38</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
   } catch(e) {}
 });
 
-// v15.4.2.36: แก้ Worker รับชำระนอกระบบ Failed to fetch จาก manualPayment + คง mobile menu fix
+// v15.4.2.37: แก้ Worker รับชำระนอกระบบ Failed to fetch จาก manualPayment + คง mobile menu fix
 let mobileToolMenuResizeBound = false;
 let mobileToolMenuResizeTimer = null;
 
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.36'
+        createdFrom: 'web-v15.4.2.38'
       })
     });
 
@@ -6896,7 +6896,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.36'
+        createdFrom: 'web-v15.4.2.38'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -7168,31 +7168,10 @@ async function closeCurrentMonth() {
     reason: 'closedMonth',
   };
 
-  // สร้างยอดค้างข้ามเดือนจากห้องที่ยังไม่ชำระ
-  if (!arrears) arrears = {};
-  for (const item of unpaid) {
-    const r = String(item.roomNum);
-    if (!arrears[r]) arrears[r] = [];
-
-    const exists = arrears[r].some(a => a.monthKey === monthKey && a.type === 'monthlyRent');
-    if (!exists) {
-      arrears[r].push({
-        id: `${monthKey}-room-${r}`,
-        roomNum: r,
-        monthKey,
-        monthText,
-        type: 'monthlyRent',
-        originalAmount: item.amount,
-        paidAmount: 0,
-        remaining: item.amount,
-        status: 'unpaid',
-        tenantName: item.tenantName || '',
-        note: 'สร้างจากการปิดรอบเดือน',
-        createdAt: new Date().toISOString(),
-        createdAtText: new Date().toLocaleString('th-TH'),
-      });
-    }
-  }
+  // v15.4.2.37:
+  // ปิดรอบบิล = บันทึก Snapshot / Lock เท่านั้น
+  // ห้ามสร้างยอดค้างเก่าที่นี่ เพราะระบบจะย้ายยอดไป arrears ตอน “เปิดรอบรับชำระใหม่” อยู่แล้ว
+  // ถ้าสร้างตรงนี้ด้วย จะทำให้ยอดรอบเดิมถูกบวกซ้ำทันที
 
   localStorage.setItem('pananth_arrears', JSON.stringify(arrears));
   localStorage.setItem('pananth_month_closures', JSON.stringify(monthClosures));
@@ -8435,7 +8414,9 @@ function deleteHistory(monthKey) {
 
 function saveCurrentMonthHistory() {
   const history = JSON.parse(localStorage.getItem('pananth_history') || '{}');
-  const monthKey = getMonthText();
+  const billingMeta = getBillingMetaFromPaymentMonth(getMonthKey());
+  // v15.4.2.38: ประวัติรายเดือนต้องผูกกับ "รอบบิล" ไม่ใช่เดือนรับชำระ
+  const monthKey = billingMeta.billingMonthText || getTenantBillingText() || getMonthText();
   const snapshot = {};
   for (const i of getManagedRoomNumbers()) {
     const d = rooms[i];
@@ -8451,7 +8432,7 @@ function saveCurrentMonthHistory() {
     body: JSON.stringify({ action: 'saveHistory', data: history }),
   }).catch(e => console.log('history sync failed:', e));
 
-  alert(`✅ บันทึก ${monthKey} แล้วครับ!`);
+  alert(`✅ บันทึกรอบบิล ${monthKey} แล้วครับ!`);
   openDashboard();
 }
 
@@ -9497,5 +9478,201 @@ document.head.appendChild(s);
   }
 })();
 </script>
+
+<!-- ===== PANANTH v15.4.2.37 duplicate arrears repair ===== -->
+<script>
+(function(){
+  let __pananthDuplicateArrearsRepairRunning = false;
+
+  function pananthGetCloseMonthDuplicateArrears(){
+    try {
+      if (!lastCloseBackup || !lastCloseBackup.monthKey || !arrears || typeof arrears !== 'object') return [];
+      const closeMonthKey = String(lastCloseBackup.monthKey || '');
+      const out = [];
+
+      Object.keys(arrears || {}).forEach(roomKey => {
+        const list = Array.isArray(arrears[roomKey]) ? arrears[roomKey] : [];
+        list.forEach((a, index) => {
+          const note = String(a?.note || '');
+          const type = String(a?.type || 'monthlyRent');
+          const monthKey = String(a?.monthKey || '');
+          const paidAmount = Number(a?.paidAmount || 0);
+          const remaining = Number(a?.remaining || 0);
+          const originalAmount = Number(a?.originalAmount || 0);
+
+          if (note !== 'สร้างจากการปิดรอบเดือน') return;
+          if (type !== 'monthlyRent') return;
+          if (monthKey !== closeMonthKey) return;
+          if (paidAmount !== 0 || remaining <= 0 || originalAmount <= 0) return;
+
+          let currentDue = NaN;
+          try {
+            if (typeof calcCurrentDue === 'function') currentDue = Number(calcCurrentDue(Number(roomKey)));
+          } catch(e) {}
+
+          // ลบเฉพาะรายการที่ยอดค้างเท่ากับยอดรอบปัจจุบัน เพื่อกันลบหนี้จริงผิดรายการ
+          if (Number.isFinite(currentDue) && currentDue > 0 && Math.abs(remaining - currentDue) > 0.01) return;
+
+          out.push({ roomKey, index, amount: remaining, entry: a });
+        });
+      });
+
+      return out;
+    } catch(e) {
+      console.log('pananth duplicate arrears scan failed:', e);
+      return [];
+    }
+  }
+
+  async function pananthRepairCloseMonthDuplicateArrears(){
+    if (__pananthDuplicateArrearsRepairRunning) return;
+    __pananthDuplicateArrearsRepairRunning = true;
+
+    try {
+      const candidates = pananthGetCloseMonthDuplicateArrears();
+      if (!candidates.length) return;
+
+      const total = candidates.reduce((s, x) => s + Number(x.amount || 0), 0);
+      const roomsText = candidates.map(x => x.roomKey).join(', ');
+      const message =
+        'พบยอดค้างเก่าที่ระบบสร้างซ้ำจากการปิดรอบเดือน\\n\\n' +
+        'จำนวน: ' + candidates.length + ' รายการ\\n' +
+        'ห้อง: ' + roomsText + '\\n' +
+        'ยอดรวมที่ซ้ำ: ' + total.toLocaleString('th-TH') + ' ฿\\n\\n' +
+        'ถ้าปล่อยไว้ ยอดรวม/ใบแจ้งเตือน/ตรวจสลิปอาจผิดได้\\n\\n' +
+        'กด ตกลง เพื่อล้างยอดซ้ำนี้ออกและซิงค์กลับ Worker';
+
+      if (!confirm(message)) return;
+
+      const removeByRoom = {};
+      candidates.forEach(x => {
+        if (!removeByRoom[x.roomKey]) removeByRoom[x.roomKey] = new Set();
+        removeByRoom[x.roomKey].add(x.index);
+      });
+
+      Object.keys(removeByRoom).forEach(roomKey => {
+        const removeSet = removeByRoom[roomKey];
+        const list = Array.isArray(arrears[roomKey]) ? arrears[roomKey] : [];
+        arrears[roomKey] = list.filter((_, idx) => !removeSet.has(idx));
+        if (!arrears[roomKey].length) delete arrears[roomKey];
+      });
+
+      try { localStorage.setItem('pananth_arrears', JSON.stringify(arrears)); } catch(e) {}
+
+      try {
+        if (typeof saveMonthControlToWorker === 'function') {
+          await saveMonthControlToWorker({ monthClosures, lockedMonths, lastCloseBackup, arrears });
+        }
+      } catch(syncErr) {
+        alert('ล้างยอดซ้ำในหน้าเว็บแล้ว แต่ซิงค์ Worker ไม่สำเร็จ: ' + (syncErr?.message || syncErr));
+        return;
+      }
+
+      try { if (typeof renderAll === 'function') renderAll(); } catch(e) {}
+      alert('✅ ล้างยอดค้างซ้ำเรียบร้อยแล้ว\\nระบบคำนวณยอดและการตรวจสลิปจะกลับไปใช้ยอดที่ถูกต้อง');
+    } catch(e) {
+      console.log('pananth duplicate arrears repair failed:', e);
+      alert('ซ่อมยอดค้างซ้ำไม่สำเร็จ: ' + (e?.message || e));
+    } finally {
+      __pananthDuplicateArrearsRepairRunning = false;
+    }
+  }
+
+  window.pananthRepairCloseMonthDuplicateArrears = pananthRepairCloseMonthDuplicateArrears;
+
+  function scheduleRepair(){
+    setTimeout(() => { try { pananthRepairCloseMonthDuplicateArrears(); } catch(e) {} }, 1800);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scheduleRepair);
+  else scheduleRepair();
+})();
+</script>
+<!-- ===== END PANANTH v15.4.2.37 duplicate arrears repair ===== -->
+<!-- ===== PANANTH v15.4.2.38 billing history label repair ===== -->
+<script>
+(function(){
+  let __pananthBillingHistoryRepairRunning = false;
+
+  function pananthGetCurrentBillingHistoryLabelRepairCandidate() {
+    try {
+      const history = JSON.parse(localStorage.getItem('pananth_history') || '{}');
+      if (!history || typeof history !== 'object' || Array.isArray(history)) return null;
+      if (typeof getMonthKey !== 'function' || typeof getBillingMetaFromPaymentMonth !== 'function') return null;
+
+      const activePaymentMonthKey = getMonthKey();
+      const billingMeta = getBillingMetaFromPaymentMonth(activePaymentMonthKey);
+      const wrongKey = String(billingMeta?.paymentMonthText || '').trim();
+      const correctKey = String(billingMeta?.billingMonthText || '').trim();
+
+      if (!wrongKey || !correctKey || wrongKey === correctKey) return null;
+      if (!Object.prototype.hasOwnProperty.call(history, wrongKey)) return null;
+      if (Object.prototype.hasOwnProperty.call(history, correctKey)) return null;
+
+      return { history, wrongKey, correctKey };
+    } catch(e) {
+      console.log('pananth history label repair scan failed:', e);
+      return null;
+    }
+  }
+
+  async function pananthRepairCurrentBillingHistoryLabel() {
+    if (__pananthBillingHistoryRepairRunning) return;
+    __pananthBillingHistoryRepairRunning = true;
+
+    try {
+      const candidate = pananthGetCurrentBillingHistoryLabelRepairCandidate();
+      if (!candidate) return;
+
+      const { history, wrongKey, correctKey } = candidate;
+      const ok = confirm(
+        'พบประวัติรอบบิลที่น่าจะถูกบันทึกชื่อเดือนผิด\\n\\n' +
+        'ตอนนี้เก็บเป็น: ' + wrongKey + '\\n' +
+        'ควรเป็นรอบบิล: ' + correctKey + '\\n\\n' +
+        'กด ตกลง เพื่อย้ายประวัติไปชื่อเดือนที่ถูกต้อง'
+      );
+      if (!ok) return;
+
+      history[correctKey] = history[wrongKey];
+      delete history[wrongKey];
+      localStorage.setItem('pananth_history', JSON.stringify(history));
+
+      try {
+        await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'saveHistory', data: history }),
+        });
+      } catch(syncErr) {
+        console.log('history billing label repair sync failed:', syncErr);
+      }
+
+      try {
+        const dashboard = document.getElementById('dashboardPage');
+        if (dashboard && dashboard.classList.contains('open') && typeof openDashboard === 'function') openDashboard();
+      } catch(e) {}
+
+      alert('✅ ย้ายประวัติจาก "' + wrongKey + '" เป็น "' + correctKey + '" แล้วครับ');
+    } catch(e) {
+      console.log('pananth history label repair failed:', e);
+      alert('ซ่อมชื่อประวัติรอบบิลไม่สำเร็จ: ' + (e?.message || e));
+    } finally {
+      __pananthBillingHistoryRepairRunning = false;
+    }
+  }
+
+  window.pananthRepairCurrentBillingHistoryLabel = pananthRepairCurrentBillingHistoryLabel;
+
+  function schedulePananthBillingHistoryRepair(){
+    setTimeout(() => {
+      try { pananthRepairCurrentBillingHistoryLabel(); } catch(e) {}
+    }, 2400);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedulePananthBillingHistoryRepair);
+  else schedulePananthBillingHistoryRepair();
+})();
+</script>
+<!-- ===== END PANANTH v15.4.2.38 billing history label repair ===== -->
 </body>
 </html>
