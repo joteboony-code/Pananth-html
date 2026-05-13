@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.49</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.50</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.49'
+        createdFrom: 'web-v15.4.2.50'
       })
     });
 
@@ -3261,6 +3261,367 @@ body.dark .health-item.info { background:rgba(59,130,246,.12); }
 <meta name="apple-mobile-web-app-title" content="ป้านันท์">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <!-- PWA END -->
+
+<!-- ===== v15.4.2.50: Preview ก่อนปิดรอบบิล / เปิดรอบรับชำระใหม่ ===== -->
+<style>
+  .cycle-preview-overlay.open {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+    background: rgba(2, 8, 23, 0.72) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    z-index: 960 !important;
+  }
+  .cycle-preview-modal {
+    width: min(760px, 100%);
+    max-height: min(92dvh, 900px);
+    overflow: auto;
+    border-radius: 24px;
+    padding: 0;
+    background: #ffffff;
+    color: var(--text, #10233b);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    box-shadow: 0 26px 90px rgba(2, 8, 23, 0.42);
+    animation: pananthCyclePreviewPop .18s ease-out;
+  }
+  @keyframes pananthCyclePreviewPop {
+    from { opacity: 0; transform: translateY(10px) scale(.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .cycle-preview-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 18px 18px 14px;
+    background: linear-gradient(135deg, #123557, #1a4f77);
+    color: #ffffff;
+    border-radius: 24px 24px 0 0;
+  }
+  .cycle-preview-head-title {
+    font-family: 'Kanit', sans-serif;
+    font-size: 21px;
+    line-height: 1.35;
+    font-weight: 900;
+    margin: 0;
+  }
+  .cycle-preview-head-sub {
+    margin-top: 5px;
+    font-size: 13px;
+    opacity: .95;
+    line-height: 1.5;
+  }
+  .cycle-preview-body { padding: 16px 18px 18px; }
+  .cycle-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .cycle-preview-grid.stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cycle-preview-card {
+    min-height: 68px;
+    padding: 12px;
+    border-radius: 16px;
+    background: #f5f8fc;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+  }
+  .cycle-preview-card.warn { background: #fff7ed; border-color: rgba(249, 115, 22, 0.28); }
+  .cycle-preview-card.safe { background: #ecfdf5; border-color: rgba(16, 185, 129, 0.28); }
+  .cycle-preview-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 800;
+    color: #64748b;
+    margin-bottom: 5px;
+  }
+  .cycle-preview-value {
+    display: block;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    line-height: 1.35;
+    color: #123557;
+    word-break: break-word;
+  }
+  .cycle-preview-card.warn .cycle-preview-value { color: #c2410c; }
+  .cycle-preview-card.safe .cycle-preview-value { color: #047857; }
+  .cycle-preview-section {
+    margin-top: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 18px;
+    overflow: hidden;
+    background: #ffffff;
+  }
+  .cycle-preview-section-title {
+    padding: 12px 14px;
+    font-weight: 900;
+    color: #123557;
+    background: #eef4fb;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.20);
+  }
+  .cycle-preview-room-list { max-height: 245px; overflow: auto; }
+  .cycle-preview-room-row {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px dashed rgba(148, 163, 184, 0.38);
+  }
+  .cycle-preview-room-row:last-child { border-bottom: 0; }
+  .cycle-preview-room-name { font-weight: 900; color: #123557; line-height: 1.4; }
+  .cycle-preview-room-tenant { font-size: 12px; color: #64748b; margin-top: 1px; }
+  .cycle-preview-room-amount {
+    white-space: nowrap;
+    font-family: 'Kanit', sans-serif;
+    font-size: 17px;
+    font-weight: 900;
+    color: #c2410c;
+  }
+  .cycle-preview-empty {
+    padding: 14px;
+    font-weight: 900;
+    color: #047857;
+    background: #ecfdf5;
+  }
+  .cycle-preview-impact {
+    padding: 12px 14px;
+    line-height: 1.65;
+    font-size: 14px;
+    color: #334155;
+  }
+  .cycle-preview-impact div { margin: 3px 0; }
+  .cycle-preview-alert {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #fff7ed;
+    border: 1px solid rgba(249, 115, 22, 0.28);
+    color: #9a3412;
+    font-weight: 800;
+    line-height: 1.55;
+    font-size: 13px;
+  }
+  .cycle-preview-actions {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 14px 18px 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.84), #ffffff 36%);
+    border-top: 1px solid rgba(148, 163, 184, 0.20);
+  }
+  .cycle-preview-btn {
+    min-height: 48px;
+    border: 0;
+    border-radius: 14px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  .cycle-preview-btn.cancel {
+    color: #334155;
+    background: #e2e8f0;
+  }
+  .cycle-preview-btn.confirm {
+    color: #ffffff;
+    background: linear-gradient(135deg, #0f766e, #047857);
+    box-shadow: 0 10px 25px rgba(4, 120, 87, .22);
+  }
+  .cycle-preview-btn.confirm.open-cycle { background: linear-gradient(135deg, #1d4ed8, #1e40af); box-shadow: 0 10px 25px rgba(29, 78, 216, .22); }
+  body.dark .cycle-preview-modal {
+    background: linear-gradient(180deg, rgba(8, 18, 36, 0.99), rgba(3, 12, 27, 0.99));
+    color: #f8fafc;
+    border-color: rgba(125, 211, 252, .20);
+  }
+  body.dark .cycle-preview-card,
+  body.dark .cycle-preview-section {
+    background: rgba(15, 32, 56, 0.94);
+    border-color: rgba(125, 211, 252, .18);
+  }
+  body.dark .cycle-preview-card.warn,
+  body.dark .cycle-preview-alert { background: rgba(124, 45, 18, .34); border-color: rgba(251, 146, 60, .32); color: #fdba74; }
+  body.dark .cycle-preview-card.safe,
+  body.dark .cycle-preview-empty { background: rgba(6, 78, 59, .34); border-color: rgba(52, 211, 153, .28); color: #6ee7b7; }
+  body.dark .cycle-preview-section-title { background: rgba(30, 58, 95, .95); color: #e0f2fe; border-bottom-color: rgba(125, 211, 252, .18); }
+  body.dark .cycle-preview-label,
+  body.dark .cycle-preview-room-tenant { color: #cbd5e1; }
+  body.dark .cycle-preview-value,
+  body.dark .cycle-preview-room-name { color: #f8fafc; }
+  body.dark .cycle-preview-impact { color: #e2e8f0; }
+  body.dark .cycle-preview-room-row { border-bottom-color: rgba(148, 163, 184, .24); }
+  body.dark .cycle-preview-actions { background: linear-gradient(180deg, rgba(3,12,27,.80), rgba(3,12,27,.98) 34%); border-top-color: rgba(125, 211, 252, .14); }
+  body.dark .cycle-preview-btn.cancel { background: rgba(71, 85, 105, .88); color: #f8fafc; }
+  @media (max-width: 680px) {
+    .cycle-preview-overlay.open { padding: 10px !important; align-items: flex-end !important; }
+    .cycle-preview-modal { width: 100%; max-height: 94dvh; border-radius: 22px 22px 18px 18px; }
+    .cycle-preview-head { border-radius: 22px 22px 0 0; }
+    .cycle-preview-grid,
+    .cycle-preview-grid.stats,
+    .cycle-preview-actions { grid-template-columns: 1fr; }
+    .cycle-preview-head-title { font-size: 19px; }
+    .cycle-preview-value { font-size: 17px; }
+  }
+</style>
+<script>
+function pananthCyclePreviewMoney(value) {
+  return Number(value || 0).toLocaleString('th-TH');
+}
+
+function pananthCyclePreviewRoomListHtml(unpaid = []) {
+  const list = Array.isArray(unpaid) ? unpaid : [];
+  if (!list.length) {
+    return '<div class="cycle-preview-empty">✅ ไม่มีห้องค้างชำระในรอบนี้</div>';
+  }
+  return '<div class="cycle-preview-room-list">' + list.map(item => {
+    const room = escapeHtml(String(item.roomNum ?? '-'));
+    const tenant = escapeHtml(String(item.tenantName || '').trim());
+    const amount = pananthCyclePreviewMoney(item.amount);
+    return `
+      <div class="cycle-preview-room-row">
+        <div>
+          <div class="cycle-preview-room-name">ห้อง ${room}</div>
+          ${tenant ? `<div class="cycle-preview-room-tenant">${tenant}</div>` : ''}
+        </div>
+        <div class="cycle-preview-room-amount">${amount} ฿</div>
+      </div>`;
+  }).join('') + '</div>';
+}
+
+function pananthCyclePreviewCard(label, value, tone = '') {
+  return `
+    <div class="cycle-preview-card ${tone || ''}">
+      <span class="cycle-preview-label">${escapeHtml(label)}</span>
+      <span class="cycle-preview-value">${value}</span>
+    </div>`;
+}
+
+function showBillingCyclePreview(options = {}) {
+  return new Promise(resolve => {
+    try {
+      const old = document.getElementById('pananthCyclePreviewOverlay');
+      if (old) old.remove();
+
+      const type = options.type === 'open' ? 'open' : 'close';
+      const unpaid = Array.isArray(options.unpaid) ? options.unpaid : [];
+      const unpaidTotal = Number(options.unpaidTotal || 0);
+      const paidCount = Number(options.paidCount || 0);
+      const fromMeta = options.fromBillingMeta || options.billingMeta || {};
+      const toMeta = options.toBillingMeta || {};
+      const roomListHtml = pananthCyclePreviewRoomListHtml(unpaid);
+
+      let title = '📋 Preview ก่อนปิดรอบบิล';
+      let subtitle = 'ตรวจข้อมูลการเงินให้ครบก่อนยืนยันปิดรอบ';
+      let summaryHtml = '';
+      let roomTitle = 'ห้องที่ยังค้างชำระ';
+      let impactHtml = '';
+      let warningHtml = '';
+      let confirmText = '✅ ยืนยันปิดรอบบิล';
+      let confirmClass = '';
+
+      if (type === 'open') {
+        title = '📋 Preview ก่อนเปิดรอบรับชำระใหม่';
+        subtitle = 'ตรวจสอบรอบบิลและยอดค้างที่จะถูกย้าย ก่อนระบบเริ่มรอบใหม่';
+        confirmText = '🆕 ยืนยันเปิดรอบใหม่';
+        confirmClass = 'open-cycle';
+        roomTitle = 'ยอดที่กำลังจะย้ายเป็น “ยอดค้างเก่า”';
+        summaryHtml = `
+          <div class="cycle-preview-grid">
+            ${pananthCyclePreviewCard('รอบปัจจุบัน', `รอบบิล ${escapeHtml(fromMeta.billingMonthText || '-')}<br><span style="font-size:13px;font-family:Sarabun,sans-serif;font-weight:800;">รับชำระ ${escapeHtml(fromMeta.paymentMonthText || '-')}</span>`)}
+            ${pananthCyclePreviewCard('รอบที่จะเปิดใหม่', `รอบบิล ${escapeHtml(toMeta.billingMonthText || '-')}<br><span style="font-size:13px;font-family:Sarabun,sans-serif;font-weight:800;">รับชำระ ${escapeHtml(toMeta.paymentMonthText || '-')}</span>`, 'safe')}
+          </div>
+          <div class="cycle-preview-grid stats">
+            ${pananthCyclePreviewCard('ชำระแล้ว', `${pananthCyclePreviewMoney(paidCount)} ห้อง`, 'safe')}
+            ${pananthCyclePreviewCard('ค้างชำระ', `${pananthCyclePreviewMoney(unpaid.length)} ห้อง`, unpaid.length ? 'warn' : 'safe')}
+            ${pananthCyclePreviewCard('ยอดค้างที่จะย้าย', `${pananthCyclePreviewMoney(unpaidTotal)} ฿`, unpaidTotal > 0 ? 'warn' : 'safe')}
+          </div>`;
+        impactHtml = `
+          <div>• ระบบจะบันทึกประวัติรอบเดิมไว้ดูย้อนหลัง</div>
+          <div>• ยอดค้างด้านบนจะถูกย้ายไปเป็นยอดค้างเก่าแยกตามห้อง</div>
+          <div>• ค่าน้ำ/ค่าไฟ “ครั้งหลัง” จะย้ายไปเป็น “ครั้งก่อน”</div>
+          <div>• ห้องในรอบใหม่จะกลับเป็นสถานะรอชำระ</div>
+          <div>• ยอดรับแล้ว/ชำระบางส่วนของรอบใหม่จะเริ่มต้นใหม่</div>`;
+        warningHtml = unpaid.length
+          ? `⚠️ มีห้องค้างชำระ ${pananthCyclePreviewMoney(unpaid.length)} ห้อง รวม ${pananthCyclePreviewMoney(unpaidTotal)} ฿ ระบบจะไม่ลบหนี้ แต่จะย้ายไปเป็นยอดค้างเก่า`
+          : '✅ ไม่มีห้องค้างชำระที่จะย้ายเป็นยอดค้างเก่า';
+      } else {
+        const billingMeta = options.billingMeta || {};
+        summaryHtml = `
+          <div class="cycle-preview-grid">
+            ${pananthCyclePreviewCard('รอบบิลที่จะปิด', escapeHtml(billingMeta.billingMonthText || '-'))}
+            ${pananthCyclePreviewCard('รับชำระใน', escapeHtml(billingMeta.paymentMonthText || '-'))}
+          </div>
+          <div class="cycle-preview-grid stats">
+            ${pananthCyclePreviewCard('ชำระแล้ว', `${pananthCyclePreviewMoney(paidCount)} ห้อง`, 'safe')}
+            ${pananthCyclePreviewCard('ค้างชำระ', `${pananthCyclePreviewMoney(unpaid.length)} ห้อง`, unpaid.length ? 'warn' : 'safe')}
+            ${pananthCyclePreviewCard('ยอดค้างรวม', `${pananthCyclePreviewMoney(unpaidTotal)} ฿`, unpaidTotal > 0 ? 'warn' : 'safe')}
+          </div>`;
+        impactHtml = `
+          <div>• ระบบจะบันทึก Monthly Archive / Snapshot ของรอบนี้</div>
+          <div>• รอบบิลนี้จะถูกล็อกไว้ เพื่อกันการแก้ไขผิดรอบ</div>
+          <div>• การปิดรอบขั้นตอนนี้ยังไม่ย้ายหนี้เป็นยอดค้างเก่า</div>
+          <div>• ยอดค้างจะถูกย้ายตอนกด “เปิดรอบรับชำระใหม่” เท่านั้น</div>`;
+        warningHtml = unpaid.length
+          ? `⚠️ ยังมีห้องค้างชำระ ${pananthCyclePreviewMoney(unpaid.length)} ห้อง รวม ${pananthCyclePreviewMoney(unpaidTotal)} ฿ ข้อมูลนี้จะถูกบันทึกใน Snapshot ก่อนปิดรอบ`
+          : '✅ รอบนี้ไม่มีห้องค้างชำระ สามารถปิดรอบได้';
+      }
+
+      const overlay = document.createElement('div');
+      overlay.id = 'pananthCyclePreviewOverlay';
+      overlay.className = 'modal-overlay cycle-preview-overlay open';
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-modal', 'true');
+      overlay.innerHTML = `
+        <div class="cycle-preview-modal" onclick="event.stopPropagation()">
+          <div class="cycle-preview-head">
+            <div class="cycle-preview-head-title">${title}</div>
+            <div class="cycle-preview-head-sub">${subtitle}</div>
+          </div>
+          <div class="cycle-preview-body">
+            ${summaryHtml}
+            <div class="cycle-preview-alert">${warningHtml}</div>
+            <div class="cycle-preview-section">
+              <div class="cycle-preview-section-title">${roomTitle}</div>
+              ${roomListHtml}
+            </div>
+            <div class="cycle-preview-section">
+              <div class="cycle-preview-section-title">สิ่งที่จะเกิดขึ้นหลังยืนยัน</div>
+              <div class="cycle-preview-impact">${impactHtml}</div>
+            </div>
+          </div>
+          <div class="cycle-preview-actions">
+            <button type="button" class="cycle-preview-btn cancel" id="pananthCyclePreviewCancelBtn">ยกเลิก</button>
+            <button type="button" class="cycle-preview-btn confirm ${confirmClass}" id="pananthCyclePreviewConfirmBtn">${confirmText}</button>
+          </div>
+        </div>`;
+
+      document.body.appendChild(overlay);
+      if (typeof refreshModalLockSafe === 'function') refreshModalLockSafe();
+      else if (typeof lockModalScrollKeepPosition === 'function') lockModalScrollKeepPosition();
+
+      let done = false;
+      const finish = ok => {
+        if (done) return;
+        done = true;
+        try { overlay.remove(); } catch(e) {}
+        if (typeof refreshModalLockSafe === 'function') refreshModalLockSafe();
+        else if (typeof unlockModalScrollKeepPosition === 'function') unlockModalScrollKeepPosition();
+        resolve(!!ok);
+      };
+      overlay.querySelector('#pananthCyclePreviewCancelBtn')?.addEventListener('click', () => finish(false));
+      overlay.querySelector('#pananthCyclePreviewConfirmBtn')?.addEventListener('click', () => finish(true));
+    } catch (e) {
+      console.warn('cycle preview modal failed:', e);
+      resolve(confirm('ไม่สามารถเปิดหน้าพรีวิวแบบใหม่ได้\n\nต้องการทำรายการต่อหรือไม่?'));
+    }
+  });
+}
+</script>
+
 </head>
 <body>
 
@@ -8462,7 +8823,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.49'
+        createdFrom: 'web-v15.4.2.50'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -8523,25 +8884,16 @@ async function openNewBillingMonth(fromMonthKeyArg, toMonthKeyArg) {
   const unpaid = getUnpaidRoomsSummary();
   const unpaidTotal = unpaid.reduce((s, x) => s + x.amount, 0);
 
-  const confirmMsg =
-`ยืนยันเปิดรอบรับชำระใหม่
-
-จาก:
-รอบบิล ${fromBillingMeta.billingMonthText} / รับชำระ ${fromBillingMeta.paymentMonthText}
-
-เป็น:
-รอบบิล ${toBillingMeta.billingMonthText} / รับชำระ ${toBillingMeta.paymentMonthText}
-
-สิ่งที่จะเกิดขึ้น:
-• ย้ายค่าน้ำ/ค่าไฟ “ครั้งหลัง” ไปเป็น “ครั้งก่อน”
-• ตั้งสถานะห้องเป็น “รอชำระ”
-• ล้างยอดรับแล้ว/ชำระบางส่วนของเดือนใหม่
-• ห้องที่ยังค้าง ${unpaid.length} ห้อง รวม ${unpaidTotal.toLocaleString('th-TH')} ฿ จะถูกบันทึกเป็นยอดค้างเก่า
-• ประวัติรอบเดิมจะถูกบันทึกไว้ดูย้อนหลัง
-
-ต้องการทำต่อใช่ไหมครับ?`;
-
-  if (!confirm(confirmMsg)) return;
+  const paidCountBeforeOpen = Object.values(rooms).filter(x => x && x.paid && !x.vacant).length;
+  const openPreviewOk = await showBillingCyclePreview({
+    type: 'open',
+    fromBillingMeta,
+    toBillingMeta,
+    unpaid,
+    unpaidTotal,
+    paidCount: paidCountBeforeOpen,
+  });
+  if (!openPreviewOk) return;
   if (!confirm('ยืนยันอีกครั้ง: ระบบจะเปิดรอบใหม่ ย้ายเลขมิเตอร์ และตั้งสถานะห้องเป็นรอชำระ ใช่ไหมครับ?')) return;
 
   const backupResult = await createSafetyBackup('before_open_billing_month');
@@ -8684,17 +9036,21 @@ async function closeCurrentMonth() {
   const billingMeta = getBillingMetaFromPaymentMonth(monthKey);
   const unpaid = getUnpaidRoomsSummary();
 
-  const warning = unpaid.length
-    ? `ยังมีห้องค้างชำระ ${unpaid.length} ห้อง\nระบบจะบันทึกยอดค้างไว้ใน Snapshot แต่จะยังไม่ลบหนี้ให้ครับ\n\nต้องการปิดรอบบิล ${billingMeta.billingMonthText} ต่อหรือไม่?`
-    : `ไม่มีห้องค้างชำระ\nต้องการปิดรอบบิล ${billingMeta.billingMonthText} ใช่ไหมครับ?`;
-
-  if (!confirm(warning)) return;
+  const unpaidTotal = unpaid.reduce((s, x) => s + x.amount, 0);
+  const paidCountBeforeClose = Object.values(rooms).filter(x => x && x.paid && !x.vacant).length;
+  const closePreviewOk = await showBillingCyclePreview({
+    type: 'close',
+    billingMeta,
+    unpaid,
+    unpaidTotal,
+    paidCount: paidCountBeforeClose,
+  });
+  if (!closePreviewOk) return;
 
   if (!confirm('ยืนยันอีกครั้ง: ระบบจะบันทึก Snapshot รอบบิลนี้ และล็อกรอบนี้ไว้')) return;
 
   const snapshotRooms = JSON.parse(JSON.stringify(rooms));
   const snapshotTenants = JSON.parse(JSON.stringify(tenants));
-  const unpaidTotal = unpaid.reduce((s, x) => s + x.amount, 0);
   const monthlyArchive = buildMonthlyArchive(monthKey, monthText, unpaid, snapshotRooms, snapshotTenants, unpaidTotal);
   monthlyArchive.paymentMonthKey = billingMeta.paymentMonthKey;
   monthlyArchive.paymentMonthText = billingMeta.paymentMonthText;
