@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.54</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.55</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.54'
+        createdFrom: 'web-v15.4.2.55'
       })
     });
 
@@ -717,6 +717,7 @@ const SYSTEM_ACTIVITY_DEFINITIONS = {
   tenantCheckout: { group: 'tenant', icon: '🚪', title: 'ผู้เช่าย้ายออก / เปลี่ยนห้องเป็นว่าง', actor: 'เจ้าของ/แอดมิน' },
   tenantOnboarding: { group: 'tenant', icon: '🧍', title: 'รับผู้เช่าใหม่', actor: 'เจ้าของ/แอดมิน' },
   contractExpiryReminderSent: { group: 'tenant', icon: '📌', title: 'แจ้งเตือนสัญญาใกล้หมดทาง LINE OA', actor: 'ระบบ' },
+  tenantBroadcastSent: { group: 'tenant', icon: '📢', title: 'ส่งประกาศถึงผู้เช่าทาง LINE OA', actor: 'เจ้าของ/แอดมิน' },
   uploadTenantDocument: { group: 'document', icon: '📤', title: 'อัปโหลดเอกสารผู้เช่า', actor: 'เจ้าของ/แอดมิน' },
   deleteTenantDocument: { group: 'document', icon: '🗑️', title: 'ลบเอกสารผู้เช่า', actor: 'เจ้าของ/แอดมิน' },
   deleteCustomRoom: { group: 'room', icon: '🗑️', title: 'ลบห้องที่เพิ่มเอง', actor: 'เจ้าของ/แอดมิน' },
@@ -823,6 +824,17 @@ function getSystemActivityDetailsHtml(log = {}, def = null) {
       { label: 'เหลือ 7 วัน', value: Number(extra.count7 || 0).toLocaleString('th-TH') + ' สัญญา' },
       { label: 'หมดสัญญาแล้ว', value: Number(extra.countExpired || 0).toLocaleString('th-TH') + ' สัญญา' },
       { label: 'จำนวนรายการแจ้ง', value: Number(extra.total || 0).toLocaleString('th-TH') + ' รายการ' },
+    ]);
+  }
+
+  if (action === 'tenantBroadcastSent') {
+    return renderSystemActivityDetailRows([
+      { label: 'เลือกส่ง', value: Number(extra.requestedRoomCount || 0).toLocaleString('th-TH') + ' ห้อง' },
+      { label: 'ผู้รับไม่ซ้ำ', value: Number(extra.uniqueRecipientCount || 0).toLocaleString('th-TH') + ' ราย' },
+      { label: 'สำเร็จ', value: Number(extra.sentCount || 0).toLocaleString('th-TH') + ' ราย' },
+      { label: 'ล้มเหลว', value: Number(extra.failedCount || 0).toLocaleString('th-TH') + ' ราย' },
+      { label: 'ข้ามไม่มี User ID', value: Number(extra.skippedNoUserId || 0).toLocaleString('th-TH') + ' ห้อง' },
+      { label: 'ตัวอย่างข้อความ', value: extra.messagePreview || '-' },
     ]);
   }
 
@@ -4049,7 +4061,7 @@ function showBillingCyclePreview(options = {}) {
 
 
 <style>
-/* ===== Pananth v15.4.2.54: Tenant onboarding wizard ===== */
+/* ===== Pananth v15.4.2.55: Tenant onboarding wizard ===== */
 .tenant-onboarding-note{
   background:#e8f7ef;
   padding:10px 16px;
@@ -4511,6 +4523,7 @@ body.dark .tenant-onboarding-actions{
         <button class="ctrl-btn important" data-meter-cycle-action="1" onclick="openMeterPage()">📝 จดมิเตอร์รอบบิลใหม่</button>
         <button class="ctrl-btn danger" onclick="alertUnpaid()">🔔 แจ้งเตือนค้างชำระ</button>
         <button class="ctrl-btn purple" onclick="sendOwnerUnpaidSummary()">📋 สรุปค้างส่งเจ้าของ</button>
+        <button class="ctrl-btn outline" onclick="openTenantBroadcastPage()">📢 ประกาศผู้เช่า</button>
       </div>
     </div>
 
@@ -6275,7 +6288,7 @@ function tenantFileToBase64(file) {
 }
 
 
-// ===== TENANT ONBOARDING WIZARD v15.4.2.54 =====
+// ===== TENANT ONBOARDING WIZARD v15.4.2.55 =====
 const TENANT_ONBOARDING_STEPS = [
   { key: 1, label: 'ห้อง', icon: '1' },
   { key: 2, label: 'ข้อมูล', icon: '2' },
@@ -10371,7 +10384,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.54'
+        createdFrom: 'web-v15.4.2.55'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -11636,7 +11649,7 @@ function renderPaymentSearchResults() {
 
 
 
-// ===== ค้นหาผู้เช่า / เอกสาร v15.4.2.54 =====
+// ===== ค้นหาผู้เช่า / เอกสาร v15.4.2.55 =====
 function tenantSearchNormalize(value = '') {
   return String(value ?? '')
     .toLowerCase()
@@ -11992,6 +12005,257 @@ function renderTenantDocumentSearchResults() {
 
   const el = document.getElementById('tenantDocumentSearchResults');
   if (el) el.innerHTML = summary + cards;
+}
+
+
+
+// ===== ประกาศถึงผู้เช่าผ่าน LINE OA v15.4.2.55 =====
+function getTenantBroadcastCandidates() {
+  const cfg = loadConfig();
+  const userIds = cfg?.userIds || {};
+  return getManagedRoomNumbers()
+    .filter(roomNum => Number(roomNum) !== TEST_ROOM)
+    .map(roomNum => {
+      const key = String(roomNum);
+      const room = rooms?.[roomNum] || rooms?.[key] || {};
+      const vacant = room?.vacant === true || getRoomSetting(roomNum)?.status === 'vacant';
+      const userId = String(userIds?.[key] || userIds?.[roomNum] || '').trim();
+      return {
+        roomNum: key,
+        roomNumValue: Number(roomNum),
+        tenantName: String(tenants?.[key]?.name || tenants?.[roomNum]?.name || getTenantDisplayNameForDocs(key) || '').trim(),
+        userId,
+        hasUserId: !!userId,
+        vacant,
+        selectable: !vacant && !!userId,
+      };
+    });
+}
+
+function getTenantBroadcastSelectedSet() {
+  if (!(window._tenantBroadcastSelectedRooms instanceof Set)) {
+    window._tenantBroadcastSelectedRooms = new Set();
+  }
+  return window._tenantBroadcastSelectedRooms;
+}
+
+function getTenantBroadcastSelectionStats() {
+  const selected = getTenantBroadcastSelectedSet();
+  const candidates = getTenantBroadcastCandidates();
+  const selectedRows = candidates.filter(item => selected.has(String(item.roomNum)) && item.selectable);
+  const uniqueUserIds = new Set(selectedRows.map(item => item.userId).filter(Boolean));
+  return {
+    selectedRows,
+    selectedRooms: selectedRows.map(item => item.roomNum),
+    selectedCount: selectedRows.length,
+    uniqueRecipientCount: uniqueUserIds.size,
+  };
+}
+
+function openTenantBroadcastPage() {
+  setAlertPageTitle('📢 ประกาศถึงผู้เช่าผ่าน LINE OA');
+  window._tenantBroadcastSelectedRooms = new Set();
+  const html = `
+    <div style="background:white;border-radius:12px;padding:14px;margin-bottom:14px;border:1.5px solid var(--border);">
+      <div style="font-family:Kanit,sans-serif;font-size:18px;font-weight:900;color:var(--primary);">📢 ประกาศถึงผู้เช่าผ่าน LINE OA</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.55;">
+        เลือกห้องที่ต้องการส่ง แล้วพิมพ์ข้อความประกาศ ระบบจะส่งเฉพาะห้องที่มี LINE User ID และจะกันส่งซ้ำให้หากหลายห้องผูกกับ LINE เดียวกัน
+      </div>
+    </div>
+
+    <div style="background:white;border-radius:12px;padding:12px;margin-bottom:12px;border:1.5px solid var(--border);">
+      <div style="font-size:13px;font-weight:900;color:var(--primary);margin-bottom:6px;">1. ข้อความประกาศ</div>
+      <textarea id="tenantBroadcastMessage" class="form-input" rows="6" maxlength="4500"
+        placeholder="เช่น แจ้งผู้เช่าทุกท่าน วันนี้มีการซ่อมระบบน้ำช่วงเวลา 13:00–15:00 น. ขออภัยในความไม่สะดวกครับ"
+        oninput="renderTenantBroadcastPreview()"
+        style="resize:vertical;min-height:130px;line-height:1.55;"></textarea>
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px;">
+        <span>ส่งตามข้อความที่พิมพ์จริง ไม่มีข้อความระบบแทรกเพิ่ม</span>
+        <span id="tenantBroadcastCharCount">0 / 4,500 ตัวอักษร</span>
+      </div>
+    </div>
+
+    <div style="background:white;border-radius:12px;padding:12px;margin-bottom:12px;border:1.5px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:13px;font-weight:900;color:var(--primary);">2. เลือกห้องปลายทาง</div>
+          <div id="tenantBroadcastSelectionSummary" style="font-size:12px;color:var(--muted);margin-top:3px;">ยังไม่ได้เลือกห้อง</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="ctrl-btn outline" onclick="selectAllTenantBroadcastRooms()">เลือกห้องพร้อมส่งทั้งหมด</button>
+          <button class="ctrl-btn outline" onclick="clearTenantBroadcastRooms()">ล้างการเลือก</button>
+        </div>
+      </div>
+      <div id="tenantBroadcastRoomGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px;margin-top:12px;"></div>
+    </div>
+
+    <div style="background:white;border-radius:12px;padding:12px;margin-bottom:12px;border:1.5px solid var(--border);">
+      <div style="font-size:13px;font-weight:900;color:var(--primary);margin-bottom:6px;">3. พรีวิวก่อนส่ง</div>
+      <div id="tenantBroadcastPreview" style="background:var(--bg);border-radius:10px;padding:12px;min-height:72px;border:1px dashed var(--border);white-space:pre-wrap;line-height:1.6;color:var(--text);font-size:14px;"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button id="tenantBroadcastSendBtn" class="ctrl-btn primary" style="flex:1;justify-content:center;min-height:48px;font-size:15px;" onclick="sendTenantBroadcastAnnouncement()">📢 ส่งประกาศที่เลือก</button>
+      <button class="ctrl-btn outline" style="justify-content:center;min-height:48px;" onclick="document.getElementById('tenantBroadcastMessage').value='';renderTenantBroadcastPreview();">ล้างข้อความ</button>
+    </div>
+    <div id="tenantBroadcastSendStatus" style="font-size:12px;color:var(--muted);margin-top:10px;"></div>
+  `;
+
+  document.getElementById('alertPageContent').innerHTML = html;
+  document.getElementById('alertPage').classList.add('open');
+  refreshModalLockSafe();
+  renderTenantBroadcastRoomGrid();
+  renderTenantBroadcastPreview();
+}
+
+function renderTenantBroadcastRoomGrid() {
+  const box = document.getElementById('tenantBroadcastRoomGrid');
+  if (!box) return;
+  const selected = getTenantBroadcastSelectedSet();
+  const rows = getTenantBroadcastCandidates();
+
+  if (!rows.length) {
+    box.innerHTML = '<div style="grid-column:1/-1;padding:14px;border-radius:10px;background:var(--bg);color:var(--muted);font-weight:800;">ยังไม่พบห้องสำหรับส่งประกาศ</div>';
+    renderTenantBroadcastSelectionSummary();
+    return;
+  }
+
+  box.innerHTML = rows.map(item => {
+    const active = selected.has(String(item.roomNum)) && item.selectable;
+    const border = active ? '#2c7be5' : (item.selectable ? 'var(--border)' : '#d7d7d7');
+    const bg = active ? 'rgba(44,123,229,.12)' : (item.selectable ? 'white' : '#f4f4f4');
+    const status = item.vacant
+      ? 'ห้องว่าง'
+      : (item.hasUserId ? 'พร้อมส่ง' : 'ไม่มี LINE User ID');
+    const statusColor = item.selectable ? 'var(--green)' : '#8e8e8e';
+    const title = item.selectable ? 'แตะเพื่อเลือก/ยกเลิก' : status;
+
+    return `
+      <button ${item.selectable ? '' : 'disabled'} title="${escapeHtml(title)}"
+        onclick="toggleTenantBroadcastRoom('${escapeJsString(item.roomNum)}')"
+        style="text-align:left;padding:10px;border-radius:12px;border:2px solid ${border};background:${bg};cursor:${item.selectable ? 'pointer' : 'not-allowed'};opacity:${item.selectable ? '1' : '.65'};font-family:'Sarabun',sans-serif;">
+        <div style="display:flex;justify-content:space-between;gap:6px;align-items:center;">
+          <div style="font-family:Kanit,sans-serif;font-size:16px;font-weight:900;color:var(--primary);">ห้อง ${escapeHtml(item.roomNum)}</div>
+          <div style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${active ? '#2c7be5' : 'transparent'};border:2px solid ${active ? '#2c7be5' : '#b8c2cc'};color:white;font-size:12px;font-weight:900;">${active ? '✓' : ''}</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;min-height:30px;line-height:1.35;">${escapeHtml(item.tenantName || 'ยังไม่มีชื่อผู้เช่า')}</div>
+        <div style="font-size:11px;font-weight:900;color:${statusColor};margin-top:4px;">${escapeHtml(status)}</div>
+      </button>
+    `;
+  }).join('');
+
+  renderTenantBroadcastSelectionSummary();
+}
+
+function renderTenantBroadcastSelectionSummary() {
+  const el = document.getElementById('tenantBroadcastSelectionSummary');
+  if (!el) return;
+  const stats = getTenantBroadcastSelectionStats();
+  const totalReady = getTenantBroadcastCandidates().filter(item => item.selectable).length;
+  if (!stats.selectedCount) {
+    el.textContent = `ยังไม่ได้เลือกห้อง • ห้องที่พร้อมส่ง ${totalReady.toLocaleString('th-TH')} ห้อง`;
+    return;
+  }
+  el.textContent = `เลือก ${stats.selectedCount.toLocaleString('th-TH')} ห้อง • ผู้รับ LINE ไม่ซ้ำ ${stats.uniqueRecipientCount.toLocaleString('th-TH')} ราย`;
+}
+
+function toggleTenantBroadcastRoom(roomNum) {
+  const key = String(roomNum || '');
+  const candidate = getTenantBroadcastCandidates().find(item => String(item.roomNum) === key);
+  if (!candidate || !candidate.selectable) return;
+  const selected = getTenantBroadcastSelectedSet();
+  if (selected.has(key)) selected.delete(key);
+  else selected.add(key);
+  renderTenantBroadcastRoomGrid();
+}
+
+function selectAllTenantBroadcastRooms() {
+  const selected = getTenantBroadcastSelectedSet();
+  selected.clear();
+  getTenantBroadcastCandidates()
+    .filter(item => item.selectable)
+    .forEach(item => selected.add(String(item.roomNum)));
+  renderTenantBroadcastRoomGrid();
+}
+
+function clearTenantBroadcastRooms() {
+  getTenantBroadcastSelectedSet().clear();
+  renderTenantBroadcastRoomGrid();
+}
+
+function renderTenantBroadcastPreview() {
+  const input = document.getElementById('tenantBroadcastMessage');
+  const preview = document.getElementById('tenantBroadcastPreview');
+  const counter = document.getElementById('tenantBroadcastCharCount');
+  const text = String(input?.value || '');
+  if (counter) counter.textContent = `${text.length.toLocaleString('th-TH')} / 4,500 ตัวอักษร`;
+  if (preview) {
+    preview.textContent = text.trim() || 'ข้อความประกาศจะแสดงตัวอย่างตรงนี้ก่อนส่ง';
+    preview.style.color = text.trim() ? 'var(--text)' : 'var(--muted)';
+  }
+}
+
+async function sendTenantBroadcastAnnouncement() {
+  const message = String(document.getElementById('tenantBroadcastMessage')?.value || '').trim();
+  const stats = getTenantBroadcastSelectionStats();
+  const status = document.getElementById('tenantBroadcastSendStatus');
+  const btn = document.getElementById('tenantBroadcastSendBtn');
+
+  if (!message) {
+    alert('กรุณาพิมพ์ข้อความประกาศก่อนครับ');
+    return;
+  }
+  if (message.length > 4500) {
+    alert('ข้อความยาวเกิน 4,500 ตัวอักษร กรุณาย่อข้อความก่อนส่งครับ');
+    return;
+  }
+  if (!stats.selectedRooms.length) {
+    alert('กรุณาเลือกห้องที่ต้องการส่งก่อนครับ');
+    return;
+  }
+
+  const confirmText =
+`ยืนยันส่งประกาศถึงผู้เช่าหรือไม่?
+
+เลือกไว้: ${stats.selectedCount.toLocaleString('th-TH')} ห้อง
+ผู้รับ LINE ไม่ซ้ำ: ${stats.uniqueRecipientCount.toLocaleString('th-TH')} ราย
+
+ระบบจะส่งข้อความตามพรีวิวที่แสดงอยู่`;
+  if (!confirm(confirmText)) return;
+
+  try {
+    if (btn) btn.disabled = true;
+    if (status) status.textContent = 'กำลังส่งประกาศ...';
+
+    const result = await workerPost({
+      action: 'sendTenantBroadcast',
+      roomNums: stats.selectedRooms,
+      message,
+    });
+
+    const sent = Number(result.sentCount || 0);
+    const failed = Number(result.failedCount || 0);
+    const noId = Number(result.skippedNoUserId || 0);
+    const duplicates = Number(result.skippedDuplicateRecipients || 0);
+
+    if (status) {
+      status.textContent = `ส่งเสร็จแล้ว • สำเร็จ ${sent.toLocaleString('th-TH')} ราย • ล้มเหลว ${failed.toLocaleString('th-TH')} ราย`;
+    }
+
+    alert(
+`✅ ส่งประกาศเรียบร้อยแล้ว
+
+ส่งสำเร็จ: ${sent.toLocaleString('th-TH')} ราย
+ส่งไม่สำเร็จ: ${failed.toLocaleString('th-TH')} ราย
+ข้ามเพราะไม่มี User ID: ${noId.toLocaleString('th-TH')} ห้อง
+กันส่งซ้ำจาก LINE เดียวกัน: ${duplicates.toLocaleString('th-TH')} ห้อง`
+    );
+  } catch (e) {
+    if (status) status.textContent = '❌ ส่งประกาศไม่สำเร็จ: ' + (e.message || e);
+    alert('❌ ส่งประกาศไม่สำเร็จ: ' + (e.message || e));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 
