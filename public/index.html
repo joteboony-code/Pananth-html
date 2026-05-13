@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.57</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.58</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.57'
+        createdFrom: 'web-v15.4.2.58'
       })
     });
 
@@ -4061,7 +4061,7 @@ function showBillingCyclePreview(options = {}) {
 
 
 <style>
-/* ===== Pananth v15.4.2.57: Tenant onboarding wizard ===== */
+/* ===== Pananth v15.4.2.58: Tenant onboarding wizard ===== */
 .tenant-onboarding-note{
   background:#e8f7ef;
   padding:10px 16px;
@@ -6288,7 +6288,7 @@ function tenantFileToBase64(file) {
 }
 
 
-// ===== TENANT ONBOARDING WIZARD v15.4.2.57 =====
+// ===== TENANT ONBOARDING WIZARD v15.4.2.58 =====
 const TENANT_ONBOARDING_STEPS = [
   { key: 1, label: 'ห้อง', icon: '1' },
   { key: 2, label: 'ข้อมูล', icon: '2' },
@@ -10384,7 +10384,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.57'
+        createdFrom: 'web-v15.4.2.58'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -11649,7 +11649,7 @@ function renderPaymentSearchResults() {
 
 
 
-// ===== ค้นหาผู้เช่า / เอกสาร v15.4.2.57 =====
+// ===== ค้นหาผู้เช่า / เอกสาร v15.4.2.58 =====
 function tenantSearchNormalize(value = '') {
   return String(value ?? '')
     .toLowerCase()
@@ -12009,7 +12009,7 @@ function renderTenantDocumentSearchResults() {
 
 
 
-// ===== ประกาศถึงผู้เช่าผ่าน LINE OA v15.4.2.57 =====
+// ===== ประกาศถึงผู้เช่าผ่าน LINE OA v15.4.2.58 =====
 function getTenantBroadcastCandidates() {
   const cfg = loadConfig();
   const userIds = cfg?.userIds || {};

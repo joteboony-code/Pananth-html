@@ -74,6 +74,92 @@
     .skeleton{animation:pulse 1.2s infinite ease-in-out;background:linear-gradient(90deg,#eef3fb,#f8fbff,#eef3fb);background-size:200% 100%;color:transparent;border-radius:12px}
     @keyframes pulse{0%{background-position:0 0}100%{background-position:-200% 0}}
     .footer-note{font-size:12px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.55}
+
+    .qr-toggle-card{
+      margin-top:14px;
+      border:1px solid var(--border);
+      border-radius:20px;
+      background:linear-gradient(135deg,#f8fbff,#eef5ff);
+      overflow:hidden;
+    }
+    .qr-toggle-head{
+      width:100%;
+      border:none;
+      background:transparent;
+      padding:14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      cursor:pointer;
+      text-align:left;
+      font:inherit;
+      color:var(--text);
+    }
+    .qr-toggle-title{
+      font-family:'Kanit',sans-serif;
+      font-size:16px;
+      font-weight:800;
+      color:var(--primary);
+    }
+    .qr-toggle-sub{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.45;
+      margin-top:2px;
+    }
+    .qr-toggle-pill{
+      flex:0 0 auto;
+      min-width:112px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:var(--primary);
+      color:#fff;
+      font-size:12px;
+      font-weight:900;
+    }
+    .qr-panel{
+      display:none;
+      border-top:1px solid var(--border);
+      padding:14px;
+      background:#fff;
+    }
+    .qr-panel.open{display:block}
+    .qr-panel-note{
+      text-align:center;
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.55;
+      margin-bottom:12px;
+      font-weight:800;
+    }
+    .qr-image-wrap{
+      width:min(100%,430px);
+      margin:0 auto;
+      padding:10px;
+      border-radius:20px;
+      background:#fff;
+      border:1px solid var(--border);
+      box-shadow:0 10px 24px rgba(23,58,99,.12);
+    }
+    .qr-image-wrap img{
+      display:block;
+      width:100%;
+      height:auto;
+      border-radius:14px;
+    }
+    .qr-footer-hint{
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+      margin-top:12px;
+    }
+
     @media(max-width:720px){
       .hero-grid,.summary-grid{grid-template-columns:1fr}
       .history-card{grid-template-columns:auto 1fr}
@@ -166,6 +252,27 @@
         </div>
         <div class="bar"><span id="billProgressBar"></span></div>
       </div>
+
+      <div class="qr-toggle-card">
+        <button id="tenantPaymentQrToggle" class="qr-toggle-head" type="button" onclick="toggleTenantPaymentQr()">
+          <div>
+            <div class="qr-toggle-title">📱 QR พร้อมเพย์สำหรับชำระค่าเช่า</div>
+            <div class="qr-toggle-sub">กดเพื่อแสดง QR ให้ผู้เช่าสแกนจ่ายจากแอปธนาคาร</div>
+          </div>
+          <span id="tenantPaymentQrToggleText" class="qr-toggle-pill">แสดง QR ▾</span>
+        </button>
+        <div id="tenantPaymentQrPanel" class="qr-panel">
+          <div class="qr-panel-note">
+            สแกน QR นี้เพื่อโอนชำระค่าเช่า<br>
+            หลังโอนแล้ว สามารถส่งสลิปในแชต LINE OA ได้ตามปกติ
+          </div>
+          <div class="qr-image-wrap">
+            <img src="promptpay-rent-qr.jpg" alt="QR PromptPay สำหรับชำระค่าเช่า" loading="lazy">
+          </div>
+          <div class="qr-footer-hint">บัญชีรับเงินตาม QR: นาย บุญรัตน์ ชลา</div>
+        </div>
+      </div>
+
     </section>
 
     <section class="section" id="arrearsSection" style="display:none;">
@@ -242,6 +349,16 @@
       if (key === 'partial') return { label: 'ชำระบางส่วน', cls: 'partial', icon: '🟠' };
       if (key === 'vacant') return { label: 'ห้องว่าง', cls: 'vacant', icon: '🔑' };
       return { label: 'ยังไม่ชำระ', cls: 'unpaid', icon: '🔴' };
+    }
+
+
+    function toggleTenantPaymentQr() {
+      const panel = $('tenantPaymentQrPanel');
+      const label = $('tenantPaymentQrToggleText');
+      if (!panel) return;
+      const willOpen = !panel.classList.contains('open');
+      panel.classList.toggle('open', willOpen);
+      if (label) label.textContent = willOpen ? 'ซ่อน QR ▴' : 'แสดง QR ▾';
     }
 
     async function initTenantPortal() {
