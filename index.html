@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.50</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.51</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.50'
+        createdFrom: 'web-v15.4.2.51'
       })
     });
 
@@ -693,15 +693,245 @@ function renderErrorLogs() {
   content.innerHTML = logs.slice().reverse().map(log => `<div style="background:white;border-radius:10px;padding:12px;margin-bottom:10px;border:1.5px solid var(--border);"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px;"><div style="font-weight:700;color:${log.level === 'error' ? '#e74c3c' : 'var(--primary)'};">${log.level === 'error' ? '❌' : 'ℹ️'} ${log.action || 'log'}</div><div style="font-size:11px;color:var(--muted);">${log.timeText || log.time || '-'}</div></div><div style="font-size:12px;color:var(--muted);white-space:pre-wrap;word-break:break-word;">${log.message || ''}</div>${log.roomNum ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">🏠 ห้อง ${log.roomNum}</div>` : ''}${log.ref ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;word-break:break-all;">🔢 Ref: ${log.ref}</div>` : ''}</div>`).join('');
 }
 async function clearErrorLogs() {
-  if (!confirm('ล้าง Worker Logs ทั้งหมดใช่ไหมครับ?')) return;
+  if (!confirm('ล้าง Worker Logs และประวัติเหตุการณ์ที่บันทึกใน Logs ทั้งหมดใช่ไหมครับ?')) return;
   try {
     const res = await fetch(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'clearLogs' }) });
     if (!res.ok) throw new Error(await res.text());
     localStorage.setItem('pananth_logs', '[]');
     renderErrorLogs();
+    try { renderSystemActivityHistory(); } catch(e) {}
     alert('✅ ล้าง Logs แล้วครับ');
   } catch(e) { alert('❌ ล้าง Logs ไม่สำเร็จ: ' + e.message); }
 }
+
+
+// ===== SYSTEM ACTIVITY HISTORY v15.4.2.51 =====
+let systemActivityFilter = 'all';
+
+const SYSTEM_ACTIVITY_DEFINITIONS = {
+  closeCurrentMonth: { group: 'billing', icon: '🔒', title: 'ปิดรอบบิล', actor: 'เจ้าของ/แอดมิน' },
+  openNewBillingMonth: { group: 'billing', icon: '🆕', title: 'เปิดรอบรับชำระใหม่', actor: 'เจ้าของ/แอดมิน' },
+  saveMonthlyArchive: { group: 'billing', icon: '📚', title: 'บันทึกประวัติรอบบิล', actor: 'ระบบ' },
+  rollbackMonthClose: { group: 'billing', icon: '↩️', title: 'ย้อนกลับปิดรอบล่าสุด', actor: 'เจ้าของ/แอดมิน' },
+  manualPayment: { group: 'payment', icon: '💰', title: 'รับชำระเอง', actor: 'เจ้าของ/แอดมิน' },
+  tenantCheckout: { group: 'tenant', icon: '🚪', title: 'ผู้เช่าย้ายออก / เปลี่ยนห้องเป็นว่าง', actor: 'เจ้าของ/แอดมิน' },
+  uploadTenantDocument: { group: 'document', icon: '📤', title: 'อัปโหลดเอกสารผู้เช่า', actor: 'เจ้าของ/แอดมิน' },
+  deleteTenantDocument: { group: 'document', icon: '🗑️', title: 'ลบเอกสารผู้เช่า', actor: 'เจ้าของ/แอดมิน' },
+  deleteCustomRoom: { group: 'room', icon: '🗑️', title: 'ลบห้องที่เพิ่มเอง', actor: 'เจ้าของ/แอดมิน' },
+};
+
+function getSystemActivityDefinition(action = '') {
+  return SYSTEM_ACTIVITY_DEFINITIONS[String(action || '').trim()] || null;
+}
+
+function formatSystemActivityMoney(value) {
+  const n = Number(value || 0);
+  return Number.isFinite(n) ? n.toLocaleString('th-TH') + ' ฿' : '-';
+}
+
+function getSystemActivityActor(log = {}, def = null) {
+  return String(log?.extra?.actor || def?.actor || 'ระบบ');
+}
+
+function getSystemActivityTimeText(log = {}) {
+  return String(log.timeText || log.savedAtText || log.createdAtText || log.time || '-');
+}
+
+function getSystemActivityExtra(log = {}) {
+  return log && typeof log.extra === 'object' && log.extra !== null ? log.extra : {};
+}
+
+function renderSystemActivityDetailRows(rows = []) {
+  const safeRows = rows.filter(row => row && row.label && row.value !== undefined && row.value !== null && String(row.value) !== '');
+  if (!safeRows.length) return '';
+  return `<div class="system-activity-details">` + safeRows.map(row => `
+    <div class="system-activity-details-row">
+      <span>${escapeHtml(row.label)}</span>
+      <b>${escapeHtml(String(row.value))}</b>
+    </div>`).join('') + `</div>`;
+}
+
+function getSystemActivityDetailsHtml(log = {}, def = null) {
+  const extra = getSystemActivityExtra(log);
+  const action = String(log.action || '');
+
+  if (action === 'closeCurrentMonth') {
+    return renderSystemActivityDetailRows([
+      { label: 'รอบบิล', value: extra.billingMonthText || '-' },
+      { label: 'รับชำระใน', value: extra.paymentMonthText || '-' },
+      { label: 'ชำระแล้ว', value: Number(extra.paidCount || 0).toLocaleString('th-TH') + ' ห้อง' },
+      { label: 'ค้างชำระ', value: Number(extra.unpaidCount || 0).toLocaleString('th-TH') + ' ห้อง' },
+      { label: 'ยอดค้างรวม', value: formatSystemActivityMoney(extra.unpaidTotal || 0) },
+    ]);
+  }
+
+  if (action === 'openNewBillingMonth') {
+    return renderSystemActivityDetailRows([
+      { label: 'จากรอบบิล', value: extra.fromBillingMonthText || '-' },
+      { label: 'ไปรอบบิล', value: extra.toBillingMonthText || '-' },
+      { label: 'รับชำระใหม่', value: extra.toPaymentMonthText || '-' },
+      { label: 'ยอดย้ายเป็นค้างเก่า', value: formatSystemActivityMoney(extra.unpaidTotal || 0) },
+      { label: 'จำนวนห้องที่ย้ายยอด', value: Number(extra.unpaidCount || 0).toLocaleString('th-TH') + ' ห้อง' },
+    ]);
+  }
+
+  if (action === 'saveMonthlyArchive') {
+    const summary = extra.summary || {};
+    return renderSystemActivityDetailRows([
+      { label: 'เดือนรับชำระ', value: extra.paymentMonthKey || '-' },
+      { label: 'รอบบิล', value: extra.billingMonthKey || '-' },
+      { label: 'ค้างชำระ', value: Number(summary.unpaidCount || 0).toLocaleString('th-TH') + ' ห้อง' },
+      { label: 'ยอดค้างรวม', value: formatSystemActivityMoney(summary.unpaidTotal || 0) },
+    ]);
+  }
+
+  if (action === 'manualPayment') {
+    return renderSystemActivityDetailRows([
+      { label: 'ห้อง', value: log.roomNum ? 'ห้อง ' + log.roomNum : '-' },
+      { label: 'ยอดรับ', value: formatSystemActivityMoney(extra.amount || extra.appliedTotal || 0) },
+      { label: 'คงเหลือหลังรับ', value: formatSystemActivityMoney(extra.remainingTotal || 0) },
+      { label: 'สถานะ', value: extra.status === 'paid' ? 'ชำระแล้ว' : (extra.status === 'partial' ? 'รับชำระบางส่วน' : (extra.status || '-')) },
+      { label: 'วิธีรับ', value: extra.method || extra.source || '-' },
+    ]);
+  }
+
+  if (action === 'tenantCheckout') {
+    return renderSystemActivityDetailRows([
+      { label: 'ห้อง', value: extra.roomNum ? 'ห้อง ' + extra.roomNum : (log.roomNum ? 'ห้อง ' + log.roomNum : '-') },
+      { label: 'ผู้เช่า', value: extra.tenantName || '-' },
+      { label: 'บันทึกแฟ้มเก่า', value: extra.archived ? 'บันทึกแล้ว' : 'ไม่มีข้อมูลแฟ้มให้ย้าย' },
+      { label: 'ยอดคืน/เก็บเพิ่ม', value: extra.diffText || '-' },
+    ]);
+  }
+
+  if (action === 'uploadTenantDocument' || action === 'deleteTenantDocument') {
+    const docType = extra.docType || extra.type || '';
+    return renderSystemActivityDetailRows([
+      { label: 'ห้อง', value: log.roomNum ? 'ห้อง ' + log.roomNum : '-' },
+      { label: 'ประเภทเอกสาร', value: docType ? getTenantDocumentTypeLabel(docType) : '-' },
+      { label: 'ไฟล์', value: extra.fileName || extra.objectKey || '-' },
+    ]);
+  }
+
+  if (action === 'deleteCustomRoom') {
+    return renderSystemActivityDetailRows([
+      { label: 'ห้องที่ลบ', value: extra.roomNum ? 'ห้อง ' + extra.roomNum : (log.roomNum ? 'ห้อง ' + log.roomNum : '-') },
+      { label: 'ประเภท', value: 'ห้องที่เพิ่มเอง' },
+    ]);
+  }
+
+  if (action === 'rollbackMonthClose') {
+    return renderSystemActivityDetailRows([
+      { label: 'รายการ', value: 'ย้อนกลับสถานะก่อนปิดรอบล่าสุด' },
+    ]);
+  }
+
+  return '';
+}
+
+function getSystemActivityPillHtml(log = {}, def = null) {
+  const extra = getSystemActivityExtra(log);
+  const pills = [];
+  pills.push(`<span class="system-activity-pill">👤 ${escapeHtml(getSystemActivityActor(log, def))}</span>`);
+  if (log.roomNum) pills.push(`<span class="system-activity-pill">🏠 ห้อง ${escapeHtml(log.roomNum)}</span>`);
+  if (def?.group === 'billing') pills.push(`<span class="system-activity-pill">📅 รอบบิล</span>`);
+  if (def?.group === 'payment') pills.push(`<span class="system-activity-pill">💸 การเงิน</span>`);
+  if (def?.group === 'document') pills.push(`<span class="system-activity-pill">📄 เอกสาร</span>`);
+  if (def?.group === 'tenant') pills.push(`<span class="system-activity-pill">👥 ผู้เช่า</span>`);
+  if (def?.group === 'room') pills.push(`<span class="system-activity-pill">🏘️ ห้อง</span>`);
+  return pills.join('');
+}
+
+async function recordSystemActivity(activityAction, message, extra = {}, roomNum = '') {
+  try {
+    await workerPost({
+      action: 'recordActivity',
+      activityAction,
+      message,
+      roomNum: roomNum || extra?.roomNum || '',
+      extra: {
+        actor: 'เจ้าของ/แอดมิน',
+        source: 'web',
+        ...(extra && typeof extra === 'object' ? extra : {}),
+      },
+    });
+  } catch (e) {
+    console.log('record activity failed:', e);
+  }
+}
+
+async function openSystemActivityHistory() {
+  const page = document.getElementById('systemActivityPage');
+  if (!page) return;
+  page.classList.add('open');
+  refreshModalLockSafe();
+  await refreshSystemActivityHistory();
+}
+
+async function refreshSystemActivityHistory() {
+  try {
+    const res = await fetch(WORKER_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    const data = await res.json();
+    if (Array.isArray(data.logs)) {
+      localStorage.setItem('pananth_logs', JSON.stringify(data.logs));
+    }
+  } catch (e) {
+    console.log('refresh system activity failed:', e);
+  }
+  renderSystemActivityHistory();
+}
+
+function setSystemActivityFilter(filter = 'all') {
+  systemActivityFilter = String(filter || 'all');
+  document.querySelectorAll('#systemActivityFilterBar [data-activity-filter]').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-activity-filter') === systemActivityFilter);
+  });
+  renderSystemActivityHistory();
+}
+
+function renderSystemActivityHistory() {
+  const content = document.getElementById('systemActivityContent');
+  if (!content) return;
+
+  let logs = [];
+  try { logs = JSON.parse(localStorage.getItem('pananth_logs') || '[]'); } catch(e) { logs = []; }
+  const rows = (Array.isArray(logs) ? logs : [])
+    .filter(log => {
+      const def = getSystemActivityDefinition(log?.action);
+      if (!def) return false;
+      return systemActivityFilter === 'all' || def.group === systemActivityFilter;
+    })
+    .slice()
+    .reverse();
+
+  if (!rows.length) {
+    content.innerHTML = `<div class="system-activity-empty">ยังไม่มีประวัติเหตุการณ์ในหมวดนี้ครับ<br><span style="font-size:13px;font-weight:700;">เมื่อมีการปิดรอบ เปิดรอบใหม่ รับชำระเอง ย้ายผู้เช่า หรือจัดการเอกสาร รายการจะขึ้นตรงนี้</span></div>`;
+    return;
+  }
+
+  const filterLabelMap = { all: 'ทั้งหมด', billing: 'รอบบิล', payment: 'รับชำระ', tenant: 'ผู้เช่า', document: 'เอกสาร', room: 'ห้อง' };
+  const htmlRows = rows.map(log => {
+    const def = getSystemActivityDefinition(log.action);
+    return `
+      <div class="system-activity-card">
+        <div class="system-activity-card-head">
+          <div class="system-activity-title">${def.icon} ${escapeHtml(def.title)}</div>
+          <div class="system-activity-time">${escapeHtml(getSystemActivityTimeText(log))}</div>
+        </div>
+        <div class="system-activity-message">${escapeHtml(log.message || def.title)}</div>
+        <div class="system-activity-meta">${getSystemActivityPillHtml(log, def)}</div>
+        ${getSystemActivityDetailsHtml(log, def)}
+      </div>`;
+  }).join('');
+
+  content.innerHTML = `
+    <div class="system-activity-summary">
+      <div>พบ ${rows.length.toLocaleString('th-TH')} รายการ<small>หมวด: ${escapeHtml(filterLabelMap[systemActivityFilter] || 'ทั้งหมด')}</small></div>
+      <div style="font-size:12px;color:var(--muted);font-weight:900;">แสดงล่าสุดก่อน</div>
+    </div>
+    ${htmlRows}`;
+}
+
 
 </script>
 <style>
@@ -3622,6 +3852,179 @@ function showBillingCyclePreview(options = {}) {
 }
 </script>
 
+
+<!-- ===== v15.4.2.51: ประวัติเหตุการณ์สำคัญของระบบ ===== -->
+<style>
+  .system-activity-wrap {
+    padding: 16px;
+    padding-bottom: 90px;
+  }
+  .system-activity-intro {
+    background: var(--card);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+    line-height: 1.55;
+    box-shadow: 0 1px 3px rgba(26,58,92,0.06);
+  }
+  .system-activity-intro-title {
+    font-family: 'Kanit', sans-serif;
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+  .system-activity-filter-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 0 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .system-activity-filter-btn {
+    flex: 0 0 auto;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--primary);
+    border-radius: 999px;
+    padding: 9px 12px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .system-activity-filter-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 6px 18px rgba(26,58,92,0.18);
+  }
+  .system-activity-summary {
+    background: var(--card);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    font-weight: 800;
+  }
+  .system-activity-summary small {
+    color: var(--muted);
+    font-weight: 700;
+    display: block;
+    margin-top: 2px;
+  }
+  .system-activity-card {
+    background: var(--card);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(26,58,92,0.06);
+  }
+  .system-activity-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .system-activity-title {
+    font-family: 'Kanit', sans-serif;
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--primary);
+    line-height: 1.35;
+  }
+  .system-activity-time {
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.35;
+  }
+  .system-activity-message {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  .system-activity-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .system-activity-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 999px;
+    padding: 5px 9px;
+    background: var(--bg);
+    color: var(--primary);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 900;
+  }
+  .system-activity-details {
+    margin-top: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .system-activity-details-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    border-bottom: 1px dashed var(--border);
+    padding: 5px 0;
+  }
+  .system-activity-details-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .system-activity-details-row b {
+    color: var(--primary);
+    text-align: right;
+  }
+  .system-activity-empty {
+    background: var(--card);
+    border: 1.5px dashed var(--border);
+    border-radius: 16px;
+    color: var(--muted);
+    text-align: center;
+    padding: 38px 18px;
+    font-weight: 800;
+    line-height: 1.6;
+  }
+  body.dark .system-activity-intro,
+  body.dark .system-activity-summary,
+  body.dark .system-activity-card,
+  body.dark .system-activity-filter-btn {
+    background: rgba(8, 18, 36, 0.95);
+  }
+  @media (max-width: 640px) {
+    .system-activity-wrap { padding: 12px; padding-bottom: 90px; }
+    .system-activity-card-head { flex-direction: column; gap: 4px; }
+    .system-activity-time { text-align: left; }
+    .system-activity-details-row { flex-direction: column; gap: 2px; }
+    .system-activity-details-row b { text-align: left; }
+  }
+</style>
+
 </head>
 <body>
 
@@ -3815,6 +4218,7 @@ function showBillingCyclePreview(options = {}) {
         <button class="ctrl-btn outline" onclick="openTenantDocs()">🧾 ผู้เช่า/เอกสาร</button>
         <button class="ctrl-btn outline" onclick="openMutedRooms()">🔕 งดแจ้งเตือน</button>
         <button class="ctrl-btn outline" onclick="openBackupRestore()">🛡️ Backup</button>
+        <button class="ctrl-btn outline" onclick="openSystemActivityHistory()">🧾 เหตุการณ์สำคัญ</button>
         <button class="ctrl-btn outline" onclick="openErrorLogs()">🧾 Logs</button>
         <button class="ctrl-btn outline" onclick="openExpense()">💸 ค่าใช้จ่าย</button>
         <button class="ctrl-btn outline" onclick="openSystemHealth()">🩺 สุขภาพระบบ</button>
@@ -4292,6 +4696,33 @@ function showBillingCyclePreview(options = {}) {
     <button class="meter-save-btn" onclick="clearErrorLogs()">ล้าง</button>
   </div>
   <div style="padding:16px;padding-bottom:80px;" id="errorLogsContent"></div>
+</div>
+
+
+<!-- SYSTEM ACTIVITY HISTORY PAGE v15.4.2.51 -->
+<div class="page-overlay" id="systemActivityPage">
+  <div class="page-header">
+    <button class="back-btn" onclick="document.getElementById('systemActivityPage').classList.remove('open'); refreshModalLockSafe();">←</button>
+    <h2>🧾 ประวัติเหตุการณ์</h2>
+    <button class="meter-save-btn" onclick="refreshSystemActivityHistory()">รีเฟรช</button>
+  </div>
+  <div class="system-activity-wrap">
+    <div class="system-activity-intro">
+      <div class="system-activity-intro-title">ประวัติเหตุการณ์สำคัญของระบบ</div>
+      <div style="font-size:13px;color:var(--muted);font-weight:700;">
+        ใช้ไล่ย้อนว่าเกิดอะไรขึ้นเมื่อไร เช่น ปิดรอบ เปิดรอบใหม่ รับชำระเอง ผู้เช่าย้ายออก ลบห้องที่เพิ่มเอง และอัปโหลด/ลบเอกสาร
+      </div>
+    </div>
+    <div class="system-activity-filter-bar" id="systemActivityFilterBar">
+      <button class="system-activity-filter-btn active" data-activity-filter="all" onclick="setSystemActivityFilter('all')">ทั้งหมด</button>
+      <button class="system-activity-filter-btn" data-activity-filter="billing" onclick="setSystemActivityFilter('billing')">รอบบิล</button>
+      <button class="system-activity-filter-btn" data-activity-filter="payment" onclick="setSystemActivityFilter('payment')">รับชำระ</button>
+      <button class="system-activity-filter-btn" data-activity-filter="tenant" onclick="setSystemActivityFilter('tenant')">ผู้เช่า</button>
+      <button class="system-activity-filter-btn" data-activity-filter="document" onclick="setSystemActivityFilter('document')">เอกสาร</button>
+      <button class="system-activity-filter-btn" data-activity-filter="room" onclick="setSystemActivityFilter('room')">ห้อง</button>
+    </div>
+    <div id="systemActivityContent"></div>
+  </div>
 </div>
 
 <!-- EXPENSE PAGE -->
@@ -4789,6 +5220,12 @@ async function deleteCustomRoomSettingLive(roomNum) {
     ].filter(Boolean).join('\n');
     alert('ลบห้องในหน้าเว็บแล้ว แต่ซิงค์ไป Worker ไม่ครบถ้วน:\n' + details);
   } else {
+    await recordSystemActivity(
+      'deleteCustomRoom',
+      `ลบห้อง ${room} ที่เพิ่มเองออกจากระบบ`,
+      { roomNum: room },
+      room
+    );
     alert(`✅ ลบห้อง ${room} ที่เพิ่มเองออกจากระบบแล้วครับ`);
   }
 }
@@ -8823,7 +9260,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.50'
+        createdFrom: 'web-v15.4.2.51'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -9022,6 +9459,21 @@ async function openNewBillingMonth(fromMonthKeyArg, toMonthKeyArg) {
     // บันทึกรอบบิลซ้ำอีกครั้งท้ายกระบวนการ เพื่อกันกรณี Worker/KV ยังไม่ทันได้ค่า currentPaymentMonth/currentBillingMonth
     await saveActiveBillingMonthToWorker(toMonthKey);
     window._bypassMonthLock = false;
+    await recordSystemActivity(
+      'openNewBillingMonth',
+      `เปิดรอบรับชำระใหม่จาก ${fromBillingMeta.billingMonthText} เป็น ${toBillingMeta.billingMonthText}`,
+      {
+        fromMonthKey,
+        toMonthKey,
+        fromBillingMonthText: fromBillingMeta.billingMonthText,
+        fromPaymentMonthText: fromBillingMeta.paymentMonthText,
+        toBillingMonthText: toBillingMeta.billingMonthText,
+        toPaymentMonthText: toBillingMeta.paymentMonthText,
+        unpaidCount: unpaid.length,
+        unpaidTotal,
+        arrearsRooms: unpaid.map(item => ({ roomNum: item.roomNum, amount: item.amount })),
+      }
+    );
     renderAll();
     alert(`✅ เปิดรอบรับชำระใหม่เรียบร้อยแล้วครับ\n\nรอบบิลใหม่: ${toBillingMeta.billingMonthText}\nรับชำระ: ${toBillingMeta.paymentMonthText}\nระบบย้ายเลขมิเตอร์และตั้งสถานะเป็นรอชำระแล้ว`);
   } catch (e) {
@@ -9104,6 +9556,19 @@ async function closeCurrentMonth() {
     window._bypassMonthLock = true;
     await saveMonthlyArchiveToWorker(monthlyArchive);
     await saveMonthControlToWorker({ monthClosures, lockedMonths, lastCloseBackup, arrears });
+    await recordSystemActivity(
+      'closeCurrentMonth',
+      `ปิดรอบบิล ${billingMeta.billingMonthText}`,
+      {
+        monthKey,
+        billingMonthText: billingMeta.billingMonthText,
+        paymentMonthText: billingMeta.paymentMonthText,
+        paidCount: Object.values(rooms).filter(x => x && x.paid && !x.vacant).length,
+        unpaidCount: unpaid.length,
+        unpaidTotal,
+        unpaidRooms: unpaid.map(item => ({ roomNum: item.roomNum, amount: item.amount })),
+      }
+    );
     window._bypassMonthLock = false;
     alert('✅ ปิดรอบเดือนเรียบร้อยแล้วครับ\nระบบบันทึก Monthly Archive / Snapshot และล็อกรอบนี้แล้ว');
   } catch (e) {
@@ -11190,6 +11655,7 @@ ${isRefund ? `💚 คืนเงินคุณ: ${Math.abs(diff).toLocaleStri
 
 async function confirmCheckout() {
   const r = currentRoom;
+  const checkoutTenantName = tenants?.[r]?.name || tenantProfiles?.[String(r)]?.fullName || '';
   if (!confirm(`ส่ง LINE OA แจ้งผู้เช่าห้อง ${r} แล้วหรือยังครับ?\n\nถ้ายังไม่ได้ส่ง กด "ยกเลิก" แล้วกดปุ่ม "📣 ส่ง LINE OA แจ้งผู้เช่า" ก่อนนะครับ`)) return;
   if (!confirm(`ยืนยันให้ห้อง ${r} เป็นห้องว่าง และปิดแฟ้มผู้เช่าปัจจุบันใช่ไหมครับ?\n\nถ้ามีข้อมูลผู้เช่าหรือเอกสาร ระบบจะย้ายไปเก็บใน “ประวัติผู้เช่าเก่า” ให้ก่อนล้างแฟ้มปัจจุบัน`)) return;
 
@@ -11232,6 +11698,20 @@ async function confirmCheckout() {
 
   saveData();
   saveTenants();
+  await recordSystemActivity(
+    'tenantCheckout',
+    `ผู้เช่าห้อง ${r} ย้ายออก และเปลี่ยนห้องเป็นว่าง`,
+    {
+      roomNum: r,
+      tenantName: checkoutTenantName || '',
+      archived: !!archiveResult?.archived,
+      diffText: checkoutSnapshot?.isRefund
+        ? `คืนผู้เช่า ${Math.abs(Number(checkoutSnapshot?.diffAmount || 0)).toLocaleString('th-TH')} บาท`
+        : `เก็บเพิ่ม ${Math.abs(Number(checkoutSnapshot?.diffAmount || 0)).toLocaleString('th-TH')} บาท`,
+      checkoutAtText: checkoutSnapshot?.checkoutAtText || '',
+    },
+    r
+  );
   renderAll();
   try { renderTenantDocsPage(); } catch(e) {}
   closeModal('checkoutOverlay');
@@ -11746,6 +12226,7 @@ function organizeMobileTools() {
             <button class="ctrl-btn outline" onclick="openTenantDocs()">🧾 ผู้เช่า/เอกสาร</button>
             <button class="ctrl-btn outline" onclick="openMutedRooms()">🔕 งดแจ้งเตือน</button>
             <button class="ctrl-btn outline" onclick="openBackupRestore()">🛡️ Backup</button>
+            <button class="ctrl-btn outline" onclick="openSystemActivityHistory()">🧾 เหตุการณ์สำคัญ</button>
             <button class="ctrl-btn outline" onclick="openErrorLogs()">🧾 Logs</button>
             <button class="ctrl-btn outline" onclick="openExpense()">💸 ค่าใช้จ่าย</button>
             <button class="ctrl-btn outline" onclick="openSystemHealth()">🩺 สุขภาพระบบ</button>
