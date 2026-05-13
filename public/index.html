@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.53</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.54</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.53'
+        createdFrom: 'web-v15.4.2.54'
       })
     });
 
@@ -4049,7 +4049,7 @@ function showBillingCyclePreview(options = {}) {
 
 
 <style>
-/* ===== Pananth v15.4.2.53: Tenant onboarding wizard ===== */
+/* ===== Pananth v15.4.2.54: Tenant onboarding wizard ===== */
 .tenant-onboarding-note{
   background:#e8f7ef;
   padding:10px 16px;
@@ -4543,6 +4543,7 @@ body.dark .tenant-onboarding-actions{
         <button class="ctrl-btn outline" onclick="openMonthlyReport()">📈 สรุปสิ้นเดือน</button>
         <button class="ctrl-btn outline" onclick="openPaymentHistory()">📜 ประวัติชำระ</button>
         <button class="ctrl-btn outline" onclick="openPaymentSearch()">🔎 ค้นหาชำระ</button>
+        <button class="ctrl-btn outline" onclick="openTenantDocumentSearch()">🔎 ผู้เช่า/เอกสาร</button>
         <button class="ctrl-btn outline" onclick="openAnomalyReport()">🚨 ห้องผิดปกติ</button>
         <button class="ctrl-btn outline" onclick="openRoomEditHistory()">🧾 ประวัติแก้ไข</button>
       </div>
@@ -6274,7 +6275,7 @@ function tenantFileToBase64(file) {
 }
 
 
-// ===== TENANT ONBOARDING WIZARD v15.4.2.53 =====
+// ===== TENANT ONBOARDING WIZARD v15.4.2.54 =====
 const TENANT_ONBOARDING_STEPS = [
   { key: 1, label: 'ห้อง', icon: '1' },
   { key: 2, label: 'ข้อมูล', icon: '2' },
@@ -10370,7 +10371,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.53'
+        createdFrom: 'web-v15.4.2.54'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -11631,6 +11632,366 @@ function renderPaymentSearchResults() {
 
   const el = document.getElementById('paymentSearchResults');
   if (el) el.innerHTML = summary + html;
+}
+
+
+
+// ===== ค้นหาผู้เช่า / เอกสาร v15.4.2.54 =====
+function tenantSearchNormalize(value = '') {
+  return String(value ?? '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tenantSearchMatches(haystack = '', query = '') {
+  const q = tenantSearchNormalize(query);
+  if (!q) return true;
+  const hay = tenantSearchNormalize(haystack);
+  return q.split(' ').filter(Boolean).every(token => hay.includes(token));
+}
+
+function getTenantSearchDocumentText(doc = {}) {
+  return [
+    doc.type || '',
+    typeof getTenantDocumentTypeLabel === 'function' ? getTenantDocumentTypeLabel(doc.type) : '',
+    doc.label || '',
+    doc.fileName || '',
+    doc.uploadedAtText || '',
+    doc.uploadedAt || '',
+    doc.key || '',
+  ].join(' ');
+}
+
+function getTenantDocumentSearchRecords() {
+  const records = [];
+  const roomNums = typeof getTenantDocsRoomNumbers === 'function'
+    ? getTenantDocsRoomNumbers().filter(room => Number(room) !== TEST_ROOM)
+    : Object.keys(tenantProfiles || {}).filter(room => Number(room) !== TEST_ROOM);
+
+  roomNums.forEach(room => {
+    const roomNum = String(room);
+    const profile = getTenantProfileLocal(roomNum);
+    const currentDocs = Array.isArray(profile.documents) ? profile.documents.filter(Boolean) : [];
+    const tenantName = profile.fullName || getTenantDisplayNameForDocs(roomNum) || '';
+    const currentText = [
+      'ปัจจุบัน current',
+      `ห้อง ${roomNum}`,
+      roomNum,
+      tenantName,
+      profile.phone || '',
+      profile.idCardNumber || '',
+      profile.birthDate || '',
+      profile.occupation || '',
+      profile.workplace || '',
+      profile.registeredAddress || '',
+      profile.emergencyName || '',
+      profile.emergencyRelation || '',
+      profile.emergencyPhone || '',
+      profile.contractStart || '',
+      profile.contractEnd || '',
+      profile.moveInDate || '',
+      profile.profileNote || '',
+      currentDocs.map(getTenantSearchDocumentText).join(' '),
+    ].join(' ');
+
+    const hasCurrentProfile = !!(
+      tenantName || profile.phone || profile.idCardNumber ||
+      profile.contractStart || profile.contractEnd ||
+      profile.profileNote || currentDocs.length
+    );
+
+    if (hasCurrentProfile) {
+      records.push({
+        scope: 'current',
+        roomNum,
+        recordId: `current-${roomNum}`,
+        fullName: tenantName,
+        phone: profile.phone || '',
+        idCardNumber: profile.idCardNumber || '',
+        contractStart: profile.contractStart || '',
+        contractEnd: profile.contractEnd || '',
+        moveInDate: profile.moveInDate || '',
+        moveOutDate: '',
+        profileNote: profile.profileNote || '',
+        documents: currentDocs,
+        searchText: currentText,
+        archivedAtText: '',
+      });
+    }
+
+    (Array.isArray(profile.history) ? profile.history : []).forEach((item, idx) => {
+      const historyDocs = Array.isArray(item?.documents) ? item.documents.filter(Boolean) : [];
+      const historyText = [
+        'ประวัติเก่า history archived',
+        `ห้อง ${roomNum}`,
+        roomNum,
+        item?.fullName || '',
+        item?.phone || '',
+        item?.idCardNumber || '',
+        item?.birthDate || '',
+        item?.occupation || '',
+        item?.workplace || '',
+        item?.registeredAddress || '',
+        item?.emergencyName || '',
+        item?.emergencyRelation || '',
+        item?.emergencyPhone || '',
+        item?.contractStart || '',
+        item?.contractEnd || '',
+        item?.moveInDate || '',
+        item?.moveOutDate || '',
+        item?.profileNote || '',
+        item?.archivedAtText || '',
+        item?.archivedAt || '',
+        historyDocs.map(getTenantSearchDocumentText).join(' '),
+      ].join(' ');
+
+      records.push({
+        scope: 'history',
+        roomNum,
+        recordId: String(item?.id || `history-${roomNum}-${idx}`),
+        fullName: String(item?.fullName || '').trim(),
+        phone: String(item?.phone || '').trim(),
+        idCardNumber: String(item?.idCardNumber || '').trim(),
+        contractStart: String(item?.contractStart || '').trim(),
+        contractEnd: String(item?.contractEnd || '').trim(),
+        moveInDate: String(item?.moveInDate || '').trim(),
+        moveOutDate: String(item?.moveOutDate || '').trim(),
+        profileNote: String(item?.profileNote || '').trim(),
+        documents: historyDocs,
+        searchText: historyText,
+        archivedAtText: String(item?.archivedAtText || item?.archivedAt || '').trim(),
+      });
+    });
+  });
+
+  return records.sort((a, b) => {
+    const roomDiff = Number(a.roomNum || 0) - Number(b.roomNum || 0);
+    if (roomDiff !== 0) return roomDiff;
+    if (a.scope !== b.scope) return a.scope === 'current' ? -1 : 1;
+    return String(b.archivedAtText || '').localeCompare(String(a.archivedAtText || ''));
+  });
+}
+
+async function refreshTenantDocumentSearchSilent() {
+  try {
+    const res = await fetch(WORKER_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    const data = await res.json();
+    if (data.rooms && Object.keys(data.rooms).length > 0) {
+      rooms = data.rooms;
+      localStorage.setItem('pananth_rooms', JSON.stringify(rooms));
+    }
+    if (data.tenants) {
+      tenants = data.tenants;
+      localStorage.setItem('pananth_tenants', JSON.stringify(tenants));
+    }
+    if (data.tenantProfiles && typeof data.tenantProfiles === 'object') {
+      tenantProfiles = data.tenantProfiles;
+      saveTenantProfilesLocal();
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function openTenantDocumentSearch() {
+  setAlertPageTitle('🔎 ค้นหาผู้เช่า / เอกสาร');
+  window._tenantDocumentSearchFilter = window._tenantDocumentSearchFilter || 'all';
+
+  const html = `
+    <div style="background:white;border-radius:12px;padding:14px;margin-bottom:14px;border:1.5px solid var(--border);">
+      <div style="font-family:Kanit,sans-serif;font-size:18px;font-weight:900;color:var(--primary);">🔎 ค้นหาผู้เช่า / เอกสาร</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.55;">
+        ค้นหาจากเลขห้อง ชื่อผู้เช่า เบอร์โทร เลขบัตร ประเภทเอกสาร ชื่อไฟล์ ป้ายกำกับเอกสาร และข้อมูลผู้เช่าเก่า
+      </div>
+    </div>
+
+    <div style="background:white;border-radius:12px;padding:12px;margin-bottom:12px;border:1.5px solid var(--border);">
+      <input id="tenantDocumentSearchInput" class="form-input"
+        placeholder="เช่น ห้อง 7 / สมชาย / 081 / สัญญา / บัตรประชาชน / Rental / ชื่อไฟล์"
+        oninput="renderTenantDocumentSearchResults()">
+
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <button class="ctrl-btn primary" style="flex:1;justify-content:center;min-width:150px;" onclick="reloadTenantDocumentSearch()">🔄 โหลดข้อมูลล่าสุด</button>
+        <button class="ctrl-btn outline" style="flex:1;justify-content:center;min-width:120px;" onclick="document.getElementById('tenantDocumentSearchInput').value='';renderTenantDocumentSearchResults();">ล้างคำค้น</button>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <button class="ctrl-btn outline" data-tenant-search-filter="all" onclick="setTenantDocumentSearchFilter('all')">ทั้งหมด</button>
+        <button class="ctrl-btn outline" data-tenant-search-filter="current" onclick="setTenantDocumentSearchFilter('current')">ผู้เช่าปัจจุบัน</button>
+        <button class="ctrl-btn outline" data-tenant-search-filter="documents" onclick="setTenantDocumentSearchFilter('documents')">มีเอกสาร</button>
+        <button class="ctrl-btn outline" data-tenant-search-filter="history" onclick="setTenantDocumentSearchFilter('history')">ประวัติเก่า</button>
+      </div>
+
+      <div id="tenantDocumentSearchStatus" style="font-size:12px;color:var(--muted);margin-top:8px;">กำลังเปิดหน้าค้นหา...</div>
+    </div>
+    <div id="tenantDocumentSearchResults"></div>
+  `;
+
+  document.getElementById('alertPageContent').innerHTML = html;
+  document.getElementById('alertPage').classList.add('open');
+  refreshModalLockSafe();
+  renderTenantDocumentSearchResults();
+
+  const ok = await refreshTenantDocumentSearchSilent();
+  const status = document.getElementById('tenantDocumentSearchStatus');
+  if (status) {
+    status.textContent = ok
+      ? '✅ โหลดข้อมูลผู้เช่าและเอกสารล่าสุดแล้ว'
+      : '⚠️ เปิดจากข้อมูลในเครื่องก่อน — ถ้าข้อมูลไม่ครบ ให้ตรวจ WORKER_URL/อินเทอร์เน็ต';
+  }
+  renderTenantDocumentSearchResults();
+}
+
+async function reloadTenantDocumentSearch() {
+  const status = document.getElementById('tenantDocumentSearchStatus');
+  if (status) status.textContent = 'กำลังโหลดข้อมูลล่าสุด...';
+  const ok = await refreshTenantDocumentSearchSilent();
+  if (status) status.textContent = ok ? '✅ โหลดข้อมูลล่าสุดแล้ว' : '❌ โหลดข้อมูลล่าสุดไม่สำเร็จ';
+  renderTenantDocumentSearchResults();
+}
+
+function setTenantDocumentSearchFilter(mode = 'all') {
+  window._tenantDocumentSearchFilter = ['all', 'current', 'documents', 'history'].includes(mode) ? mode : 'all';
+  renderTenantDocumentSearchResults();
+}
+
+function updateTenantDocumentSearchFilterButtons() {
+  const active = window._tenantDocumentSearchFilter || 'all';
+  document.querySelectorAll('[data-tenant-search-filter]').forEach(btn => {
+    const isActive = btn.getAttribute('data-tenant-search-filter') === active;
+    btn.className = isActive ? 'ctrl-btn primary' : 'ctrl-btn outline';
+  });
+}
+
+function renderTenantDocumentSearchDocActions(record, doc) {
+  const roomNum = escapeJsString(record.roomNum || '');
+  const docId = escapeJsString(doc?.id || '');
+  const historyId = escapeJsString(record.recordId || '');
+  if (record.scope === 'history') {
+    return `
+      <button class="tenant-doc-preview-btn" onclick="previewArchivedTenantDocument('${roomNum}','${historyId}','${docId}')">👁️ ดู</button>
+      <button class="tenant-doc-download-btn" onclick="downloadArchivedTenantDocument('${roomNum}','${historyId}','${docId}')">⬇️ โหลด</button>
+    `;
+  }
+  return `
+    <button class="tenant-doc-preview-btn" onclick="previewTenantDocument('${roomNum}','${docId}')">👁️ ดู</button>
+    <button class="tenant-doc-download-btn" onclick="downloadTenantDocument('${roomNum}','${docId}')">⬇️ โหลด</button>
+  `;
+}
+
+function renderTenantDocumentSearchDocList(record, query = '') {
+  const docs = Array.isArray(record.documents) ? record.documents : [];
+  if (!docs.length) {
+    return '<div style="font-size:12px;color:var(--muted);margin-top:8px;">ยังไม่มีเอกสารในรายการนี้</div>';
+  }
+
+  const matchedDocs = tenantSearchNormalize(query)
+    ? docs.filter(doc => tenantSearchMatches(getTenantSearchDocumentText(doc), query))
+    : docs;
+
+  const docsToShow = matchedDocs.length ? matchedDocs : docs;
+  const limit = 5;
+  const cards = docsToShow.slice(0, limit).map(doc => `
+    <div style="margin-top:8px;padding:10px;border-radius:10px;border:1px dashed var(--border);background:var(--bg);">
+      <div style="font-weight:900;color:var(--primary);font-size:12px;">
+        📄 ${escapeHtml(typeof getTenantDocumentTypeLabel === 'function' ? getTenantDocumentTypeLabel(doc.type) : (doc.type || 'เอกสาร'))}
+      </div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.55;margin-top:3px;">
+        ${doc.label ? `ป้ายกำกับ: ${escapeHtml(doc.label)}<br>` : ''}
+        ไฟล์: ${escapeHtml(doc.fileName || '-')}<br>
+        อัปโหลด: ${escapeHtml(doc.uploadedAtText || doc.uploadedAt || '-')}
+      </div>
+      <div class="tenant-doc-card-actions" style="margin-top:8px;">
+        ${renderTenantDocumentSearchDocActions(record, doc)}
+      </div>
+    </div>
+  `).join('');
+
+  const more = docsToShow.length > limit
+    ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;">และอีก ${(docsToShow.length - limit).toLocaleString('th-TH')} ไฟล์ — เปิดแฟ้มห้องเพื่อดูทั้งหมด</div>`
+    : '';
+
+  return cards + more;
+}
+
+function renderTenantDocumentSearchResults() {
+  updateTenantDocumentSearchFilterButtons();
+
+  const q = String(document.getElementById('tenantDocumentSearchInput')?.value || '').trim();
+  const filter = window._tenantDocumentSearchFilter || 'all';
+  const allRecords = getTenantDocumentSearchRecords();
+
+  const filtered = allRecords.filter(record => {
+    const filterOk =
+      filter === 'all' ||
+      (filter === 'current' && record.scope === 'current') ||
+      (filter === 'history' && record.scope === 'history') ||
+      (filter === 'documents' && Array.isArray(record.documents) && record.documents.length > 0);
+    return filterOk && tenantSearchMatches(record.searchText || '', q);
+  });
+
+  const currentCount = filtered.filter(record => record.scope === 'current').length;
+  const historyCount = filtered.filter(record => record.scope === 'history').length;
+  const docCount = filtered.reduce((sum, record) => sum + (Array.isArray(record.documents) ? record.documents.length : 0), 0);
+
+  const summary = `
+    <div style="background:white;border-radius:10px;padding:10px;margin-bottom:8px;border:1.5px solid var(--border);font-size:13px;color:var(--muted);line-height:1.6;">
+      พบ <b>${filtered.length.toLocaleString('th-TH')}</b> แฟ้ม/ประวัติ
+      • ผู้เช่าปัจจุบัน <b>${currentCount.toLocaleString('th-TH')}</b>
+      • ประวัติเก่า <b>${historyCount.toLocaleString('th-TH')}</b>
+      • เอกสารในผลลัพธ์ <b>${docCount.toLocaleString('th-TH')}</b> ไฟล์
+    </div>
+  `;
+
+  const cards = filtered.length ? filtered.map(record => {
+    const isHistory = record.scope === 'history';
+    const roomLabel = `ห้อง ${record.roomNum || '-'}`;
+    const badgeText = isHistory ? 'ประวัติเก่า' : 'ผู้เช่าปัจจุบัน';
+    const badgeBg = isHistory ? '#f4ecff' : '#e8f5ee';
+    const badgeColor = isHistory ? '#6f42c1' : 'var(--green)';
+    const contractText = record.contractStart || record.contractEnd
+      ? `${record.contractStart || '-'} ถึง ${record.contractEnd || '-'}`
+      : '-';
+    const moveText = isHistory
+      ? `ย้ายออก: ${record.moveOutDate || '-'}`
+      : `ย้ายเข้า: ${record.moveInDate || '-'}`;
+
+    return `
+      <div style="background:white;border-radius:12px;padding:12px;margin-bottom:10px;border:1.5px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+          <div style="min-width:220px;flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div style="font-family:Kanit,sans-serif;font-size:17px;font-weight:900;color:var(--primary);">🏠 ${escapeHtml(roomLabel)}</div>
+              <span style="display:inline-flex;padding:4px 8px;border-radius:999px;background:${badgeBg};color:${badgeColor};font-size:11px;font-weight:900;">${badgeText}</span>
+            </div>
+            <div style="margin-top:5px;font-size:14px;font-weight:900;color:var(--text);">${escapeHtml(record.fullName || 'ยังไม่มีชื่อผู้เช่า')}</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-top:4px;">
+              โทร: ${escapeHtml(record.phone || '-')}<br>
+              เลขบัตร: ${escapeHtml(record.idCardNumber || '-')}<br>
+              สัญญา: ${escapeHtml(contractText)}<br>
+              ${escapeHtml(moveText)}
+              ${record.archivedAtText ? `<br>บันทึกประวัติ: ${escapeHtml(record.archivedAtText)}` : ''}
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="ctrl-btn outline" onclick="openTenantDocs('${escapeJsString(record.roomNum || '')}')">📁 เปิดแฟ้มห้องนี้</button>
+          </div>
+        </div>
+        ${record.profileNote ? `<div style="margin-top:8px;padding:8px;border-radius:10px;background:var(--bg);font-size:12px;color:var(--muted);white-space:pre-wrap;">หมายเหตุ: ${escapeHtml(record.profileNote)}</div>` : ''}
+        <div style="margin-top:8px;font-size:12px;font-weight:900;color:var(--primary);">เอกสาร ${Number((record.documents || []).length).toLocaleString('th-TH')} ไฟล์</div>
+        ${renderTenantDocumentSearchDocList(record, q)}
+      </div>
+    `;
+  }).join('') : `
+    <div style="background:white;border-radius:10px;padding:20px;text-align:center;color:var(--muted);border:1.5px solid var(--border);">
+      ยังไม่พบผู้เช่า / เอกสารที่ตรงกับคำค้น
+    </div>
+  `;
+
+  const el = document.getElementById('tenantDocumentSearchResults');
+  if (el) el.innerHTML = summary + cards;
 }
 
 
@@ -13319,6 +13680,7 @@ function organizeMobileTools() {
             <button class="ctrl-btn outline" onclick="openMonthlyReport()">📈 สรุปสิ้นเดือน</button>
             <button class="ctrl-btn outline" onclick="openPaymentHistory()">📜 ประวัติชำระ</button>
             <button class="ctrl-btn outline" onclick="openPaymentSearch()">🔎 ค้นหาชำระ</button>
+            <button class="ctrl-btn outline" onclick="openTenantDocumentSearch()">🔎 ผู้เช่า/เอกสาร</button>
             <button class="ctrl-btn outline" onclick="openAnomalyReport()">🚨 ห้องผิดปกติ</button>
             <button class="ctrl-btn outline" onclick="openRoomEditHistory()">🧾 ประวัติแก้ไข</button>
           </div>
