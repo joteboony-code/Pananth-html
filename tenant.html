@@ -160,6 +160,30 @@
       margin-top:12px;
     }
 
+
+    .qr-return-chat-btn{
+      width:100%;
+      margin-top:12px;
+      border:none;
+      border-radius:16px;
+      padding:14px 12px;
+      background:linear-gradient(135deg,#06c755,#05a846);
+      color:#fff;
+      font:inherit;
+      font-size:15px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:0 12px 24px rgba(6,199,85,.18);
+    }
+    .qr-return-chat-btn:active{transform:translateY(1px)}
+    .qr-return-chat-hint{
+      text-align:center;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.5;
+      margin-top:8px;
+    }
+
     @media(max-width:720px){
       .hero-grid,.summary-grid{grid-template-columns:1fr}
       .history-card{grid-template-columns:auto 1fr}
@@ -270,6 +294,9 @@
             <img src="promptpay-rent-qr.jpg" alt="QR PromptPay สำหรับชำระค่าเช่า" loading="lazy">
           </div>
           <div class="qr-footer-hint">บัญชีรับเงินตาม QR: นาย บุญรัตน์ ชลา</div>
+
+          <button class="qr-return-chat-btn" type="button" onclick="returnToLineChatForSlip()">📤 โอนแล้ว กลับไปส่งสลิปในแชต LINE</button>
+          <div class="qr-return-chat-hint">ปุ่มนี้จะปิดหน้า Portal แล้วพากลับไปยัง LINE เพื่อส่งสลิปต่อ</div>
         </div>
       </div>
 
@@ -359,6 +386,17 @@
       const willOpen = !panel.classList.contains('open');
       panel.classList.toggle('open', willOpen);
       if (label) label.textContent = willOpen ? 'ซ่อน QR ▴' : 'แสดง QR ▾';
+    }
+
+
+    function returnToLineChatForSlip() {
+      try {
+        if (window.liff && typeof liff.isInClient === 'function' && liff.isInClient() && typeof liff.closeWindow === 'function') {
+          liff.closeWindow();
+          return;
+        }
+      } catch (e) {}
+      alert('หน้านี้เปิดอยู่นอก LIFF หรือไม่สามารถปิดหน้าต่างได้ กรุณากลับไปที่แชต LINE OA แล้วส่งสลิปได้เลยครับ');
     }
 
     async function initTenantPortal() {
