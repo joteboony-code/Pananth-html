@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.47</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.49</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.47'
+        createdFrom: 'web-v15.4.2.49'
       })
     });
 
@@ -3131,6 +3131,125 @@ body.dark .meter-correction-note.danger {
   color: #fca5a5;
 }
 
+
+/* ===== v15.4.2.48: System Health Dashboard ===== */
+.health-overview {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:16px;
+  border-radius:16px;
+  margin-bottom:12px;
+  border:1.5px solid var(--border);
+  background:var(--card);
+}
+.health-overview.healthy { border-color:#9fd5b6; background:linear-gradient(135deg,#eafaf1,#ffffff); }
+.health-overview.warning { border-color:#f0d06e; background:linear-gradient(135deg,#fff8e8,#ffffff); }
+.health-overview.critical { border-color:#f0b0ab; background:linear-gradient(135deg,#fff0ef,#ffffff); }
+.health-overview-title { font-family:'Kanit',sans-serif; font-size:19px; font-weight:900; color:var(--primary); }
+.health-overview-sub { font-size:12px; color:var(--muted); margin-top:4px; line-height:1.45; }
+.health-overview-score {
+  min-width:78px;
+  text-align:center;
+  background:rgba(255,255,255,.72);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:10px 12px;
+}
+.health-score-num { font-family:'Kanit',sans-serif; font-size:26px; font-weight:900; color:var(--green); line-height:1; }
+.health-score-label { font-size:11px; color:var(--muted); margin-top:4px; font-weight:700; }
+.health-summary-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:12px;
+}
+.health-summary-card {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:72px;
+  border-radius:14px;
+  border:1.5px solid var(--border);
+  background:var(--card);
+}
+.health-summary-card b { font-family:'Kanit',sans-serif; font-size:24px; line-height:1; }
+.health-summary-card span { font-size:11px; color:var(--muted); margin-top:4px; font-weight:800; }
+.health-summary-card.critical b { color:#c0392b; }
+.health-summary-card.warning b { color:#d97706; }
+.health-summary-card.ok b { color:var(--green); }
+.health-summary-card.info b { color:var(--primary); }
+.health-section {
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  padding:12px;
+  margin-bottom:12px;
+}
+.health-section-title {
+  font-family:'Kanit',sans-serif;
+  font-size:15px;
+  font-weight:900;
+  color:var(--primary);
+  margin-bottom:8px;
+}
+.health-item {
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  margin-top:8px;
+  background:var(--bg);
+}
+.health-item:first-of-type { margin-top:0; }
+.health-item.critical { background:#fff2f1; border-color:#f0b0ab; }
+.health-item.warning { background:#fff8e8; border-color:#f0d06e; }
+.health-item.ok { background:#ecf8f1; border-color:#a8d5ba; }
+.health-item.info { background:#eef6ff; border-color:#bcd6f1; }
+.health-item-icon { font-size:18px; line-height:1.2; }
+.health-item-title { font-weight:900; color:var(--primary); line-height:1.35; }
+.health-item-detail { font-size:12px; color:var(--muted); margin-top:3px; line-height:1.45; word-break:break-word; }
+.health-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+.health-action-btn {
+  border:none;
+  border-radius:12px;
+  min-height:44px;
+  padding:11px 12px;
+  font-family:'Sarabun',sans-serif;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.health-action-btn.primary { background:linear-gradient(135deg,#0a1e3d,#1a3f7a); color:#fff; }
+.health-action-btn.outline { background:var(--card); color:var(--primary); border:1.5px solid var(--border); }
+body.dark .health-overview,
+body.dark .health-section,
+body.dark .health-summary-card,
+body.dark .health-action-btn.outline {
+  background:rgba(15,23,42,.92);
+}
+body.dark .health-overview.healthy { background:linear-gradient(135deg,rgba(16,185,129,.12),rgba(15,23,42,.94)); }
+body.dark .health-overview.warning { background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(15,23,42,.94)); }
+body.dark .health-overview.critical { background:linear-gradient(135deg,rgba(239,68,68,.14),rgba(15,23,42,.94)); }
+body.dark .health-item.critical { background:rgba(239,68,68,.12); }
+body.dark .health-item.warning { background:rgba(245,158,11,.12); }
+body.dark .health-item.ok { background:rgba(16,185,129,.12); }
+body.dark .health-item.info { background:rgba(59,130,246,.12); }
+@media (max-width: 768px) {
+  .health-overview { align-items:flex-start; flex-direction:column; }
+  .health-overview-score { width:100%; }
+  .health-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .health-actions { grid-template-columns:1fr; }
+}
 </style>
 
 <!-- PWA START: ติดตั้งเป็นแอปบนมือถือ -->
@@ -3334,8 +3453,6 @@ body.dark .meter-correction-note.danger {
         <button class="ctrl-btn outline" onclick="openRoomSettings()">🏘️ ห้อง/ค่าเช่า</button>
         <button class="ctrl-btn outline" onclick="openTenantDocs()">🧾 ผู้เช่า/เอกสาร</button>
         <button class="ctrl-btn outline" onclick="openMutedRooms()">🔕 งดแจ้งเตือน</button>
-        <button class="ctrl-btn primary" onclick="openImport()">📂 นำเข้า</button>
-        <button class="ctrl-btn green" onclick="exportExcel()">💾 บันทึก</button>
         <button class="ctrl-btn outline" onclick="openBackupRestore()">🛡️ Backup</button>
         <button class="ctrl-btn outline" onclick="openErrorLogs()">🧾 Logs</button>
         <button class="ctrl-btn outline" onclick="openExpense()">💸 ค่าใช้จ่าย</button>
@@ -3722,7 +3839,7 @@ body.dark .meter-correction-note.danger {
     <div id="checkoutSummary" style="background:var(--bg);border-radius:10px;padding:14px;margin-top:6px;border:1.5px solid var(--border);"></div>
 
     <div class="modal-actions" style="margin-top:14px;">
-      <button class="action-btn line" onclick="sendCheckoutLine()">📱 ส่ง LINE แจ้งผู้เช่า</button>
+      <button class="action-btn line" onclick="sendCheckoutLine()">📣 ส่ง LINE OA แจ้งผู้เช่า</button>
       <button class="action-btn img" onclick="closeModal('checkoutOverlay')" style="background:#e74c3c;">✕ ปิด</button>
     </div>
     <div style="margin-top:10px;">
@@ -8345,7 +8462,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.47'
+        createdFrom: 'web-v15.4.2.49'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -9596,51 +9713,334 @@ async function openSystemHealth() {
     const res = await fetch(WORKER_URL + '?t=' + Date.now(), { cache: 'no-store' });
     workerOk = res.ok;
     data = await res.json();
+    if (!res.ok) errText = data?.error || `HTTP ${res.status}`;
   } catch(e) {
-    errText = e.message;
+    errText = e?.message || String(e);
   }
 
+  const roomsData = data.rooms && typeof data.rooms === 'object' ? data.rooms : rooms || {};
   const cfg = data.config || loadConfig();
-  const logs = data.logs || [];
-  const lastCron = [...logs].reverse().find(x => String(x.action || '').includes('autoReminder'));
-  const lastSlip = [...logs].reverse().find(x => ['verifiedSlip','partialSlipPayment','duplicateSlip','verifySlipFailed'].includes(x.action));
-  const hasRooms = data.rooms && Object.keys(data.rooms).length > 0;
-  const hasTenants = data.tenants && Object.keys(data.tenants).length >= 0;
-  const hasOwnerConfig = true; // OWNER_ID อยู่ใน Worker secret ตรวจตรงจากเว็บไม่ได้
-  const userIdCount = Object.keys(cfg.userIds || {}).length;
-  const mutedCount = Object.keys(cfg.mutedRooms || {}).length;
+  const tenantsData = data.tenants && typeof data.tenants === 'object' ? data.tenants : tenants || {};
+  const profiles = data.tenantProfiles && typeof data.tenantProfiles === 'object'
+    ? data.tenantProfiles
+    : getTenantProfilesStoreLocal();
+  const arrearsData = data.arrears && typeof data.arrears === 'object' ? data.arrears : arrears || {};
+  const logs = Array.isArray(data.logs) ? data.logs : [];
+  const paymentHistory = Array.isArray(data.paymentHistory) ? data.paymentHistory : getPaymentHistoryLocal();
+  const archiveIndex = data.monthlyArchiveIndex && typeof data.monthlyArchiveIndex === 'object' ? data.monthlyArchiveIndex : {};
+  const archives = data.monthlyArchives && typeof data.monthlyArchives === 'object' ? data.monthlyArchives : {};
+  const monthClosuresData = data.monthClosures && typeof data.monthClosures === 'object' ? data.monthClosures : monthClosures || {};
+  const lockedMonthsData = data.lockedMonths && typeof data.lockedMonths === 'object' ? data.lockedMonths : lockedMonths || {};
+  const lastClose = data.lastCloseBackup || lastCloseBackup || null;
+  const billingMeta = data.billingMeta || (typeof getBillingMetaFromPaymentMonth === 'function' ? getBillingMetaFromPaymentMonth(getMonthKey()) : {});
+  const paymentMonthKey = getMonthKey();
+  const paymentMonthText = billingMeta.paymentMonthText || getMonthText();
+  const billingMonthKey = billingMeta.billingMonthKey || '';
+  const billingMonthText = billingMeta.billingMonthText || getTenantBillingText();
 
-  const item = (ok, title, sub = '') => `
-    <div style="display:flex;gap:10px;align-items:flex-start;background:white;border-radius:10px;padding:10px;margin-bottom:8px;border:1.5px solid ${ok ? '#a8d5ba':'#f0d06e'};">
-      <div style="font-size:18px;">${ok ? '✅':'⚠️'}</div>
-      <div>
-        <div style="font-weight:900;color:var(--primary);">${title}</div>
-        ${sub ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;">${sub}</div>` : ''}
+  const managedRooms = typeof getManagedRoomNumbers === 'function'
+    ? getManagedRoomNumbers()
+    : Object.keys(roomsData || {}).map(n => Number(n)).filter(Number.isFinite).sort((a,b)=>a-b);
+
+  const roomCount = managedRooms.filter(n => Number(n) !== TEST_ROOM).length;
+  const logLast = (actions) => [...logs].reverse().find(x => actions.includes(String(x.action || '')));
+  const lastCron = [...logs].reverse().find(x => String(x.action || '').includes('autoReminder'));
+  const lastSlip = logLast(['verifiedSlip','partialSlipPayment','duplicateSlip','verifySlipFailed','easySlipVerified']);
+  const warnings = [];
+  const critical = [];
+  const okItems = [];
+  const infoItems = [];
+
+  function addOk(title, detail = '') { okItems.push({ title, detail }); }
+  function addWarn(title, detail = '', rooms = []) { warnings.push({ title, detail, rooms }); }
+  function addCritical(title, detail = '', rooms = []) { critical.push({ title, detail, rooms }); }
+  function addInfo(title, detail = '') { infoItems.push({ title, detail }); }
+
+  function safeText(v) { return escapeHtml(String(v ?? '')); }
+  function money(n) { return Number(n || 0).toLocaleString('th-TH') + ' ฿'; }
+  function roomLabel(room) { return Number(room) === TEST_ROOM ? 'ห้อง 99 TEST' : `ห้อง ${room}`; }
+  function documentCount(profile = {}) { return Array.isArray(profile.documents) ? profile.documents.length : 0; }
+  function hasCurrentProfile(profile = {}) {
+    return !!(
+      profile.fullName || profile.phone || profile.idCardNumber ||
+      profile.birthDate || profile.occupation || profile.workplace ||
+      profile.address || profile.contractStart || profile.contractEnd ||
+      Number(profile.deposit || 0) > 0 || profile.moveInDate ||
+      profile.emergencyName || profile.emergencyPhone || profile.notes ||
+      documentCount(profile) > 0
+    );
+  }
+  function currentRoomDue(roomNum) {
+    try {
+      if (typeof calcTotalDueWithArrears === 'function') return Number(calcTotalDueWithArrears(roomNum) || 0);
+      if (typeof calcCurrentDue === 'function') return Number(calcCurrentDue(roomNum) || 0);
+    } catch(e) {}
+    return 0;
+  }
+  function sumRemainingArrears(roomNum) {
+    const list = Array.isArray(arrearsData?.[String(roomNum)]) ? arrearsData[String(roomNum)] : [];
+    return list.reduce((s, a) => s + Math.max(0, Number(a?.remaining || 0)), 0);
+  }
+  function roomStatusSetting(roomNum) {
+    const cfgNow = cfg || {};
+    const settings = cfgNow.roomSettings || {};
+    return String(settings?.[String(roomNum)]?.status || '').trim();
+  }
+  function hasUserId(roomNum) {
+    return !!String(cfg?.userIds?.[String(roomNum)] || cfg?.userIds?.[roomNum] || '').trim();
+  }
+
+  // ===== Core connectivity / base data =====
+  if (workerOk) addOk('Worker URL ใช้งานได้', WORKER_URL);
+  else addCritical('เชื่อมต่อ Worker ไม่สำเร็จ', errText || 'ไม่สามารถโหลดข้อมูลจาก Worker ได้');
+
+  if (roomsData && Object.keys(roomsData).length) addOk('ข้อมูลห้องโหลดได้', `พบข้อมูล ${Object.keys(roomsData).length.toLocaleString('th-TH')} รายการ`);
+  else addCritical('ไม่พบข้อมูลห้อง', 'rooms ว่างหรือโหลดไม่สำเร็จ');
+
+  if (cfg && typeof cfg === 'object') addOk('Config โหลดได้', `User ID ที่ผูกไว้ ${Object.keys(cfg.userIds || {}).length.toLocaleString('th-TH')} ห้อง`);
+  else addCritical('Config โหลดไม่ได้', 'อาจกระทบ LINE / รอบบิล / ตั้งค่าห้อง');
+
+  if (/^\d{4}-\d{2}$/.test(paymentMonthKey) && /^\d{4}-\d{2}$/.test(billingMonthKey)) {
+    addOk('รอบบิลสัมพันธ์กับเดือนรับชำระ', `รอบบิล ${billingMonthText} / รับชำระ ${paymentMonthText}`);
+  } else {
+    addCritical('รอบบิลหรือเดือนรับชำระไม่สมบูรณ์', `billingMonthKey=${billingMonthKey || '-'} | paymentMonthKey=${paymentMonthKey || '-'}`);
+  }
+
+  if (Array.isArray(paymentHistory)) addOk('ประวัติการชำระโหลดได้', `${paymentHistory.length.toLocaleString('th-TH')} รายการ`);
+  else addWarn('Payment History ไม่ใช่รายการ array', 'ควรตรวจการ sync ประวัติการชำระ');
+
+  if (arrearsData && typeof arrearsData === 'object') {
+    const arCount = Object.keys(arrearsData).filter(room => Array.isArray(arrearsData[room]) && arrearsData[room].length).length;
+    addOk('ระบบยอดค้างโหลดได้', `มีรายการยอดค้างอยู่ใน ${arCount.toLocaleString('th-TH')} ห้อง`);
+  } else {
+    addWarn('ไม่พบข้อมูลยอดค้าง', 'ถ้าไม่มีหนี้ค้างจริงถือว่าปกติ แต่ถ้ามีควรตรวจสอบ');
+  }
+
+  // ===== Check 1: duplicate arrears / suspicious debt =====
+  const duplicatedArrearsRooms = [];
+  const suspiciousCloseArrears = [];
+  Object.keys(arrearsData || {}).forEach(roomKey => {
+    const list = Array.isArray(arrearsData[roomKey]) ? arrearsData[roomKey] : [];
+    const currentDue = currentRoomDue(Number(roomKey));
+    const fingerprint = {};
+    list.forEach(a => {
+      const month = String(a?.monthKey || '');
+      const type = String(a?.type || '');
+      const amount = Number(a?.remaining || a?.originalAmount || 0);
+      const key = [month, type, amount.toFixed(2)].join('|');
+      fingerprint[key] = (fingerprint[key] || 0) + 1;
+      if (
+        String(a?.note || '') === 'สร้างจากการปิดรอบเดือน' &&
+        Number(a?.remaining || 0) > 0 &&
+        currentDue > 0 &&
+        Math.abs(Number(a?.remaining || 0) - currentDue) < 0.01
+      ) suspiciousCloseArrears.push(roomKey);
+    });
+    if (Object.values(fingerprint).some(n => n > 1)) duplicatedArrearsRooms.push(roomKey);
+  });
+  if (duplicatedArrearsRooms.length) {
+    addCritical('พบรายการยอดค้างซ้ำในห้องเดียวกัน', `ห้อง ${duplicatedArrearsRooms.join(', ')}`, duplicatedArrearsRooms);
+  } else {
+    addOk('ไม่พบรายการยอดค้างซ้ำแบบตรงตัว');
+  }
+  if (suspiciousCloseArrears.length) {
+    addCritical('พบยอดค้างที่ดูเหมือนซ้ำจากขั้นตอนปิดรอบ', `ห้อง ${[...new Set(suspiciousCloseArrears)].join(', ')}`, [...new Set(suspiciousCloseArrears)]);
+  } else {
+    addOk('ไม่พบยอดค้างซ้ำจากการปิดรอบแบบที่เคยเกิดก่อนหน้า');
+  }
+
+  // ===== Check 2: payment state consistency =====
+  const paidButDueRooms = [];
+  const vacantButPaidRooms = [];
+  const zeroDueButUnpaidRooms = [];
+  managedRooms.forEach(roomNum => {
+    const room = roomsData?.[roomNum] || roomsData?.[String(roomNum)] || {};
+    const due = currentRoomDue(roomNum);
+    const isVacant = !!room.vacant || roomStatusSetting(roomNum) === 'vacant';
+    const paidFlag = !!room.paid;
+    if (paidFlag && due > 0.01 && !isVacant) paidButDueRooms.push(`${roomNum} (${money(due)})`);
+    if (isVacant && (paidFlag || Number(room.manualPaidAmount || 0) > 0)) vacantButPaidRooms.push(String(roomNum));
+    if (!paidFlag && due <= 0.01 && !isVacant && Number(room.manualPaidAmount || 0) <= 0) zeroDueButUnpaidRooms.push(String(roomNum));
+  });
+  if (paidButDueRooms.length) addCritical('ห้องขึ้นว่าชำระแล้ว แต่ยังมียอดค้าง', paidButDueRooms.join(', '));
+  else addOk('ไม่พบห้องชำระแล้วแต่ยังค้างยอด');
+  if (vacantButPaidRooms.length) addWarn('ห้องว่างยังมีสถานะรับชำระติดอยู่', `ห้อง ${vacantButPaidRooms.join(', ')}`, vacantButPaidRooms);
+  else addOk('ห้องว่างไม่มีสถานะรับชำระค้างผิดปกติ');
+  if (zeroDueButUnpaidRooms.length) addWarn('ห้องไม่ค้างยอดแล้ว แต่สถานะยังไม่ใช่ชำระแล้ว', `ห้อง ${zeroDueButUnpaidRooms.join(', ')}`, zeroDueButUnpaidRooms);
+  else addOk('ไม่พบห้องยอด 0 แต่สถานะค้างผิดปกติ');
+
+  // ===== Check 3: tenant / room / LINE consistency =====
+  const vacantButHasTenantName = [];
+  const vacantButHasProfile = [];
+  const vacantButHasUserId = [];
+  const activeRoomNoTenantName = [];
+  managedRooms.forEach(roomNum => {
+    const room = roomsData?.[roomNum] || roomsData?.[String(roomNum)] || {};
+    const tenant = tenantsData?.[roomNum] || tenantsData?.[String(roomNum)] || {};
+    const profile = profiles?.[String(roomNum)] || {};
+    const isVacant = !!room.vacant || roomStatusSetting(roomNum) === 'vacant';
+    const displayName = String(tenant?.name || room?.tenant || room?.tenantName || '').trim();
+    if (isVacant && displayName) vacantButHasTenantName.push(String(roomNum));
+    if (isVacant && hasCurrentProfile(profile)) vacantButHasProfile.push(String(roomNum));
+    if (isVacant && hasUserId(roomNum)) vacantButHasUserId.push(String(roomNum));
+    if (!isVacant && roomStatusSetting(roomNum) !== 'disabled' && !displayName) activeRoomNoTenantName.push(String(roomNum));
+  });
+  if (vacantButHasTenantName.length) addCritical('ห้องว่างแต่ยังมีชื่อผู้เช่าเดิมติดอยู่', `ห้อง ${vacantButHasTenantName.join(', ')}`, vacantButHasTenantName);
+  else addOk('ห้องว่างไม่มีชื่อผู้เช่าเดิมติดอยู่');
+  if (vacantButHasProfile.length) addWarn('ห้องว่างแต่ยังมีแฟ้มผู้เช่าปัจจุบันค้างอยู่', `ห้อง ${vacantButHasProfile.join(', ')}`, vacantButHasProfile);
+  else addOk('ห้องว่างไม่มีแฟ้มผู้เช่าปัจจุบันค้างอยู่');
+  if (vacantButHasUserId.length) addCritical('ห้องว่างแต่ยังมี LINE User ID ผูกอยู่', `ห้อง ${vacantButHasUserId.join(', ')}`, vacantButHasUserId);
+  else addOk('ห้องว่างไม่มี LINE User ID ค้างอยู่');
+  if (activeRoomNoTenantName.length) addWarn('ห้องใช้งานอยู่แต่ยังไม่มีชื่อผู้เช่า', `ห้อง ${activeRoomNoTenantName.join(', ')}`, activeRoomNoTenantName);
+  else addOk('ห้องที่เปิดใช้งานมีชื่อผู้เช่าครบ');
+
+  // ===== Check 4: tenant profile / documents consistency =====
+  const docMetaMissingKey = [];
+  const profileNameMismatch = [];
+  const expiringContracts = [];
+  const expiredContracts = [];
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  Object.keys(profiles || {}).forEach(roomKey => {
+    const profile = profiles[roomKey] || {};
+    const docs = Array.isArray(profile.documents) ? profile.documents : [];
+    docs.forEach((doc, idx) => {
+      const objectKey = String(doc?.objectKey || doc?.key || '').trim();
+      if (!objectKey) docMetaMissingKey.push(`${roomKey}#${idx+1}`);
+    });
+    const tenant = tenantsData?.[roomKey] || tenantsData?.[Number(roomKey)] || {};
+    const profileName = String(profile.fullName || '').trim();
+    const tenantName = String(tenant.name || '').trim();
+    if (profileName && tenantName && profileName !== tenantName) profileNameMismatch.push(roomKey);
+
+    if (profile.contractEnd) {
+      const end = new Date(profile.contractEnd + 'T00:00:00');
+      if (!Number.isNaN(end.getTime())) {
+        const diffDays = Math.ceil((end.getTime() - today.getTime()) / 86400000);
+        if (diffDays < 0) expiredContracts.push(`${roomKey} (${Math.abs(diffDays)} วัน)`);
+        else if (diffDays <= 30) expiringContracts.push(`${roomKey} (${diffDays} วัน)`);
+      }
+    }
+  });
+  if (docMetaMissingKey.length) addWarn('พบ metadata เอกสารที่ไม่มี objectKey', docMetaMissingKey.join(', '));
+  else addOk('metadata เอกสารผู้เช่ามี objectKey ครบ');
+  if (profileNameMismatch.length) addWarn('ชื่อในแฟ้มผู้เช่าไม่ตรงกับชื่อผู้เช่าหน้าห้อง', `ห้อง ${profileNameMismatch.join(', ')}`, profileNameMismatch);
+  else addOk('ชื่อแฟ้มผู้เช่ากับชื่อหน้าห้องไม่พบความต่างชัดเจน');
+  if (expiredContracts.length) addWarn('พบสัญญาหมดอายุแล้ว', expiredContracts.join(', '));
+  else addOk('ไม่พบสัญญาที่หมดอายุแล้วจากข้อมูลที่กรอกไว้');
+  if (expiringContracts.length) addWarn('พบสัญญาใกล้หมดภายใน 30 วัน', expiringContracts.join(', '));
+  else addOk('ไม่พบสัญญาใกล้หมดภายใน 30 วัน');
+
+  // ===== Check 5: monthly archive / close-open round consistency =====
+  const archiveMissing = [];
+  const archiveCountMismatch = [];
+  Object.keys(archiveIndex || {}).forEach(monthKey => {
+    const idx = archiveIndex[monthKey] || {};
+    const archive = archives[monthKey];
+    if (!archive) {
+      archiveMissing.push(monthKey);
+      return;
+    }
+    const summary = archive.summary || {};
+    const fullPaid = Number(summary.paidCount || 0);
+    const fullUnpaid = Number(summary.unpaidCount || 0);
+    const fullVacant = Number(summary.vacantCount || 0);
+    const idxPaid = Number(idx.paidCount || 0);
+    const idxUnpaid = Number(idx.unpaidCount || 0);
+    const idxVacant = Number(idx.vacantCount || 0);
+    if (fullPaid !== idxPaid || fullUnpaid !== idxUnpaid || fullVacant !== idxVacant) {
+      archiveCountMismatch.push(monthKey);
+    }
+  });
+  if (archiveMissing.length) addWarn('มี monthlyArchiveIndex แต่หา archive ตัวเต็มไม่เจอ', archiveMissing.join(', '));
+  else addOk('ไม่พบประวัติรอบบิลที่ index ชี้แล้ว archive หาย');
+  if (archiveCountMismatch.length) addWarn('สรุปการ์ดประวัติรอบบิลอาจไม่ตรงกับรายละเอียด', archiveCountMismatch.join(', '));
+  else addOk('การ์ดสรุปประวัติรอบบิลตรงกับ archive ที่อ่านได้');
+
+  const currentClosed = !!monthClosuresData?.[billingMonthKey] || !!lockedMonthsData?.[billingMonthKey];
+  if (billingMonthKey) {
+    addInfo('สถานะรอบบิลปัจจุบัน', currentClosed
+      ? `รอบบิล ${billingMonthText} มีสถานะล็อก/ปิดรอบแล้ว`
+      : `รอบบิล ${billingMonthText} ยังไม่ถูกล็อกหรือปิดรอบ`);
+  }
+  if (lastClose?.monthKey) addInfo('ปิดรอบล่าสุด', `${lastClose.monthText || lastClose.monthKey} — ${lastClose.closedAtText || lastClose.closedAt || '-'}`);
+  else addInfo('ปิดรอบล่าสุด', 'ยังไม่พบข้อมูล lastCloseBackup');
+
+  if (lastCron) addInfo('Cron แจ้งเตือนล่าสุด', `${lastCron.action} — ${lastCron.timeText || lastCron.time || '-'}`);
+  else addWarn('ยังไม่พบ log Cron แจ้งเตือน', 'ถ้าระบบเพิ่งใช้งานใหม่อาจยังไม่ถึงรอบ Cron');
+
+  if (lastSlip) addInfo('สลิปล่าสุดที่มี log', `${lastSlip.action} — ${lastSlip.timeText || lastSlip.time || '-'}`);
+  else addWarn('ยังไม่พบ log ระบบสลิป', 'ถ้ายังไม่มีผู้เช่าส่งสลิปถือว่าไม่ผิดปกติ');
+
+  // ===== Render =====
+  const severityClass = critical.length ? 'critical' : warnings.length ? 'warning' : 'healthy';
+  const severityTitle = critical.length
+    ? 'พบจุดที่ควรแก้ทันที'
+    : warnings.length
+      ? 'ระบบใช้งานได้ แต่มีจุดที่ควรตรวจ'
+      : 'ภาพรวมระบบปกติ';
+  const severityDetail = critical.length
+    ? `พบ ${critical.length.toLocaleString('th-TH')} จุดสำคัญ และ ${warnings.length.toLocaleString('th-TH')} จุดเตือน`
+    : warnings.length
+      ? `พบ ${warnings.length.toLocaleString('th-TH')} จุดเตือน`
+      : `ผ่านการตรวจ ${okItems.length.toLocaleString('th-TH')} รายการ`;
+
+  const card = (tone, icon, item) => `
+    <div class="health-item ${tone}">
+      <div class="health-item-icon">${icon}</div>
+      <div style="min-width:0;flex:1;">
+        <div class="health-item-title">${safeText(item.title)}</div>
+        ${item.detail ? `<div class="health-item-detail">${safeText(item.detail)}</div>` : ''}
       </div>
     </div>`;
 
-  const html = `
-    <div style="background:white;border-radius:12px;padding:14px;margin-bottom:14px;border:1.5px solid var(--border);">
-      <div style="font-family:Kanit,sans-serif;font-size:18px;font-weight:900;color:var(--primary);">🩺 ตรวจสุขภาพระบบ</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px;">เช็กจากข้อมูลที่เว็บสามารถอ่านได้ ไม่แสดง Token หรือ Secret</div>
+  const criticalHtml = critical.length
+    ? `<div class="health-section"><div class="health-section-title">❌ ต้องแก้ / ควรตรวจทันที</div>${critical.map(x => card('critical','❌',x)).join('')}</div>`
+    : '';
+  const warningHtml = warnings.length
+    ? `<div class="health-section"><div class="health-section-title">⚠️ ควรตรวจสอบ</div>${warnings.map(x => card('warning','⚠️',x)).join('')}</div>`
+    : '';
+  const okHtml = okItems.length
+    ? `<div class="health-section"><div class="health-section-title">✅ รายการที่ผ่าน</div>${okItems.map(x => card('ok','✅',x)).join('')}</div>`
+    : '';
+  const infoHtml = infoItems.length
+    ? `<div class="health-section"><div class="health-section-title">ℹ️ ข้อมูลประกอบ</div>${infoItems.map(x => card('info','ℹ️',x)).join('')}</div>`
+    : '';
+
+  const htmlOut = `
+    <div class="health-overview ${severityClass}">
+      <div>
+        <div class="health-overview-title">🩺 ${severityTitle}</div>
+        <div class="health-overview-sub">${severityDetail}</div>
+      </div>
+      <div class="health-overview-score">
+        <div class="health-score-num">${(okItems.length).toLocaleString('th-TH')}</div>
+        <div class="health-score-label">ผ่าน</div>
+      </div>
     </div>
 
-    ${item(workerOk, 'Worker URL ใช้งานได้', workerOk ? WORKER_URL : errText)}
-    ${item(hasRooms, 'ข้อมูลห้องโหลดได้', hasRooms ? `พบข้อมูลห้อง ${Object.keys(data.rooms || {}).length} ห้อง` : 'ยังไม่พบข้อมูล rooms')}
-    ${item(!!cfg && !!cfg.userIds, 'Config ปลอดภัยโหลดได้', `User ID ที่ผูกไว้ ${userIdCount} ห้อง | งดแจ้ง ${mutedCount} ห้อง`)}
-    ${item(/^\d{4}-\d{2}$/.test(getMonthKey()), 'รอบบิล/เดือนรับชำระถูกต้อง', `รอบบิล ${getTenantBillingText()} / รับชำระ ${getMonthText()}`)}
-    ${item(Array.isArray(data.paymentHistory), 'Payment History พร้อมใช้งาน', `จำนวนรายการ ${Array.isArray(data.paymentHistory) ? data.paymentHistory.length : 0}`)}
-    ${item(!!data.arrears, 'ระบบยอดค้างพร้อมใช้งาน', `ห้องที่มียอดค้าง ${Object.keys(data.arrears || {}).length} ห้อง`)}
-    ${item(Array.isArray(logs), 'Logs พร้อมใช้งาน', `จำนวน Logs ${logs.length} รายการ`)}
-    ${item(!!lastCron, 'Cron เคยทำงาน', lastCron ? `${lastCron.action} — ${lastCron.timeText || lastCron.time || '-'}` : 'ยังไม่พบ log autoReminder')}
-    ${item(!!lastSlip, 'ระบบสลิปเคยทำงาน', lastSlip ? `${lastSlip.action} — ${lastSlip.timeText || lastSlip.time || '-'}` : 'ยังไม่พบ log สลิป')}
-    ${item(hasOwnerConfig, 'LINE Token/OWNER_ID อยู่ใน Worker Secrets', 'เว็บไม่สามารถและไม่ควรอ่าน Secret โดยตรง ถือว่าปลอดภัยกว่า')}
+    <div class="health-summary-grid">
+      <div class="health-summary-card critical"><b>${critical.length.toLocaleString('th-TH')}</b><span>ต้องแก้</span></div>
+      <div class="health-summary-card warning"><b>${warnings.length.toLocaleString('th-TH')}</b><span>ควรตรวจ</span></div>
+      <div class="health-summary-card ok"><b>${okItems.length.toLocaleString('th-TH')}</b><span>ผ่าน</span></div>
+      <div class="health-summary-card info"><b>${infoItems.length.toLocaleString('th-TH')}</b><span>ข้อมูล</span></div>
+    </div>
 
-    <button onclick="openErrorLogs()" style="width:100%;padding:12px;border:none;border-radius:10px;background:var(--primary);color:white;font-weight:900;margin-top:8px;cursor:pointer;">🧾 เปิด Logs</button>
+    ${criticalHtml}
+    ${warningHtml}
+    ${okHtml}
+    ${infoHtml}
+
+    <div class="health-actions">
+      <button onclick="openSystemHealth()" class="health-action-btn primary">🔄 ตรวจใหม่</button>
+      <button onclick="openErrorLogs()" class="health-action-btn outline">🧾 เปิด Logs</button>
+    </div>
   `;
 
-  document.getElementById('alertPageContent').innerHTML = html;
-  document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  const content = document.getElementById('alertPageContent');
+  if (content) content.innerHTML = htmlOut;
+  document.getElementById('alertPage').classList.add('open');
+  refreshModalLockSafe();
 }
 
 
@@ -10363,7 +10763,7 @@ function calcCheckout() {
     </div>`;
 }
 
-function sendCheckoutLine() {
+async function sendCheckoutLine() {
   const r = currentRoom;
   const d = rooms[r];
   const deposit  = getCheckoutDepositForRoom(r);
@@ -10374,7 +10774,6 @@ function sendCheckoutLine() {
   const clean    = parseInt(document.getElementById('checkoutClean').value)  || 0;
   const damage   = parseInt(document.getElementById('checkoutDamage').value) || 0;
   const note     = document.getElementById('checkoutNote').value;
-  const shop     = loadShopInfo();
   const totalBill = rent + elecAmt + waterAmt + trash + (d.wifi||0) + clean + damage;
   const diff = deposit - totalBill;
   const isRefund = diff >= 0;
@@ -10396,29 +10795,46 @@ ${tenant.name ? `👤 ${tenant.name}` : ''}
 ${isRefund ? `💚 คืนเงินคุณ: ${Math.abs(diff).toLocaleString()}฿` : `🔴 ค้างชำระเพิ่ม: ${Math.abs(diff).toLocaleString()}฿`}${note ? `\n\n📝 หมายเหตุ: ${note}` : ''}`;
 
   const cfg = loadConfig();
-  const userId = cfg.userIds?.[r];
-  if (userId) {
-    fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, message: msg }),
-    }).then(() => {
-      const toast = document.createElement('div');
-      toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2e7d52;color:white;padding:10px 20px;border-radius:20px;font-weight:700;font-size:14px;z-index:999;';
-      toast.textContent = '✅ ส่ง LINE แล้ว';
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 2000);
-    });
-  } else {
-    // share แบบปกติ
-    const shop = loadShopInfo();
-    window.open(`https://line.me/R/share?text=${encodeURIComponent(msg)}`, '_blank');
+  const userId = String(cfg.userIds?.[r] || '').trim();
+
+  // v15.4.2.49: หน้าแจ้งออกส่งผ่าน LINE OA เท่านั้น
+  // ไม่ fallback ไปเปิดแชร์ LINE ส่วนตัว เพื่อให้ flow เหมือนระบบแจ้งค่าห้อง
+  if (!userId) {
+    alert(`ยังส่ง LINE OA ไม่ได้ครับ\n\nห้อง ${r} ยังไม่มี LINE User ID ที่ลงทะเบียนไว้\nถ้าต้องการส่งอัตโนมัติ ให้ผู้เช่าลงทะเบียนห้องใน LINE OA ก่อน`);
+    return;
+  }
+
+  const btn = document.querySelector('#checkoutOverlay button[onclick="sendCheckoutLine()"]');
+  const oldText = btn ? btn.textContent : '';
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'กำลังส่ง LINE OA...';
+      btn.style.opacity = '.75';
+    }
+
+    const result = await workerPost({ userId, message: msg });
+    if (result?.ok === false) throw new Error(result.error || 'LINE OA send failed');
+
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2e7d52;color:white;padding:10px 20px;border-radius:20px;font-weight:700;font-size:14px;z-index:9999;';
+    toast.textContent = '✅ ส่ง LINE OA แจ้งผู้เช่าแล้ว';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2400);
+  } catch(e) {
+    alert('ส่ง LINE OA ไม่สำเร็จ: ' + (e?.message || e));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = oldText || '📣 ส่ง LINE OA แจ้งผู้เช่า';
+      btn.style.opacity = '1';
+    }
   }
 }
 
 async function confirmCheckout() {
   const r = currentRoom;
-  if (!confirm(`ส่ง LINE แจ้งผู้เช่าห้อง ${r} แล้วหรือยังครับ?\n\nถ้ายังไม่ได้ส่ง กด "ยกเลิก" แล้วกดปุ่ม "📱 ส่ง LINE แจ้งผู้เช่า" ก่อนนะครับ`)) return;
+  if (!confirm(`ส่ง LINE OA แจ้งผู้เช่าห้อง ${r} แล้วหรือยังครับ?\n\nถ้ายังไม่ได้ส่ง กด "ยกเลิก" แล้วกดปุ่ม "📣 ส่ง LINE OA แจ้งผู้เช่า" ก่อนนะครับ`)) return;
   if (!confirm(`ยืนยันให้ห้อง ${r} เป็นห้องว่าง และปิดแฟ้มผู้เช่าปัจจุบันใช่ไหมครับ?\n\nถ้ามีข้อมูลผู้เช่าหรือเอกสาร ระบบจะย้ายไปเก็บใน “ประวัติผู้เช่าเก่า” ให้ก่อนล้างแฟ้มปัจจุบัน`)) return;
 
   const checkoutSnapshot = getCheckoutFinancialSnapshot(r);
@@ -10973,8 +11389,6 @@ function organizeMobileTools() {
             <button class="ctrl-btn outline" onclick="openRoomSettings()">🏘️ ตั้งค่าห้อง/ค่าเช่า</button>
             <button class="ctrl-btn outline" onclick="openTenantDocs()">🧾 ผู้เช่า/เอกสาร</button>
             <button class="ctrl-btn outline" onclick="openMutedRooms()">🔕 งดแจ้งเตือน</button>
-            <button class="ctrl-btn primary" onclick="openImport()">📂 นำเข้า Excel</button>
-            <button class="ctrl-btn green" onclick="exportExcel()">💾 บันทึก Excel</button>
             <button class="ctrl-btn outline" onclick="openBackupRestore()">🛡️ Backup</button>
             <button class="ctrl-btn outline" onclick="openErrorLogs()">🧾 Logs</button>
             <button class="ctrl-btn outline" onclick="openExpense()">💸 ค่าใช้จ่าย</button>
