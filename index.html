@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.52</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.53</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.52'
+        createdFrom: 'web-v15.4.2.53'
       })
     });
 
@@ -716,6 +716,7 @@ const SYSTEM_ACTIVITY_DEFINITIONS = {
   manualPayment: { group: 'payment', icon: '💰', title: 'รับชำระเอง', actor: 'เจ้าของ/แอดมิน' },
   tenantCheckout: { group: 'tenant', icon: '🚪', title: 'ผู้เช่าย้ายออก / เปลี่ยนห้องเป็นว่าง', actor: 'เจ้าของ/แอดมิน' },
   tenantOnboarding: { group: 'tenant', icon: '🧍', title: 'รับผู้เช่าใหม่', actor: 'เจ้าของ/แอดมิน' },
+  contractExpiryReminderSent: { group: 'tenant', icon: '📌', title: 'แจ้งเตือนสัญญาใกล้หมดทาง LINE OA', actor: 'ระบบ' },
   uploadTenantDocument: { group: 'document', icon: '📤', title: 'อัปโหลดเอกสารผู้เช่า', actor: 'เจ้าของ/แอดมิน' },
   deleteTenantDocument: { group: 'document', icon: '🗑️', title: 'ลบเอกสารผู้เช่า', actor: 'เจ้าของ/แอดมิน' },
   deleteCustomRoom: { group: 'room', icon: '🗑️', title: 'ลบห้องที่เพิ่มเอง', actor: 'เจ้าของ/แอดมิน' },
@@ -813,6 +814,15 @@ function getSystemActivityDetailsHtml(log = {}, def = null) {
       { label: 'สิ้นสุดสัญญา', value: extra.contractEnd || '-' },
       { label: 'เงินประกัน', value: formatSystemActivityMoney(extra.deposit || 0) },
       { label: 'แนบเอกสาร', value: Number(extra.uploadedDocumentCount || 0).toLocaleString('th-TH') + ' ไฟล์' },
+    ]);
+  }
+
+  if (action === 'contractExpiryReminderSent') {
+    return renderSystemActivityDetailRows([
+      { label: 'เหลือ 30 วัน', value: Number(extra.count30 || 0).toLocaleString('th-TH') + ' สัญญา' },
+      { label: 'เหลือ 7 วัน', value: Number(extra.count7 || 0).toLocaleString('th-TH') + ' สัญญา' },
+      { label: 'หมดสัญญาแล้ว', value: Number(extra.countExpired || 0).toLocaleString('th-TH') + ' สัญญา' },
+      { label: 'จำนวนรายการแจ้ง', value: Number(extra.total || 0).toLocaleString('th-TH') + ' รายการ' },
     ]);
   }
 
@@ -4039,7 +4049,7 @@ function showBillingCyclePreview(options = {}) {
 
 
 <style>
-/* ===== Pananth v15.4.2.52: Tenant onboarding wizard ===== */
+/* ===== Pananth v15.4.2.53: Tenant onboarding wizard ===== */
 .tenant-onboarding-note{
   background:#e8f7ef;
   padding:10px 16px;
@@ -5675,6 +5685,23 @@ async function workerPost(payload) {
 
 
 
+
+function downloadRentalAgreementTemplate() {
+  const fileName = 'Rental_Agreement_V3.pdf';
+  const url = new URL(fileName, window.location.href).toString();
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (e) {
+    window.open(url, '_blank', 'noopener');
+  }
+}
+
 // ===== TENANT PROFILE / DOCUMENT CENTER v15.4.2.42 =====
 const TENANT_DOCUMENT_TYPE_LABELS = {
   contract: 'สัญญาเช่า',
@@ -6048,6 +6075,10 @@ function renderTenantProfileEditor(roomNum) {
         <input id="tenantDocFile" class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
         <button class="ctrl-btn primary" onclick="uploadTenantDocumentFromForm('${escapeJsString(roomNum)}')">☁️ อัปโหลด</button>
       </div>
+      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <button class="ctrl-btn outline" onclick="downloadRentalAgreementTemplate()">📄 ดาวน์โหลดแบบฟอร์มสัญญาเช่า PDF</button>
+        <span style="font-size:12px;font-weight:800;color:var(--muted);">ใช้โหลดต้นฉบับสัญญาเช่าเมื่อเตรียมรับผู้เช่าใหม่</span>
+      </div>
       <div class="tenant-doc-upload-note">
         รองรับ JPG, PNG, WEBP และ PDF • สูงสุด 8 MB ต่อไฟล์ • สัญญาหลายหน้าอัปโหลดซ้ำประเภท “สัญญาเช่า” ได้หลายไฟล์
       </div>
@@ -6243,7 +6274,7 @@ function tenantFileToBase64(file) {
 }
 
 
-// ===== TENANT ONBOARDING WIZARD v15.4.2.52 =====
+// ===== TENANT ONBOARDING WIZARD v15.4.2.53 =====
 const TENANT_ONBOARDING_STEPS = [
   { key: 1, label: 'ห้อง', icon: '1' },
   { key: 2, label: 'ข้อมูล', icon: '2' },
@@ -6665,6 +6696,10 @@ function renderTenantOnboardingStepContent() {
     box.innerHTML = `
       <div class="tenant-onboarding-card-title">4. อัปโหลดเอกสาร</div>
       <div class="tenant-onboarding-card-sub">${selectedRoomLabel} • แนบได้ทันที หรือข้ามไปก่อนแล้วเพิ่มภายหลังในหน้า “ผู้เช่า/เอกสาร” ก็ได้</div>
+      <div style="margin:10px 0 12px;padding:12px;border-radius:14px;border:1px solid var(--border);background:rgba(232,160,32,.10);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+        <div style="font-size:13px;font-weight:900;line-height:1.5;color:var(--text);">📄 ต้องใช้สัญญาเปล่า?<br><span style="font-size:12px;color:var(--muted);">โหลดไฟล์ Rental_Agreement_V3.pdf ได้จากตรงนี้</span></div>
+        <button class="ctrl-btn outline" onclick="downloadRentalAgreementTemplate()">⬇️ ดาวน์โหลดสัญญาเช่า</button>
+      </div>
       <div class="tenant-onboarding-doc-grid">
         <div class="tenant-onboarding-doc-card">
           <div class="tenant-onboarding-doc-title">📄 สัญญาเช่า</div>
@@ -10335,7 +10370,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.52'
+        createdFrom: 'web-v15.4.2.53'
       })
     });
     if (!res.ok) throw new Error(await res.text());

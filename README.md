@@ -26,3 +26,7 @@ https://white-rice-cf72.joteboony.workers.dev
 ```
 
 If the backend Worker URL changes later, update `WORKER_URL` in `index.html`.
+
+
+## v15.4.2.53
+- เพิ่มไฟล์ `public/Rental_Agreement_V3.pdf` สำหรับปุ่มดาวน์โหลดแบบฟอร์มสัญญาเช่าในหน้าเว็บ
