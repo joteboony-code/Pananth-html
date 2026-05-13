@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.43</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.45</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.43'
+        createdFrom: 'web-v15.4.2.45'
       })
     });
 
@@ -1280,6 +1280,10 @@ async function clearErrorLogs() {
     text-align:center;
     line-height:1.55;
     background:var(--bg);
+  }
+  /* v15.4.2.45: Preview เอกสารต้องลอยเหนือหน้า ผู้เช่า/เอกสาร ซึ่งเป็น page-overlay z-index 300 */
+  #tenantDocPreviewOverlay {
+    z-index: 1200;
   }
   .tenant-doc-preview-modal {
     background:var(--card);
@@ -4085,6 +4089,24 @@ function addRoomSettingsRow() {
   setTimeout(()=>document.querySelector('#roomSettingsList .room-setting-card:last-child')?.scrollIntoView({behavior:'smooth',block:'center'}),50);
 }
 
+async function syncRoomsToWorkerWithoutMonthLock() {
+  try {
+    localStorage.setItem('pananth_rooms', JSON.stringify(rooms));
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'save', data: rooms }),
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => 'save rooms failed');
+      return { ok: false, error: errText || 'save rooms failed' };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e?.message || String(e) };
+  }
+}
+
 async function deleteCustomRoomSettingLive(roomNum) {
   const room = Number(roomNum || 0);
   const key = String(room);
@@ -4139,13 +4161,21 @@ async function deleteCustomRoomSettingLive(roomNum) {
   } catch(e) {}
 
   const okCfg = await saveConfigOnly(cfg);
-  saveData(null);
+  // v15.4.2.44:
+  // การลบห้องที่เพิ่มเองเป็นงานโครงสร้างระบบ ไม่ควรไปเรียก saveData(null)
+  // เพราะ saveData() ถูกออกแบบให้กันการแก้รอบที่ล็อกอยู่ จึงทำให้ขึ้น alert ปลดล็อกเดือนทั้งที่ลบสำเร็จแล้ว
+  const okRooms = await syncRoomsToWorkerWithoutMonthLock();
+
   renderRoomSettingsPage();
   renderAll();
   try { renderTenantDocsPage(); } catch(e) {}
 
-  if (okCfg?.ok === false) {
-    alert('ลบห้องในหน้าเว็บแล้ว แต่ซิงค์ตั้งค่าไป Worker ไม่สำเร็จ: ' + (okCfg.error || ''));
+  if (okCfg?.ok === false || okRooms?.ok === false) {
+    const details = [
+      okCfg?.ok === false ? 'ตั้งค่าห้อง: ' + (okCfg.error || 'sync failed') : '',
+      okRooms?.ok === false ? 'ข้อมูลห้อง: ' + (okRooms.error || 'sync failed') : ''
+    ].filter(Boolean).join('\n');
+    alert('ลบห้องในหน้าเว็บแล้ว แต่ซิงค์ไป Worker ไม่ครบถ้วน:\n' + details);
   } else {
     alert(`✅ ลบห้อง ${room} ที่เพิ่มเองออกจากระบบแล้วครับ`);
   }
@@ -7961,7 +7991,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.43'
+        createdFrom: 'web-v15.4.2.45'
       })
     });
     if (!res.ok) throw new Error(await res.text());
