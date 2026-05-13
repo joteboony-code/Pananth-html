@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.42</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.43</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.42'
+        createdFrom: 'web-v15.4.2.43'
       })
     });
 
@@ -1105,6 +1105,22 @@ async function clearErrorLogs() {
     box-shadow: 0 7px 18px rgba(232,160,32,0.16);
     transform: translateY(-1px);
   }
+  .tenant-room-accordion {
+    display:grid;
+    gap:8px;
+  }
+  .tenant-profile-inline-editor {
+    background: var(--card);
+    border: 1.5px solid var(--accent);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 10px 28px rgba(232,160,32,0.12);
+    animation: tenantInlineSlide .18s ease;
+  }
+  @keyframes tenantInlineSlide {
+    from { opacity:0; transform:translateY(-6px); }
+    to { opacity:1; transform:translateY(0); }
+  }
   .tenant-room-item-head {
     display:flex;
     justify-content:space-between;
@@ -1326,6 +1342,10 @@ async function clearErrorLogs() {
     .tenant-docs-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .tenant-docs-layout { grid-template-columns:1fr; }
     .tenant-room-list { max-height:unset; }
+    /* v15.4.2.43: มือถือกดห้องแล้วแสดงฟอร์มใต้การ์ดห้องทันที */
+    #tenantProfileEditor { display:none; }
+    .tenant-profile-inline-editor .tenant-profile-head { flex-direction:column; }
+    .tenant-profile-inline-editor .tenant-profile-head .ctrl-btn { width:100%; justify-content:center; }
   }
   @media (max-width: 720px) {
     .tenant-profile-grid,
@@ -2899,6 +2919,9 @@ body.dark .toggle-slider {
 .room-setting-sub{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px}
 .room-setting-status{font-size:11px;font-weight:800;border-radius:999px;padding:5px 9px;background:#eef2ff;color:#3730a3;white-space:nowrap}
 .room-setting-status.vacant{background:#fff7ed;color:#c2410c}.room-setting-status.disabled{background:#fee2e2;color:#991b1b}
+.room-setting-delete-wrap{display:flex;justify-content:flex-end;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
+.room-setting-delete-btn{border:none;border-radius:10px;padding:9px 12px;background:#c0392b;color:#fff;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:900;cursor:pointer}
+.room-setting-delete-btn:active{transform:scale(.98)}
 .room-setting-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.room-setting-fields label{display:block;font-size:11px;font-weight:800;color:var(--muted);margin-bottom:5px}.room-setting-fields input,.room-setting-fields select{width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-family:Sarabun,sans-serif;font-size:14px;font-weight:700}.room-setting-summary{background:var(--bg);border:1.5px dashed var(--border);border-radius:14px;padding:12px;font-size:13px;color:var(--text);line-height:1.6;margin-bottom:12px}
 body.dark .room-setting-card{background:#172235;border-color:#334155;box-shadow:0 10px 25px rgba(0,0,0,.25)}body.dark .room-setting-title{color:#93c5fd}body.dark .room-setting-fields input,body.dark .room-setting-fields select{background:#0f172a;border-color:#475569;color:#f8fafc}body.dark .room-setting-sub,body.dark .room-setting-fields label{color:#cbd5e1}body.dark .room-setting-summary{background:#0f172a;border-color:#475569;color:#e5e7eb}
 @media(max-width:720px){.room-setting-fields{grid-template-columns:1fr 1fr}.room-setting-card-head{align-items:flex-start}.room-setting-title{font-size:16px}}
@@ -4011,6 +4034,9 @@ function renderRoomSettingsPage() {
         </select></div>
         <div style="grid-column:1/-1;"><label>หมายเหตุ</label><input type="text" value="${note}" placeholder="เช่น ราคาพิเศษ / ห้องใหม่ / ห้องปิดซ่อม" data-field="note"></div>
       </div>
+      ${Number(room) > 30 && Number(room) !== TEST_ROOM ? `<div class="room-setting-delete-wrap">
+        <button class="room-setting-delete-btn" onclick="deleteCustomRoomSettingLive(${Number(room)})">🗑️ ลบห้องที่เพิ่มเองนี้</button>
+      </div>` : ''}
     </div>`;
   }).join('');
   renderRoomSettingsSummary();
@@ -4057,6 +4083,72 @@ function addRoomSettingsRow() {
   applyRoomSettingsToRooms(settings);
   renderRoomSettingsPage();
   setTimeout(()=>document.querySelector('#roomSettingsList .room-setting-card:last-child')?.scrollIntoView({behavior:'smooth',block:'center'}),50);
+}
+
+async function deleteCustomRoomSettingLive(roomNum) {
+  const room = Number(roomNum || 0);
+  const key = String(room);
+  if (!Number.isFinite(room) || room <= 30 || room === TEST_ROOM) {
+    alert('ลบได้เฉพาะห้องที่เพิ่มเอง ตั้งแต่ห้อง 31 ขึ้นไป และไม่รวมห้องทดสอบ 99 ครับ');
+    return;
+  }
+
+  const profile = typeof getTenantProfileLocal === 'function' ? getTenantProfileLocal(key) : {};
+  const hasTenantProfile = !!(
+    profile.fullName || profile.phone || profile.idCardNumber ||
+    profile.contractStart || profile.contractEnd ||
+    (Array.isArray(profile.documents) && profile.documents.length)
+  );
+  const tenantRecord = tenants?.[key] || tenants?.[room] || null;
+  const hasTenantRecord = !!(tenantRecord && Object.values(tenantRecord).some(v => String(v || '').trim()));
+  const roomArrears = Array.isArray(arrears?.[key]) ? arrears[key] : [];
+  const hasArrears = roomArrears.some(item => Number(item?.remaining || 0) > 0);
+  const paymentRows = typeof getPaymentHistoryLocal === 'function' ? getPaymentHistoryLocal() : [];
+  const hasPaymentHistory = Array.isArray(paymentRows) && paymentRows.some(item => String(item.roomNum || item.room || item.roomNo || '') === key);
+
+  if (hasTenantProfile || hasTenantRecord || hasArrears || hasPaymentHistory) {
+    alert(
+      `ห้อง ${room} มีข้อมูลใช้งานอยู่ จึงไม่ลบอัตโนมัติเพื่อป้องกันข้อมูลจริงหาย\n\n` +
+      `- ข้อมูลผู้เช่า/เอกสาร: ${hasTenantProfile ? 'มี' : 'ไม่มี'}\n` +
+      `- ข้อมูลผู้เช่าเดิม: ${hasTenantRecord ? 'มี' : 'ไม่มี'}\n` +
+      `- ยอดค้าง: ${hasArrears ? 'มี' : 'ไม่มี'}\n` +
+      `- ประวัติรับชำระ: ${hasPaymentHistory ? 'มี' : 'ไม่มี'}\n\n` +
+      'กรณีเป็นห้องจริงที่ไม่ใช้แล้ว ให้เปลี่ยนสถานะเป็น “ปิดใช้งาน” แทนครับ'
+    );
+    return;
+  }
+
+  if (!confirm(`ต้องการลบห้อง ${room} ที่เพิ่มเองออกจากระบบใช่ไหมครับ?\n\nห้องนี้จะหายจากหน้าตั้งค่าห้องและหน้าแฟ้มผู้เช่า`)) return;
+
+  const cfg = loadConfig();
+  const settings = normalizeRoomSettingsMap(cfg.roomSettings || {});
+  delete settings[key];
+  cfg.roomSettings = settings;
+  saveSafeConfig(cfg);
+
+  try {
+    delete rooms[key];
+    delete rooms[room];
+    localStorage.setItem('pananth_rooms', JSON.stringify(rooms));
+  } catch(e) {}
+
+  try {
+    if (tenants?.[key]) delete tenants[key];
+    if (tenants?.[room]) delete tenants[room];
+    saveTenants();
+  } catch(e) {}
+
+  const okCfg = await saveConfigOnly(cfg);
+  saveData(null);
+  renderRoomSettingsPage();
+  renderAll();
+  try { renderTenantDocsPage(); } catch(e) {}
+
+  if (okCfg?.ok === false) {
+    alert('ลบห้องในหน้าเว็บแล้ว แต่ซิงค์ตั้งค่าไป Worker ไม่สำเร็จ: ' + (okCfg.error || ''));
+  } else {
+    alert(`✅ ลบห้อง ${room} ที่เพิ่มเองออกจากระบบแล้วครับ`);
+  }
 }
 
 async function saveRoomSettingsLive() {
@@ -4267,6 +4359,10 @@ async function refreshTenantDocsPage() {
   }
 }
 
+function isTenantDocsMobileInline() {
+  return !!(window.matchMedia && window.matchMedia('(max-width: 980px)').matches);
+}
+
 function renderTenantDocsPage() {
   renderTenantDocsSummary();
   renderTenantDocsRoomList();
@@ -4322,19 +4418,27 @@ function renderTenantDocsRoomList() {
     return;
   }
 
+  const useInlineEditor = isTenantDocsMobileInline();
   box.innerHTML = rows.map(room => {
     const status = getTenantProfileCompleteness(room);
     const name = getTenantDisplayNameForDocs(room) || 'ยังไม่มีชื่อผู้เช่า';
-    const active = String(selectedTenantProfileRoom) === String(room) ? ' active' : '';
+    const isActive = String(selectedTenantProfileRoom) === String(room);
+    const active = isActive ? ' active' : '';
     const roomLabel = Number(room) === TEST_ROOM ? 'ห้อง 99 TEST' : `ห้อง ${room}`;
-    return `<button class="tenant-room-item${active}" onclick="selectTenantProfileRoom('${escapeJsString(room)}')">
-      <div class="tenant-room-item-head">
-        <div class="tenant-room-item-room">🏠 ${escapeHtml(roomLabel)}</div>
-        <span class="tenant-status-pill ${status.key}">${escapeHtml(status.label)}</span>
-      </div>
-      <div class="tenant-room-item-name">${escapeHtml(name)}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:3px;">เอกสาร ${Number(status.docCount || 0).toLocaleString('th-TH')} ไฟล์</div>
-    </button>`;
+    const inlineEditor = useInlineEditor && isActive
+      ? '<div id="tenantProfileInlineEditor" class="tenant-profile-inline-editor"></div>'
+      : '';
+    return `<div class="tenant-room-accordion${isActive ? ' open' : ''}">
+      <button class="tenant-room-item${active}" onclick="selectTenantProfileRoom('${escapeJsString(room)}')">
+        <div class="tenant-room-item-head">
+          <div class="tenant-room-item-room">🏠 ${escapeHtml(roomLabel)}</div>
+          <span class="tenant-status-pill ${status.key}">${escapeHtml(status.label)}</span>
+        </div>
+        <div class="tenant-room-item-name">${escapeHtml(name)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">เอกสาร ${Number(status.docCount || 0).toLocaleString('th-TH')} ไฟล์</div>
+      </button>
+      ${inlineEditor}
+    </div>`;
   }).join('');
 }
 
@@ -4342,6 +4446,12 @@ function selectTenantProfileRoom(roomNum) {
   selectedTenantProfileRoom = String(roomNum || '');
   renderTenantDocsRoomList();
   renderTenantProfileEditor(selectedTenantProfileRoom);
+  if (isTenantDocsMobileInline()) {
+    setTimeout(() => {
+      const active = document.querySelector('#tenantDocsRoomList .tenant-room-accordion.open');
+      if (active) active.scrollIntoView({ behavior:'smooth', block:'start' });
+    }, 60);
+  }
 }
 
 function tenantProfileField(id) {
@@ -4349,7 +4459,10 @@ function tenantProfileField(id) {
 }
 
 function renderTenantProfileEditor(roomNum) {
-  const box = document.getElementById('tenantProfileEditor');
+  const desktopBox = document.getElementById('tenantProfileEditor');
+  const inlineBox = document.getElementById('tenantProfileInlineEditor');
+  const box = isTenantDocsMobileInline() && inlineBox ? inlineBox : desktopBox;
+  if (desktopBox && box !== desktopBox) desktopBox.innerHTML = '';
   if (!box) return;
   if (!roomNum) {
     box.innerHTML = '<div class="tenant-editor-placeholder">เลือกห้องจากด้านซ้ายเพื่อเริ่มบันทึกข้อมูลผู้เช่าและเอกสาร</div>';
@@ -7848,7 +7961,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.42'
+        createdFrom: 'web-v15.4.2.43'
       })
     });
     if (!res.ok) throw new Error(await res.text());
