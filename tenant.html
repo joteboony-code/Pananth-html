@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ป้านันท์ • ข้อมูลค่าเช่าของฉัน</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=Kanit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    :root{
+      --bg:#f3f6fb;--card:#fff;--primary:#173a63;--primary2:#265f9e;--accent:#e4a43b;
+      --text:#142033;--muted:#667085;--border:#dbe4f1;--green:#15803d;--orange:#d97706;
+      --red:#c2410c;--greenBg:#eaf8ef;--orangeBg:#fff4e5;--redBg:#fff0ea;--shadow:0 14px 34px rgba(23,58,99,.10)
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Sarabun',sans-serif;color:var(--text);background:radial-gradient(circle at top right,rgba(228,164,59,.22),transparent 32%),linear-gradient(180deg,#edf4ff 0%,var(--bg) 32%,#eef3f9 100%);min-height:100vh}
+    .app{width:min(100%,980px);margin:0 auto;padding:16px 14px 72px}
+    .hero{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-radius:28px;padding:18px;box-shadow:0 18px 42px rgba(20,51,90,.26)}
+    .hero:after{content:'';position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.11);right:-78px;top:-92px}
+    .brand,.hero-grid,.userbox{position:relative;z-index:1}
+    .brand{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+    .logo{width:50px;height:50px;border-radius:18px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.20);display:flex;align-items:center;justify-content:center;font-size:25px}
+    .brand-title{font-family:'Kanit',sans-serif;font-size:20px;font-weight:800;line-height:1.15}
+    .brand-sub{font-size:12px;opacity:.86;margin-top:2px}
+    .hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
+    .hero-panel{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.20);border-radius:20px;padding:14px;backdrop-filter:blur(10px)}
+    .hello{font-size:12px;opacity:.88}
+    .tenant-name{font-family:'Kanit',sans-serif;font-size:24px;font-weight:800;margin-top:2px}
+    .room-pill,.info-pill{display:inline-flex;gap:7px;align-items:center;margin-top:10px;padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.18);font-size:12px;font-weight:800}
+    .bill-label{font-size:12px;opacity:.86;margin-bottom:3px}
+    .bill-total{font-family:'Kanit',sans-serif;font-size:34px;font-weight:800;line-height:1}
+    .bill-status{display:inline-flex;gap:6px;align-items:center;margin-top:11px;padding:7px 10px;border-radius:999px;background:rgba(255,224,178,.22);border:1px solid rgba(255,224,178,.30);font-size:12px;font-weight:800}
+    .section{margin-top:14px;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:22px;padding:15px;box-shadow:var(--shadow)}
+    .section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}
+    .section-title{font-family:'Kanit',sans-serif;font-size:18px;font-weight:800;color:var(--primary)}
+    .section-sub{font-size:12px;color:var(--muted);line-height:1.48;margin-top:2px}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#eef5ff;color:var(--primary);font-size:12px;font-weight:800;white-space:nowrap}
+    .selector{display:flex;gap:8px;overflow:auto;padding-bottom:2px}
+    .room-select{min-width:160px;text-align:left;border:2px solid var(--border);background:#fff;border-radius:16px;padding:11px;font:inherit;cursor:pointer}
+    .room-select.active{border-color:#2c7be5;background:#eef5ff}
+    .room-select-room{font-family:'Kanit',sans-serif;color:var(--primary);font-size:16px;font-weight:800}
+    .room-select-sub{font-size:12px;color:var(--muted);margin-top:3px}
+    .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+    .summary-card,.bill-row,.history-card,.empty,.notice{border-radius:16px;border:1px solid #e6edf7;background:#f8fbff}
+    .summary-card{padding:12px;min-height:88px}
+    .summary-label{font-size:12px;color:var(--muted)}
+    .summary-value{font-family:'Kanit',sans-serif;color:var(--primary);font-size:20px;font-weight:800;margin-top:6px}
+    .bill-list{display:grid;gap:8px}
+    .bill-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 12px}
+    .bill-row strong{color:var(--primary)}
+    .bill-row.total{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border:none;padding:14px 12px}
+    .bill-row.total strong{color:#fff;font-family:'Kanit',sans-serif;font-size:18px}
+    .progress{margin-top:12px;padding:12px;border-radius:16px;background:var(--orangeBg);border:1px solid #f7d9aa}
+    .progress-top{display:flex;justify-content:space-between;gap:10px;color:var(--orange);font-size:13px;font-weight:800;margin-bottom:8px}
+    .bar{height:10px;border-radius:999px;background:rgba(217,119,6,.14);overflow:hidden}
+    .bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f59e0b,#d97706);width:0}
+    .arrears-list,.history-list,.payment-list{display:grid;gap:9px}
+    .arrears-card{border-radius:16px;border:1px solid #f7c2b0;background:var(--redBg);padding:12px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .arrears-title{font-weight:900;color:var(--red);font-size:14px}
+    .arrears-sub{font-size:12px;color:#8b4a2d;margin-top:3px}
+    .arrears-value{font-family:'Kanit',sans-serif;font-weight:800;font-size:22px;color:var(--red);white-space:nowrap}
+    .history-card{padding:12px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+    .history-icon{width:42px;height:42px;border-radius:15px;background:#eef5ff;display:flex;align-items:center;justify-content:center;font-size:20px}
+    .history-title{font-weight:900;color:var(--primary);font-size:14px}
+    .history-sub{font-size:12px;color:var(--muted);line-height:1.45;margin-top:2px}
+    .status{padding:7px 10px;border-radius:999px;font-size:12px;font-weight:900;white-space:nowrap}
+    .paid{background:var(--greenBg);color:var(--green)}
+    .partial{background:var(--orangeBg);color:var(--orange)}
+    .unpaid{background:var(--redBg);color:var(--red)}
+    .vacant{background:#eef2f7;color:#667085}
+    .empty,.notice{padding:14px;color:var(--muted);font-weight:800;line-height:1.55}
+    .notice.warn{background:#fff8e7;border-color:#f2d49b;color:#9a6700}
+    .notice.error{background:#fff0ea;border-color:#f7c2b0;color:#c2410c}
+    .skeleton{animation:pulse 1.2s infinite ease-in-out;background:linear-gradient(90deg,#eef3fb,#f8fbff,#eef3fb);background-size:200% 100%;color:transparent;border-radius:12px}
+    @keyframes pulse{0%{background-position:0 0}100%{background-position:-200% 0}}
+    .footer-note{font-size:12px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.55}
+    @media(max-width:720px){
+      .hero-grid,.summary-grid{grid-template-columns:1fr}
+      .history-card{grid-template-columns:auto 1fr}
+      .history-card>:last-child{grid-column:2;justify-self:start}
+      .arrears-card,.progress-top{align-items:flex-start;flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="brand">
+        <div class="logo">🏢</div>
+        <div>
+          <div class="brand-title">ป้านันท์ ห้องเช่า</div>
+          <div class="brand-sub">Tenant Portal • ข้อมูลค่าเช่าของฉัน</div>
+        </div>
+      </div>
+      <div class="hero-grid">
+        <div class="hero-panel">
+          <div class="hello">สวัสดีครับ</div>
+          <div class="tenant-name" id="heroTenantName">กำลังตรวจสอบ LINE...</div>
+          <div class="room-pill" id="heroRoomLabel">🔐 เชื่อมต่อบัญชีผู้เช่า</div>
+        </div>
+        <div class="hero-panel">
+          <div class="bill-label">ยอดคงเหลือรวม</div>
+          <div class="bill-total" id="heroTotalOutstanding">-</div>
+          <div class="bill-status" id="heroStatus">กำลังโหลดข้อมูล</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="systemNoticeSection">
+      <div id="systemNotice" class="notice">กำลังเริ่มต้น LIFF และโหลดข้อมูลค่าเช่าครับ...</div>
+    </section>
+
+    <section class="section" id="roomSelectorSection" style="display:none;">
+      <div class="section-head">
+        <div>
+          <div class="section-title">🏠 เลือกห้องที่ต้องการดู</div>
+          <div class="section-sub">บัญชี LINE นี้ผูกกับมากกว่า 1 ห้อง ระบบจึงให้เลือกห้องก่อนแสดงรายละเอียด</div>
+        </div>
+      </div>
+      <div class="selector" id="roomSelector"></div>
+    </section>
+
+    <section class="section" id="overviewSection" style="display:none;">
+      <div class="section-head">
+        <div>
+          <div class="section-title">📊 สรุปห้อง <span id="overviewRoomNum">-</span></div>
+          <div class="section-sub" id="overviewBillingText">-</div>
+        </div>
+        <div class="chip" id="overviewStatusChip">-</div>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">เลขมิเตอร์น้ำ</div>
+          <div class="summary-value" id="overviewWaterMeter">-</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">เลขมิเตอร์ไฟ</div>
+          <div class="summary-value" id="overviewElectricMeter">-</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">ยอดค้างเก่า</div>
+          <div class="summary-value" id="overviewArrears">-</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="currentBillSection" style="display:none;">
+      <div class="section-head">
+        <div>
+          <div class="section-title">💳 ค่าเช่ารอบปัจจุบัน</div>
+          <div class="section-sub" id="billMetaText">-</div>
+        </div>
+      </div>
+      <div class="bill-list">
+        <div class="bill-row"><span>🏠 ค่าเช่าห้อง</span><strong id="billRent">-</strong></div>
+        <div class="bill-row"><span id="billWaterLabel">💧 ค่าน้ำ</span><strong id="billWater">-</strong></div>
+        <div class="bill-row"><span id="billElectricLabel">⚡ ค่าไฟ</span><strong id="billElectric">-</strong></div>
+        <div class="bill-row"><span>🗑️ ค่าขยะ</span><strong id="billTrash">-</strong></div>
+        <div class="bill-row"><span>📶 Wi‑Fi</span><strong id="billWifi">-</strong></div>
+        <div class="bill-row total"><span>ยอดรวมรอบนี้</span><strong id="billExpected">-</strong></div>
+      </div>
+      <div class="progress">
+        <div class="progress-top">
+          <span id="billPaid">รับชำระแล้ว -</span>
+          <span id="billRemaining">คงเหลือ -</span>
+        </div>
+        <div class="bar"><span id="billProgressBar"></span></div>
+      </div>
+    </section>
+
+    <section class="section" id="arrearsSection" style="display:none;">
+      <div class="section-head">
+        <div>
+          <div class="section-title">⚠️ ยอดค้างเก่า</div>
+          <div class="section-sub">แสดงเฉพาะยอดค้างที่ยังเหลืออยู่ของห้องนี้</div>
+        </div>
+      </div>
+      <div class="arrears-list" id="arrearsList"></div>
+    </section>
+
+    <section class="section" id="archiveSection" style="display:none;">
+      <div class="section-head">
+        <div>
+          <div class="section-title">📚 ประวัติค่าเช่าย้อนหลัง</div>
+          <div class="section-sub" id="archiveSectionSub">แสดงตามช่วงวันที่เริ่มสัญญา/วันเข้าอยู่ในแฟ้มผู้เช่า</div>
+        </div>
+      </div>
+      <div class="history-list" id="archiveList"></div>
+    </section>
+
+    <section class="section" id="paymentSection" style="display:none;">
+      <div class="section-head">
+        <div>
+          <div class="section-title">💰 ประวัติการชำระ</div>
+          <div class="section-sub" id="paymentSectionSub">รายการรับชำระของห้องนี้หลังวันที่เริ่มสัญญา/วันเข้าอยู่</div>
+        </div>
+      </div>
+      <div class="payment-list" id="paymentList"></div>
+    </section>
+
+    <div class="footer-note">
+      ข้อมูลนี้แสดงเฉพาะบัญชี LINE ที่ผูกกับห้องในระบบเท่านั้น • ถ้าข้อมูลไม่ตรง กรุณาติดต่อเจ้าของหอ
+    </div>
+  </main>
+
+  <script>
+    const TENANT_PORTAL_CONFIG = {
+      // ใส่ LIFF ID หลังสร้าง LIFF App ใน LINE Developers Console
+      liffId: 'PASTE_LIFF_ID_HERE',
+
+      // Worker หลักของโปรแกรมห้องเช่า
+      workerUrl: 'https://white-rice-cf72.joteboony.workers.dev',
+    };
+
+    let portalData = null;
+    let selectedRoomNum = '';
+
+    const $ = (id) => document.getElementById(id);
+    const money = (value) => (Number(value || 0)).toLocaleString('th-TH') + ' ฿';
+    const text = (value, fallback = '-') => String(value ?? '').trim() || fallback;
+    const escapeHtml = (value = '') => String(value ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    function setNotice(message, type = '') {
+      const notice = $('systemNotice');
+      const section = $('systemNoticeSection');
+      if (!notice || !section) return;
+      notice.className = 'notice' + (type ? ' ' + type : '');
+      notice.textContent = message;
+      section.style.display = 'block';
+    }
+
+    function hideNotice() {
+      const section = $('systemNoticeSection');
+      if (section) section.style.display = 'none';
+    }
+
+    function statusInfo(status = '') {
+      const key = String(status || '');
+      if (key === 'paid') return { label: 'ชำระแล้ว', cls: 'paid', icon: '✅' };
+      if (key === 'partial') return { label: 'ชำระบางส่วน', cls: 'partial', icon: '🟠' };
+      if (key === 'vacant') return { label: 'ห้องว่าง', cls: 'vacant', icon: '🔑' };
+      return { label: 'ยังไม่ชำระ', cls: 'unpaid', icon: '🔴' };
+    }
+
+    async function initTenantPortal() {
+      try {
+        if (!TENANT_PORTAL_CONFIG.liffId || TENANT_PORTAL_CONFIG.liffId === 'PASTE_LIFF_ID_HERE') {
+          setNotice('หน้านี้ยังไม่ได้ใส่ LIFF ID กรุณาตั้งค่า LIFF ID ก่อนเปิดใช้งานจริง', 'warn');
+          $('heroTenantName').textContent = 'รอตั้งค่า LIFF ID';
+          $('heroStatus').textContent = 'ยังไม่พร้อมใช้งาน';
+          return;
+        }
+
+        setNotice('กำลังเริ่มต้น LIFF...');
+        await liff.init({ liffId: TENANT_PORTAL_CONFIG.liffId });
+
+        if (!liff.isLoggedIn()) {
+          setNotice('กำลังพาเข้าสู่ระบบ LINE...');
+          liff.login({ redirectUri: window.location.href });
+          return;
+        }
+
+        const idToken = liff.getIDToken();
+        if (!idToken) {
+          setNotice('ไม่พบ ID Token จาก LINE กรุณาตรวจว่า LIFF App เปิด scope openid แล้ว', 'error');
+          $('heroTenantName').textContent = 'ยืนยันตัวตนไม่สำเร็จ';
+          $('heroStatus').textContent = 'ไม่มี ID Token';
+          return;
+        }
+
+        setNotice('ยืนยันบัญชี LINE สำเร็จ กำลังโหลดข้อมูลค่าเช่า...');
+        const res = await fetch(TENANT_PORTAL_CONFIG.workerUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'getTenantPortalData', idToken }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.ok === false) {
+          throw new Error(data.error || ('HTTP ' + res.status));
+        }
+
+        portalData = data;
+        renderPortal();
+      } catch (err) {
+        setNotice('เปิด Tenant Portal ไม่สำเร็จ: ' + (err?.message || err), 'error');
+        $('heroTenantName').textContent = 'โหลดข้อมูลไม่สำเร็จ';
+        $('heroStatus').textContent = 'โปรดลองใหม่';
+      }
+    }
+
+    function renderPortal() {
+      if (!portalData || !Array.isArray(portalData.rooms)) {
+        setNotice('ยังไม่มีข้อมูลให้แสดง', 'warn');
+        return;
+      }
+
+      const userName = portalData.user?.displayName || 'ผู้เช่า';
+      $('heroTenantName').textContent = userName;
+      $('heroTotalOutstanding').textContent = money(portalData.totals?.totalOutstanding || 0);
+
+      if (!portalData.rooms.length) {
+        $('heroRoomLabel').textContent = 'ไม่พบห้องที่ผูกกับ LINE นี้';
+        $('heroStatus').textContent = 'กรุณาติดต่อเจ้าของหอ';
+        setNotice('บัญชี LINE นี้ยังไม่ได้ผูกกับห้องเช่าในระบบ', 'warn');
+        return;
+      }
+
+      const count = portalData.rooms.length;
+      $('heroRoomLabel').textContent = count === 1
+        ? `🏠 ห้อง ${portalData.rooms[0].roomNum}`
+        : `🏠 ผูกไว้ ${count.toLocaleString('th-TH')} ห้อง`;
+
+      $('heroStatus').textContent = portalData.totals?.totalOutstanding > 0
+        ? `คงเหลือ ${money(portalData.totals.totalOutstanding)}`
+        : 'ไม่มียอดค้าง';
+
+      selectedRoomNum = selectedRoomNum || String(portalData.rooms[0].roomNum);
+      renderRoomSelector();
+      renderSelectedRoom();
+      hideNotice();
+    }
+
+    function renderRoomSelector() {
+      const section = $('roomSelectorSection');
+      const box = $('roomSelector');
+      if (!section || !box || !portalData?.rooms) return;
+
+      if (portalData.rooms.length <= 1) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = 'block';
+      box.innerHTML = portalData.rooms.map(room => {
+        const status = statusInfo(room.status);
+        const active = String(room.roomNum) === String(selectedRoomNum) ? ' active' : '';
+        return `
+          <button class="room-select${active}" onclick="selectRoom('${escapeHtml(room.roomNum)}')">
+            <div class="room-select-room">ห้อง ${escapeHtml(room.roomNum)}</div>
+            <div class="room-select-sub">${status.icon} ${escapeHtml(status.label)} • คงเหลือ ${escapeHtml(money(room.amounts?.totalRemaining || 0))}</div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectRoom(roomNum) {
+      selectedRoomNum = String(roomNum || '');
+      renderRoomSelector();
+      renderSelectedRoom();
+    }
+
+    function renderSelectedRoom() {
+      const room = (portalData.rooms || []).find(item => String(item.roomNum) === String(selectedRoomNum));
+      if (!room) return;
+
+      const status = statusInfo(room.status);
+      const amounts = room.amounts || {};
+      const billing = room.billingMeta || {};
+      const meters = room.meters || {};
+
+      ['overviewSection','currentBillSection','arrearsSection','archiveSection','paymentSection'].forEach(id => {
+        const el = $(id);
+        if (el) el.style.display = 'block';
+      });
+
+      $('overviewRoomNum').textContent = room.roomNum || '-';
+      $('overviewBillingText').textContent = `รอบบิล ${text(billing.billingMonthText)} • รับชำระใน ${text(billing.paymentMonthText)}`;
+      $('overviewStatusChip').textContent = status.icon + ' ' + status.label;
+      $('overviewWaterMeter').textContent = `${text(meters.wp, '0')} → ${text(meters.wc, '0')}`;
+      $('overviewElectricMeter').textContent = `${text(meters.ep, '0')} → ${text(meters.ec, '0')}`;
+      $('overviewArrears').textContent = money(amounts.arrearsTotal || 0);
+
+      $('billMetaText').textContent = `รอบบิล ${text(billing.billingMonthText)} • รับชำระใน ${text(billing.paymentMonthText)}`;
+      $('billRent').textContent = money(amounts.rent || 0);
+      $('billWaterLabel').textContent = `💧 ค่าน้ำ ${Number(amounts.waterUnits || 0).toLocaleString('th-TH')} หน่วย × ${Number(amounts.waterRate || 35).toLocaleString('th-TH')}`;
+      $('billWater').textContent = money(amounts.waterAmount || 0);
+      $('billElectricLabel').textContent = `⚡ ค่าไฟ ${Number(amounts.electricUnits || 0).toLocaleString('th-TH')} หน่วย × ${Number(amounts.electricRate || 8).toLocaleString('th-TH')}`;
+      $('billElectric').textContent = money(amounts.electricAmount || 0);
+      $('billTrash').textContent = money(amounts.trash || 0);
+      $('billWifi').textContent = money(amounts.wifi || 0);
+      $('billExpected').textContent = money(amounts.expected || 0);
+      $('billPaid').textContent = `รับชำระแล้ว ${money(amounts.currentPaid || 0)}`;
+      $('billRemaining').textContent = `คงเหลือ ${money(amounts.currentRemaining || 0)}`;
+
+      const pct = amounts.expected > 0
+        ? Math.max(0, Math.min(100, (Number(amounts.currentPaid || 0) / Number(amounts.expected || 1)) * 100))
+        : 0;
+      $('billProgressBar').style.width = pct.toFixed(2) + '%';
+
+      renderArrears(room.arrears || []);
+      renderArchives(room.history?.archives || [], room.history?.historyCutoffText || '');
+      renderPayments(room.history?.payments || [], room.history?.historyCutoffText || '');
+    }
+
+    function renderArrears(items) {
+      const box = $('arrearsList');
+      if (!box) return;
+      if (!Array.isArray(items) || !items.length) {
+        box.innerHTML = '<div class="empty">ไม่มีรายการยอดค้างเก่า</div>';
+        return;
+      }
+      box.innerHTML = items.map(item => `
+        <div class="arrears-card">
+          <div>
+            <div class="arrears-title">${escapeHtml(item.monthText || item.monthKey || 'ยอดค้าง')}</div>
+            <div class="arrears-sub">ยอดเดิม ${escapeHtml(money(item.originalAmount || 0))} • รับแล้ว ${escapeHtml(money(item.paidAmount || 0))}</div>
+          </div>
+          <div class="arrears-value">${escapeHtml(money(item.remaining || 0))}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderArchives(items, cutoffText) {
+      const box = $('archiveList');
+      const sub = $('archiveSectionSub');
+      if (sub) sub.textContent = cutoffText
+        ? `แสดงหลัง ${cutoffText} ตามวันเริ่มสัญญา/วันเข้าอยู่`
+        : 'ยังไม่ตั้งวันเริ่มสัญญา/วันเข้าอยู่ จึงยังไม่แสดงประวัติย้อนหลังเพื่อความเป็นส่วนตัว';
+      if (!box) return;
+      if (!Array.isArray(items) || !items.length) {
+        box.innerHTML = '<div class="empty">ยังไม่มีประวัติค่าเช่าย้อนหลังที่แสดงได้</div>';
+        return;
+      }
+      box.innerHTML = items.map(item => {
+        const status = statusInfo(item.status);
+        return `
+          <div class="history-card">
+            <div class="history-icon">🗓️</div>
+            <div>
+              <div class="history-title">${escapeHtml(item.billingMonthText || item.monthText || item.monthKey || '-')}</div>
+              <div class="history-sub">ยอดรวม ${escapeHtml(money(item.monthFullTotal || 0))} • รับแล้ว ${escapeHtml(money(item.received || 0))} • ค้าง ${escapeHtml(money(item.remaining || 0))}</div>
+            </div>
+            <div class="status ${status.cls}">${status.icon} ${escapeHtml(status.label)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderPayments(items, cutoffText) {
+      const box = $('paymentList');
+      const sub = $('paymentSectionSub');
+      if (sub) sub.textContent = cutoffText
+        ? `รายการรับชำระหลัง ${cutoffText}`
+        : 'ยังไม่ตั้งวันเริ่มสัญญา/วันเข้าอยู่ จึงยังไม่แสดงประวัติย้อนหลังเพื่อความเป็นส่วนตัว';
+      if (!box) return;
+      if (!Array.isArray(items) || !items.length) {
+        box.innerHTML = '<div class="empty">ยังไม่มีประวัติการชำระที่แสดงได้</div>';
+        return;
+      }
+      box.innerHTML = items.map(item => `
+        <div class="history-card">
+          <div class="history-icon">💸</div>
+          <div>
+            <div class="history-title">รับชำระ ${escapeHtml(money(item.amount || 0))}</div>
+            <div class="history-sub">${escapeHtml(item.paidAtText || item.paidAt || '-')} • ${escapeHtml(item.methodText || item.method || item.source || '-')}</div>
+          </div>
+          <div class="status paid">✅ บันทึกแล้ว</div>
+        </div>
+      `).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', initTenantPortal);
+  </script>
+</body>
+</html>
