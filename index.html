@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.45</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.46</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.45'
+        createdFrom: 'web-v15.4.2.46'
       })
     });
 
@@ -1165,6 +1165,137 @@ async function clearErrorLogs() {
     background:#eef2f7;
     color:#64748b;
   }
+  .tenant-contract-alert-bar {
+    margin: 0 0 12px;
+    background:#fff8e6;
+    border:1.5px solid #f3d27a;
+    color:#8a5800;
+    border-radius:14px;
+    padding:12px 14px;
+    line-height:1.55;
+    font-size:12px;
+    font-weight:700;
+  }
+  .tenant-contract-alert-room-list {
+    margin-top:3px;
+    color:#a16207;
+    font-size:11px;
+  }
+  .tenant-contract-pill {
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    margin-top:6px;
+    border-radius:999px;
+    padding:4px 8px;
+    font-size:10px;
+    font-weight:900;
+    line-height:1;
+    white-space:nowrap;
+  }
+  .tenant-contract-pill.soon {
+    background:#fff7e8;
+    color:#9a6700;
+  }
+  .tenant-contract-pill.expired {
+    background:#fdecec;
+    color:#b42318;
+  }
+  .tenant-history-panel {
+    border:1.5px solid var(--border);
+    border-radius:14px;
+    padding:12px;
+    margin-top:14px;
+    background:var(--bg);
+  }
+  .tenant-history-list {
+    display:grid;
+    gap:10px;
+  }
+  .tenant-history-card {
+    background:var(--card);
+    border:1.5px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  .tenant-history-card summary {
+    list-style:none;
+    cursor:pointer;
+    padding:12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .tenant-history-card summary::-webkit-details-marker { display:none; }
+  .tenant-history-name {
+    font-family:'Kanit',sans-serif;
+    font-weight:900;
+    color:var(--primary);
+    font-size:15px;
+  }
+  .tenant-history-meta {
+    color:var(--muted);
+    font-size:11px;
+    line-height:1.45;
+    margin-top:2px;
+  }
+  .tenant-history-toggle {
+    background:var(--bg);
+    color:var(--primary);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:6px 9px;
+    font-size:11px;
+    font-weight:900;
+    white-space:nowrap;
+  }
+  .tenant-history-body {
+    border-top:1px solid var(--border);
+    padding:12px;
+  }
+  .tenant-history-grid {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+    font-size:12px;
+    line-height:1.5;
+  }
+  .tenant-history-note,
+  .tenant-history-checkout {
+    margin-top:10px;
+    border-radius:10px;
+    padding:10px;
+    font-size:12px;
+    line-height:1.55;
+    background:var(--bg);
+    border:1px solid var(--border);
+  }
+  .tenant-history-checkout {
+    background:#fff8e6;
+    border-color:#f3d27a;
+    color:#8a5800;
+  }
+  .tenant-history-doc-title {
+    font-family:'Kanit',sans-serif;
+    font-weight:900;
+    color:var(--primary);
+    font-size:14px;
+    margin:12px 0 8px;
+  }
+  .tenant-history-empty-docs {
+    color:var(--muted);
+    background:var(--bg);
+    border:1px dashed var(--border);
+    border-radius:10px;
+    padding:10px;
+    text-align:center;
+    font-size:12px;
+  }
+  .tenant-doc-card.archived {
+    background:linear-gradient(180deg,var(--card),var(--bg));
+  }
+
   .tenant-editor-placeholder {
     padding: 30px 18px;
     border: 1.5px dashed var(--border);
@@ -1361,6 +1492,8 @@ async function clearErrorLogs() {
     .tenant-doc-card-actions { grid-template-columns:1fr; }
     .tenant-profile-form-actions .ctrl-btn { width:100%; }
     .tenant-docs-summary { grid-template-columns:1fr 1fr; }
+    .tenant-history-grid { grid-template-columns:1fr; }
+    .tenant-history-card summary { flex-direction:column; align-items:flex-start; }
   }
 
   /* FILTER TABS */
@@ -3745,6 +3878,7 @@ body.dark .meter-correction-note.danger {
   </div>
   <div class="tenant-docs-wrap">
     <div id="tenantDocsSummary"></div>
+    <div id="tenantContractAlertBar"></div>
     <div class="tenant-docs-layout">
       <section class="tenant-room-list-card">
         <div class="tenant-doc-section-title">เลือกห้อง</div>
@@ -4333,6 +4467,7 @@ function getTenantProfileLocal(roomNum) {
     moveInDate: String(raw.moveInDate || '').trim(),
     profileNote: String(raw.profileNote || raw.note || '').trim(),
     documents: docs,
+    history: Array.isArray(raw.history) ? raw.history.filter(Boolean) : [],
     createdAt: raw.createdAt || '',
     updatedAt: raw.updatedAt || '',
   };
@@ -4359,6 +4494,29 @@ function getTenantProfileCompleteness(roomNum) {
   if (complete) return { key:'complete', label:'เอกสารหลักครบ', docCount, complete:true };
   if (hasCoreInfo || docCount) return { key:'partial', label:'มีข้อมูลบางส่วน', docCount, complete:false };
   return { key:'empty', label:'ยังไม่มีแฟ้ม', docCount, complete:false };
+}
+
+function tenantDateToTime(dateText = '') {
+  const text = String(dateText || '').trim();
+  if (!text) return 0;
+  const d = new Date(text + (text.includes('T') ? '' : 'T23:59:59'));
+  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
+function getTenantContractAlert(roomNum) {
+  const profile = getTenantProfileLocal(roomNum);
+  const endMs = tenantDateToTime(profile.contractEnd);
+  if (!endMs) return null;
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const days = Math.ceil((endMs - todayStart) / 86400000);
+  if (days < 0) return { key:'expired', label:'สัญญาหมดแล้ว', days };
+  if (days <= 30) return { key:'soon', label:`ใกล้หมดสัญญา ${days} วัน`, days };
+  return null;
+}
+
+function getTenantActiveHistoryCount(roomNum) {
+  return (getTenantProfileLocal(roomNum).history || []).length;
 }
 
 function openTenantDocs(roomNum = '') {
@@ -4401,6 +4559,7 @@ function renderTenantDocsPage() {
 
 function renderTenantDocsSummary() {
   const box = document.getElementById('tenantDocsSummary');
+  const alertBar = document.getElementById('tenantContractAlertBar');
   if (!box) return;
   const roomNums = getTenantDocsRoomNumbers().filter(n => Number(n) !== TEST_ROOM);
   const total = roomNums.length;
@@ -4409,7 +4568,12 @@ function renderTenantDocsSummary() {
     return !!(p.fullName || p.phone || p.idCardNumber || (p.documents || []).length);
   }).length;
   const complete = roomNums.filter(room => getTenantProfileCompleteness(room).complete).length;
-  const totalDocs = roomNums.reduce((sum, room) => sum + (getTenantProfileLocal(room).documents || []).length, 0);
+  const totalDocs = roomNums.reduce((sum, room) => {
+    const p = getTenantProfileLocal(room);
+    const currentDocs = (p.documents || []).length;
+    const historyDocs = (p.history || []).reduce((s, item) => s + ((item.documents || []).length), 0);
+    return sum + currentDocs + historyDocs;
+  }, 0);
 
   box.className = 'tenant-docs-summary';
   box.innerHTML = `
@@ -4430,6 +4594,24 @@ function renderTenantDocsSummary() {
       <div class="tenant-doc-summary-lbl">ไฟล์เอกสารในระบบ</div>
     </div>
   `;
+
+  if (alertBar) {
+    const alerts = roomNums
+      .map(room => ({ room, alert: getTenantContractAlert(room) }))
+      .filter(item => !!item.alert);
+    if (!alerts.length) {
+      alertBar.innerHTML = '';
+    } else {
+      const expired = alerts.filter(item => item.alert.key === 'expired').length;
+      const soon = alerts.filter(item => item.alert.key === 'soon').length;
+      const roomList = alerts.slice(0, 8).map(item => `ห้อง ${item.room}`).join(', ');
+      const more = alerts.length > 8 ? ` และอีก ${alerts.length - 8} ห้อง` : '';
+      alertBar.innerHTML = `<div class="tenant-contract-alert-bar">
+        <div><b>⏳ ตรวจสัญญา:</b> หมดแล้ว ${expired.toLocaleString('th-TH')} ห้อง • ใกล้หมดภายใน 30 วัน ${soon.toLocaleString('th-TH')} ห้อง</div>
+        <div class="tenant-contract-alert-room-list">${roomList}${more}</div>
+      </div>`;
+    }
+  }
 }
 
 function renderTenantDocsRoomList() {
@@ -4452,6 +4634,8 @@ function renderTenantDocsRoomList() {
   box.innerHTML = rows.map(room => {
     const status = getTenantProfileCompleteness(room);
     const name = getTenantDisplayNameForDocs(room) || 'ยังไม่มีชื่อผู้เช่า';
+    const contractAlert = getTenantContractAlert(room);
+    const historyCount = getTenantActiveHistoryCount(room);
     const isActive = String(selectedTenantProfileRoom) === String(room);
     const active = isActive ? ' active' : '';
     const roomLabel = Number(room) === TEST_ROOM ? 'ห้อง 99 TEST' : `ห้อง ${room}`;
@@ -4465,7 +4649,11 @@ function renderTenantDocsRoomList() {
           <span class="tenant-status-pill ${status.key}">${escapeHtml(status.label)}</span>
         </div>
         <div class="tenant-room-item-name">${escapeHtml(name)}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:3px;">เอกสาร ${Number(status.docCount || 0).toLocaleString('th-TH')} ไฟล์</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">
+          เอกสาร ${Number(status.docCount || 0).toLocaleString('th-TH')} ไฟล์
+          ${historyCount ? ` • ประวัติเก่า ${Number(historyCount).toLocaleString('th-TH')} รายการ` : ''}
+        </div>
+        ${contractAlert ? `<div class="tenant-contract-pill ${contractAlert.key}">⏳ ${escapeHtml(contractAlert.label)}</div>` : ''}
       </button>
       ${inlineEditor}
     </div>`;
@@ -4502,14 +4690,16 @@ function renderTenantProfileEditor(roomNum) {
   const profile = getTenantProfileLocal(roomNum);
   const displayName = getTenantDisplayNameForDocs(roomNum) || 'ยังไม่มีชื่อผู้เช่า';
   const status = getTenantProfileCompleteness(roomNum);
+  const contractAlert = getTenantContractAlert(roomNum);
   const roomLabel = Number(roomNum) === TEST_ROOM ? 'ห้อง 99 TEST' : `ห้อง ${roomNum}`;
   const docsHtml = renderTenantDocumentsHtml(roomNum, profile.documents || []);
+  const historyHtml = renderTenantHistoryHtml(roomNum, profile.history || []);
 
   box.innerHTML = `
     <div class="tenant-profile-head">
       <div>
         <div class="tenant-profile-title">🧾 ${escapeHtml(roomLabel)}</div>
-        <div class="tenant-profile-sub">${escapeHtml(displayName)} • <span class="tenant-status-pill ${status.key}">${escapeHtml(status.label)}</span></div>
+        <div class="tenant-profile-sub">${escapeHtml(displayName)} • <span class="tenant-status-pill ${status.key}">${escapeHtml(status.label)}</span>${contractAlert ? ` • <span class="tenant-contract-pill ${contractAlert.key}">⏳ ${escapeHtml(contractAlert.label)}</span>` : ''}</div>
       </div>
       <button class="ctrl-btn outline" onclick="renderTenantProfileEditor('${escapeJsString(roomNum)}')">↻ รีโหลดฟอร์ม</button>
     </div>
@@ -4595,7 +4785,97 @@ function renderTenantProfileEditor(roomNum) {
       </div>
       <div id="tenantDocumentsGrid">${docsHtml}</div>
     </div>
+
+    ${historyHtml}
   `;
+}
+
+function formatTenantHistoryDate(value = '') {
+  const text = String(value || '').trim();
+  if (!text) return '-';
+  const d = new Date(text);
+  if (!Number.isNaN(d.getTime())) {
+    try {
+      return d.toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
+    } catch(e) {}
+  }
+  return text;
+}
+
+function renderArchivedTenantDocumentsHtml(roomNum, historyId, docs = []) {
+  if (!Array.isArray(docs) || !docs.length) {
+    return '<div class="tenant-history-empty-docs">ไม่มีเอกสารแนบในแฟ้มเก่านี้</div>';
+  }
+  const cards = docs.slice().sort((a,b) => String(b.uploadedAt || '').localeCompare(String(a.uploadedAt || ''))).map(doc => {
+    const id = escapeJsString(doc.id || '');
+    return `<div class="tenant-doc-card archived">
+      <div class="tenant-doc-card-title">📄 ${escapeHtml(getTenantDocumentTypeLabel(doc.type))}</div>
+      <div class="tenant-doc-card-meta">
+        ไฟล์: ${escapeHtml(doc.fileName || '-')}<br>
+        ขนาด: ${escapeHtml(tenantDocumentFormatSize(doc.size || 0))}<br>
+        อัปโหลด: ${escapeHtml(doc.uploadedAtText || doc.uploadedAt || '-')}
+      </div>
+      <div class="tenant-doc-card-actions">
+        <button class="tenant-doc-preview-btn" onclick="previewArchivedTenantDocument('${escapeJsString(roomNum)}','${escapeJsString(historyId)}','${id}')">👁️ ดู</button>
+        <button class="tenant-doc-download-btn" onclick="downloadArchivedTenantDocument('${escapeJsString(roomNum)}','${escapeJsString(historyId)}','${id}')">⬇️ โหลด</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="tenant-doc-grid archived">${cards}</div>`;
+}
+
+function renderTenantHistoryHtml(roomNum, history = []) {
+  const rows = Array.isArray(history) ? history.slice().reverse() : [];
+  if (!rows.length) {
+    return `<div class="tenant-history-panel">
+      <div class="tenant-doc-section-title">ประวัติผู้เช่าเก่า</div>
+      <div class="tenant-doc-empty">ยังไม่มีประวัติผู้เช่าเก่าของห้องนี้<br>เมื่อกด “แจ้งออกจากห้อง” ระบบจะย้ายแฟ้มปัจจุบันมาเก็บไว้ที่นี่</div>
+    </div>`;
+  }
+
+  const cards = rows.map((item, idx) => {
+    const historyId = String(item.id || `history-${idx}`);
+    const docs = Array.isArray(item.documents) ? item.documents : [];
+    const checkout = item.checkout && typeof item.checkout === 'object' ? item.checkout : {};
+    const diff = Number(checkout.diffAmount ?? checkout.diff ?? 0) || 0;
+    const checkoutLabel = checkout.isRefund === true
+      ? `คืนเงิน ${Math.abs(diff).toLocaleString('th-TH')} ฿`
+      : `ค้างชำระเพิ่ม ${Math.abs(diff).toLocaleString('th-TH')} ฿`;
+    const hasCheckout = Number(checkout.totalBill || 0) > 0 || Number(checkout.deposit || 0) > 0 || !!checkout.checkoutAt;
+    const docsHtml = renderArchivedTenantDocumentsHtml(roomNum, historyId, docs);
+
+    return `<details class="tenant-history-card"${idx === 0 ? ' open' : ''}>
+      <summary>
+        <div>
+          <div class="tenant-history-name">👤 ${escapeHtml(item.fullName || item.name || 'ไม่ระบุชื่อ')}</div>
+          <div class="tenant-history-meta">ย้ายออก: ${escapeHtml(formatTenantHistoryDate(item.moveOutDate || item.archivedAt))} • เอกสาร ${docs.length.toLocaleString('th-TH')} ไฟล์</div>
+        </div>
+        <span class="tenant-history-toggle">ดูรายละเอียด</span>
+      </summary>
+      <div class="tenant-history-body">
+        <div class="tenant-history-grid">
+          <div><b>เบอร์โทร:</b> ${escapeHtml(item.phone || '-')}</div>
+          <div><b>เลขบัตร:</b> ${escapeHtml(item.idCardNumber || '-')}</div>
+          <div><b>สัญญา:</b> ${escapeHtml(item.contractStart || '-')} ถึง ${escapeHtml(item.contractEnd || '-')}</div>
+          <div><b>เงินประกัน:</b> ${Number(item.deposit || 0).toLocaleString('th-TH')} ฿</div>
+          <div><b>ผู้ติดต่อฉุกเฉิน:</b> ${escapeHtml(item.emergencyName || '-')} ${item.emergencyPhone ? '(' + escapeHtml(item.emergencyPhone) + ')' : ''}</div>
+          <div><b>บันทึกประวัติเมื่อ:</b> ${escapeHtml(formatTenantHistoryDate(item.archivedAt))}</div>
+        </div>
+        ${item.profileNote ? `<div class="tenant-history-note"><b>หมายเหตุ:</b> ${escapeHtml(item.profileNote)}</div>` : ''}
+        ${hasCheckout ? `<div class="tenant-history-checkout">
+          <b>สรุปวันแจ้งออก:</b> ค่าใช้จ่ายรวม ${Number(checkout.totalBill || 0).toLocaleString('th-TH')} ฿ • หักเงินประกัน ${Number(checkout.deposit || 0).toLocaleString('th-TH')} ฿ • ${escapeHtml(checkoutLabel)}
+          ${checkout.note ? `<div style="margin-top:4px;">📝 ${escapeHtml(checkout.note)}</div>` : ''}
+        </div>` : ''}
+        <div class="tenant-history-doc-title">เอกสารในแฟ้มเก่า</div>
+        ${docsHtml}
+      </div>
+    </details>`;
+  }).join('');
+
+  return `<div class="tenant-history-panel">
+    <div class="tenant-doc-section-title">ประวัติผู้เช่าเก่า (${rows.length.toLocaleString('th-TH')} รายการ)</div>
+    <div class="tenant-history-list">${cards}</div>
+  </div>`;
 }
 
 function renderTenantDocumentTypeOptions(selected = '') {
@@ -4743,6 +5023,73 @@ async function uploadTenantDocumentFromForm(roomNum) {
 function getTenantDocumentLocal(roomNum, documentId) {
   const docs = getTenantProfileLocal(roomNum).documents || [];
   return docs.find(doc => String(doc.id || '') === String(documentId || '')) || null;
+}
+
+function getTenantHistoryEntryLocal(roomNum, historyId) {
+  const history = getTenantProfileLocal(roomNum).history || [];
+  return history.find(item => String(item.id || '') === String(historyId || '')) || null;
+}
+
+function getArchivedTenantDocumentLocal(roomNum, historyId, documentId) {
+  const item = getTenantHistoryEntryLocal(roomNum, historyId);
+  const docs = Array.isArray(item?.documents) ? item.documents : [];
+  return docs.find(doc => String(doc.id || '') === String(documentId || '')) || null;
+}
+
+async function previewArchivedTenantDocument(roomNum, historyId, documentId) {
+  const doc = getArchivedTenantDocumentLocal(roomNum, historyId, documentId);
+  if (!doc) {
+    alert('ไม่พบเอกสารนี้ในแฟ้มผู้เช่าเก่า');
+    return;
+  }
+  const overlay = document.getElementById('tenantDocPreviewOverlay');
+  const body = document.getElementById('tenantDocPreviewBody');
+  const title = document.getElementById('tenantDocPreviewTitle');
+  const meta = document.getElementById('tenantDocPreviewMeta');
+  if (!overlay || !body || !title || !meta) return;
+
+  try {
+    title.textContent = 'แฟ้มเก่า • ' + getTenantDocumentTypeLabel(doc.type);
+    meta.textContent = `${doc.fileName || '-'} • ${tenantDocumentFormatSize(doc.size || 0)}`;
+    body.innerHTML = '<div style="color:var(--muted);font-weight:700;">กำลังโหลดเอกสาร...</div>';
+    overlay.classList.add('open');
+    refreshModalLockSafe();
+
+    const blob = await fetchTenantDocumentBlob(doc);
+    if (tenantDocPreviewObjectUrl) URL.revokeObjectURL(tenantDocPreviewObjectUrl);
+    tenantDocPreviewObjectUrl = URL.createObjectURL(blob);
+    const type = String(blob.type || doc.mimeType || '');
+    if (type.startsWith('image/')) {
+      body.innerHTML = `<img alt="${escapeHtml(doc.fileName || 'tenant-document')}" src="${tenantDocPreviewObjectUrl}">`;
+    } else if (type === 'application/pdf') {
+      body.innerHTML = `<iframe title="${escapeHtml(doc.fileName || 'tenant-document')}" src="${tenantDocPreviewObjectUrl}"></iframe>`;
+    } else {
+      body.innerHTML = '<div class="tenant-doc-empty">ไฟล์ประเภทนี้ไม่รองรับ preview แต่ยังดาวน์โหลดได้</div>';
+    }
+  } catch(e) {
+    body.innerHTML = `<div class="tenant-doc-empty" style="color:#c0392b;">เปิดเอกสารไม่สำเร็จ: ${escapeHtml(e.message || e)}</div>`;
+  }
+}
+
+async function downloadArchivedTenantDocument(roomNum, historyId, documentId) {
+  const doc = getArchivedTenantDocumentLocal(roomNum, historyId, documentId);
+  if (!doc) {
+    alert('ไม่พบเอกสารนี้ในแฟ้มผู้เช่าเก่า');
+    return;
+  }
+  try {
+    const blob = await fetchTenantDocumentBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = doc.fileName || 'tenant-document';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1200);
+  } catch(e) {
+    alert('ดาวน์โหลดไม่สำเร็จ: ' + (e.message || e));
+  }
 }
 
 async function fetchTenantDocumentBlob(doc) {
@@ -7991,7 +8338,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.45'
+        createdFrom: 'web-v15.4.2.46'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -9821,10 +10168,138 @@ async function sendLineAPI() {
 const DEPOSIT = r => r <= 20 ? 5000 : 6000;
 const CLEAN_FEE = 500;
 
+function getCheckoutDepositForRoom(roomNum) {
+  const profile = getTenantProfileLocal(roomNum);
+  const profileDeposit = Number(profile.deposit || 0);
+  return profileDeposit > 0 ? profileDeposit : DEPOSIT(roomNum);
+}
+
+function getCheckoutFinancialSnapshot(roomNum) {
+  const r = roomNum;
+  const d = rooms[r];
+  const deposit = getCheckoutDepositForRoom(r);
+  const rent = getRoomRentValue(r, d);
+  const trash = getRoomTrashValue(r, d);
+  const elecAmount = (d.ec - d.ep) * ELEC_RATE;
+  const waterAmount = (d.wc - d.wp) * WATER_RATE;
+  const cleaningFee = parseInt(document.getElementById('checkoutClean')?.value || '0', 10) || 0;
+  const damageFee = parseInt(document.getElementById('checkoutDamage')?.value || '0', 10) || 0;
+  const note = String(document.getElementById('checkoutNote')?.value || '').trim();
+  const wifi = Number(d.wifi || 0) || 0;
+  const totalBill = rent + elecAmount + waterAmount + trash + wifi + cleaningFee + damageFee;
+  const diffAmount = deposit - totalBill;
+  const isRefund = diffAmount >= 0;
+  const now = new Date();
+  return {
+    deposit,
+    rent,
+    trash,
+    elecAmount,
+    waterAmount,
+    wifi,
+    cleaningFee,
+    damageFee,
+    totalBill,
+    diffAmount,
+    isRefund,
+    note,
+    checkoutAt: now.toISOString(),
+    checkoutAtText: now.toLocaleString('th-TH'),
+    moveOutDate: now.toISOString().slice(0, 10),
+  };
+}
+
+function hasTenantProfileCurrentData(profile = {}) {
+  return !!(
+    profile.fullName || profile.phone || profile.idCardNumber || profile.birthDate ||
+    profile.occupation || profile.workplace || profile.registeredAddress ||
+    profile.emergencyName || profile.emergencyRelation || profile.emergencyPhone ||
+    profile.contractStart || profile.contractEnd || Number(profile.deposit || 0) > 0 ||
+    profile.moveInDate || profile.profileNote ||
+    (Array.isArray(profile.documents) && profile.documents.length)
+  );
+}
+
+async function archiveTenantProfileOnCheckout(roomNum, checkoutSnapshot) {
+  const key = String(roomNum || '');
+  const current = getTenantProfileLocal(key);
+  const fallbackTenant = tenants?.[key] || tenants?.[Number(key)] || {};
+  const hasCurrent = hasTenantProfileCurrentData(current) || !!(fallbackTenant?.name || fallbackTenant?.phone);
+  const history = Array.isArray(current.history) ? current.history.slice() : [];
+  const now = new Date();
+  let archived = false;
+
+  if (hasCurrent) {
+    history.push({
+      id: `tenant-history-${key}-${Date.now()}`,
+      roomNum: key,
+      fullName: current.fullName || fallbackTenant?.name || '',
+      phone: current.phone || fallbackTenant?.phone || '',
+      idCardNumber: current.idCardNumber || '',
+      birthDate: current.birthDate || '',
+      occupation: current.occupation || '',
+      workplace: current.workplace || '',
+      registeredAddress: current.registeredAddress || '',
+      emergencyName: current.emergencyName || '',
+      emergencyRelation: current.emergencyRelation || '',
+      emergencyPhone: current.emergencyPhone || '',
+      contractStart: current.contractStart || '',
+      contractEnd: current.contractEnd || '',
+      deposit: Number(current.deposit || checkoutSnapshot?.deposit || 0) || 0,
+      moveInDate: current.moveInDate || '',
+      moveOutDate: checkoutSnapshot?.moveOutDate || now.toISOString().slice(0, 10),
+      profileNote: current.profileNote || '',
+      documents: Array.isArray(current.documents) ? current.documents.slice() : [],
+      archivedAt: now.toISOString(),
+      archivedAtText: now.toLocaleString('th-TH'),
+      archiveReason: 'checkout',
+      checkout: checkoutSnapshot || {},
+      createdAt: current.createdAt || '',
+      updatedAt: now.toISOString(),
+    });
+    archived = true;
+  }
+
+  tenantProfiles[key] = {
+    roomNum: key,
+    fullName: '',
+    phone: '',
+    idCardNumber: '',
+    birthDate: '',
+    occupation: '',
+    workplace: '',
+    registeredAddress: '',
+    emergencyName: '',
+    emergencyRelation: '',
+    emergencyPhone: '',
+    contractStart: '',
+    contractEnd: '',
+    deposit: 0,
+    moveInDate: '',
+    profileNote: '',
+    documents: [],
+    history,
+    createdAt: '',
+    updatedAt: now.toISOString(),
+  };
+  saveTenantProfilesLocal();
+
+  try {
+    const result = await workerPost({ action: 'saveTenantProfiles', data: tenantProfiles });
+    if (result?.tenantProfiles) {
+      tenantProfiles = result.tenantProfiles;
+      saveTenantProfilesLocal();
+    }
+    return { ok: true, archived };
+  } catch(e) {
+    return { ok: false, archived, error: e?.message || String(e) };
+  }
+}
+
 function openCheckout() {
   const r = currentRoom;
   const d = rooms[r];
-  const deposit = DEPOSIT(r);
+  const deposit = getCheckoutDepositForRoom(r);
 
   document.getElementById('checkoutRoomNum').textContent = `ที่ ${r}`;
   document.getElementById('checkoutDeposit').textContent = deposit.toLocaleString();
@@ -9843,7 +10318,7 @@ function closeCheckoutOverlay(e) {
 function calcCheckout() {
   const r = currentRoom;
   const d = rooms[r];
-  const deposit  = DEPOSIT(r);
+  const deposit  = getCheckoutDepositForRoom(r);
   const rent     = getRoomRentValue(r, d);
   const trash    = getRoomTrashValue(r, d);
   const elecAmt  = (d.ec - d.ep) * ELEC_RATE;
@@ -9884,7 +10359,7 @@ function calcCheckout() {
 function sendCheckoutLine() {
   const r = currentRoom;
   const d = rooms[r];
-  const deposit  = DEPOSIT(r);
+  const deposit  = getCheckoutDepositForRoom(r);
   const rent     = getRoomRentValue(r, d);
   const trash    = getRoomTrashValue(r, d);
   const elecAmt  = (d.ec - d.ep) * ELEC_RATE;
@@ -9934,10 +10409,21 @@ ${isRefund ? `💚 คืนเงินคุณ: ${Math.abs(diff).toLocaleStri
   }
 }
 
-function confirmCheckout() {
+async function confirmCheckout() {
   const r = currentRoom;
   if (!confirm(`ส่ง LINE แจ้งผู้เช่าห้อง ${r} แล้วหรือยังครับ?\n\nถ้ายังไม่ได้ส่ง กด "ยกเลิก" แล้วกดปุ่ม "📱 ส่ง LINE แจ้งผู้เช่า" ก่อนนะครับ`)) return;
-  if (!confirm(`ยืนยันให้ห้อง ${r} เป็นห้องว่าง และล้างข้อมูลผู้เช่าใช่ไหมครับ?`)) return;
+  if (!confirm(`ยืนยันให้ห้อง ${r} เป็นห้องว่าง และปิดแฟ้มผู้เช่าปัจจุบันใช่ไหมครับ?\n\nถ้ามีข้อมูลผู้เช่าหรือเอกสาร ระบบจะย้ายไปเก็บใน “ประวัติผู้เช่าเก่า” ให้ก่อนล้างแฟ้มปัจจุบัน`)) return;
+
+  const checkoutSnapshot = getCheckoutFinancialSnapshot(r);
+  const archiveResult = await archiveTenantProfileOnCheckout(r, checkoutSnapshot);
+  if (!archiveResult.ok) {
+    const proceed = confirm(
+      'บันทึกประวัติแฟ้มผู้เช่าไป Worker ไม่สำเร็จ:\n' +
+      (archiveResult.error || 'ไม่ทราบสาเหตุ') +
+      '\n\nข้อมูลถูกเตรียมไว้ในหน้าเว็บแล้ว แต่ถ้ารีเฟรชอาจไม่คงอยู่ครบถ้วน\nต้องการดำเนินการให้ห้องเป็นห้องว่างต่อหรือไม่?'
+    );
+    if (!proceed) return;
+  }
 
   rooms[r].vacant = true;
   rooms[r].paid   = false;
@@ -9959,14 +10445,17 @@ function confirmCheckout() {
   saveData();
   saveTenants();
   renderAll();
+  try { renderTenantDocsPage(); } catch(e) {}
   closeModal('checkoutOverlay');
   closeModal('editOverlay');
 
   const toast = document.createElement('div');
   toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#607d8b;color:white;padding:10px 20px;border-radius:20px;font-weight:700;font-size:14px;z-index:999;';
-  toast.textContent = `🔑 ห้อง ${r} เป็นห้องว่างแล้วครับ`;
+  toast.textContent = archiveResult.archived
+    ? `🔑 ห้อง ${r} ว่างแล้ว • ย้ายแฟ้มเก่าเข้าประวัติแล้ว`
+    : `🔑 ห้อง ${r} เป็นห้องว่างแล้วครับ`;
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 2500);
+  setTimeout(() => toast.remove(), 3200);
 }
 
 // ===== PIN =====
