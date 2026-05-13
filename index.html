@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.41</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.42</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.41'
+        createdFrom: 'web-v15.4.2.42'
       })
     });
 
@@ -1017,6 +1017,327 @@ async function clearErrorLogs() {
     .tool-button-list.two { grid-template-columns: 1fr; }
   }
 
+
+
+  /* ===== TENANT PROFILE / DOCUMENT CENTER v15.4.2.42 ===== */
+  .tenant-docs-note {
+    background: #fff8e6;
+    color: #7a5800;
+    border-bottom: 1px solid #f0d580;
+    padding: 10px 16px;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  .tenant-docs-wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 14px 14px 96px;
+  }
+  .tenant-docs-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .tenant-doc-summary-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.05);
+  }
+  .tenant-doc-summary-val {
+    font-family: 'Kanit',sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--primary);
+  }
+  .tenant-doc-summary-lbl {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.35;
+    margin-top: 2px;
+  }
+  .tenant-docs-layout {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+  .tenant-room-list-card,
+  .tenant-profile-editor {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+  }
+  .tenant-doc-section-title {
+    font-family: 'Kanit',sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+  .tenant-room-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+  .tenant-room-item {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'Sarabun',sans-serif;
+    transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .tenant-room-item:hover,
+  .tenant-room-item.active {
+    border-color: var(--accent);
+    box-shadow: 0 7px 18px rgba(232,160,32,0.16);
+    transform: translateY(-1px);
+  }
+  .tenant-room-item-head {
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    align-items:center;
+  }
+  .tenant-room-item-room {
+    font-family:'Kanit',sans-serif;
+    font-size:16px;
+    font-weight:800;
+    color:var(--primary);
+  }
+  .tenant-room-item-name {
+    font-size:12px;
+    color:var(--text);
+    font-weight:700;
+    margin-top:2px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .tenant-status-pill {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:900;
+    line-height:1;
+    white-space:nowrap;
+  }
+  .tenant-status-pill.complete {
+    background:#e8f5ee;
+    color:#166534;
+  }
+  .tenant-status-pill.partial {
+    background:#fff7e8;
+    color:#9a6700;
+  }
+  .tenant-status-pill.empty {
+    background:#eef2f7;
+    color:#64748b;
+  }
+  .tenant-editor-placeholder {
+    padding: 30px 18px;
+    border: 1.5px dashed var(--border);
+    border-radius: 14px;
+    text-align:center;
+    color:var(--muted);
+    line-height:1.6;
+    background:var(--bg);
+  }
+  .tenant-profile-head {
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .tenant-profile-title {
+    font-family:'Kanit',sans-serif;
+    font-size:20px;
+    font-weight:900;
+    color:var(--primary);
+  }
+  .tenant-profile-sub {
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.45;
+    margin-top:2px;
+  }
+  .tenant-profile-grid {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+  .tenant-profile-grid .span-2 {
+    grid-column:1 / -1;
+  }
+  .tenant-profile-form-actions {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin:14px 0 18px;
+  }
+  .tenant-profile-form-actions .ctrl-btn {
+    min-width:150px;
+    justify-content:center;
+  }
+  .tenant-documents-panel {
+    border-top:1.5px dashed var(--border);
+    padding-top:14px;
+  }
+  .tenant-doc-upload {
+    display:grid;
+    grid-template-columns:minmax(160px, 210px) 1fr minmax(130px, 180px);
+    gap:8px;
+    align-items:center;
+    margin:10px 0 12px;
+  }
+  .tenant-doc-upload-note {
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.45;
+    margin-top:-2px;
+    margin-bottom:8px;
+  }
+  .tenant-doc-grid {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+    margin-top:10px;
+  }
+  .tenant-doc-card {
+    border:1.5px solid var(--border);
+    background:var(--bg);
+    border-radius:14px;
+    padding:11px;
+  }
+  .tenant-doc-card-title {
+    font-family:'Kanit',sans-serif;
+    font-size:14px;
+    font-weight:800;
+    color:var(--primary);
+  }
+  .tenant-doc-card-meta {
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.45;
+    margin-top:4px;
+    word-break:break-word;
+  }
+  .tenant-doc-card-actions {
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:6px;
+    margin-top:10px;
+  }
+  .tenant-doc-card-actions button {
+    border:none;
+    border-radius:9px;
+    min-height:34px;
+    cursor:pointer;
+    font-family:'Sarabun',sans-serif;
+    font-size:12px;
+    font-weight:800;
+  }
+  .tenant-doc-preview-btn { background:#1a3f7a; color:#fff; }
+  .tenant-doc-download-btn { background:#2e7d52; color:#fff; }
+  .tenant-doc-delete-btn { background:#c0392b; color:#fff; }
+  .tenant-doc-empty {
+    border:1.5px dashed var(--border);
+    border-radius:12px;
+    padding:16px;
+    color:var(--muted);
+    text-align:center;
+    line-height:1.55;
+    background:var(--bg);
+  }
+  .tenant-doc-preview-modal {
+    background:var(--card);
+    border-radius:20px 20px 0 0;
+    width:100%;
+    max-width:920px;
+    max-height:92vh;
+    overflow-y:auto;
+    padding:18px 16px 24px;
+    animation:slideUp 0.25s ease;
+  }
+  .tenant-doc-preview-head {
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .tenant-doc-preview-meta {
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.45;
+  }
+  .tenant-doc-preview-body {
+    background:var(--bg);
+    border:1.5px solid var(--border);
+    border-radius:14px;
+    min-height:180px;
+    padding:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .tenant-doc-preview-body img {
+    max-width:100%;
+    max-height:72vh;
+    border-radius:10px;
+    background:white;
+  }
+  .tenant-doc-preview-body iframe {
+    width:100%;
+    min-height:72vh;
+    border:none;
+    border-radius:10px;
+    background:white;
+  }
+  body.dark .tenant-docs-note {
+    background:#2a2010;
+    color:#ffd080;
+    border-color:rgba(251,191,36,0.35);
+  }
+  body.dark .tenant-room-item,
+  body.dark .tenant-doc-card,
+  body.dark .tenant-doc-preview-body,
+  body.dark .tenant-editor-placeholder,
+  body.dark .tenant-doc-empty {
+    background:#0f1923;
+  }
+  @media (max-width: 980px) {
+    .tenant-docs-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .tenant-docs-layout { grid-template-columns:1fr; }
+    .tenant-room-list { max-height:unset; }
+  }
+  @media (max-width: 720px) {
+    .tenant-profile-grid,
+    .tenant-doc-grid,
+    .tenant-doc-upload {
+      grid-template-columns:1fr;
+    }
+    .tenant-profile-grid .span-2 { grid-column:auto; }
+    .tenant-doc-card-actions { grid-template-columns:1fr; }
+    .tenant-profile-form-actions .ctrl-btn { width:100%; }
+    .tenant-docs-summary { grid-template-columns:1fr 1fr; }
+  }
 
   /* FILTER TABS */
   .filter-tabs {
@@ -2851,6 +3172,7 @@ body.dark .meter-correction-note.danger {
       <div class="tool-button-list two">
         <button class="ctrl-btn outline" onclick="openSettings()">⚙️ LINE</button>
         <button class="ctrl-btn outline" onclick="openRoomSettings()">🏘️ ห้อง/ค่าเช่า</button>
+        <button class="ctrl-btn outline" onclick="openTenantDocs()">🧾 ผู้เช่า/เอกสาร</button>
         <button class="ctrl-btn outline" onclick="openMutedRooms()">🔕 งดแจ้งเตือน</button>
         <button class="ctrl-btn primary" onclick="openImport()">📂 นำเข้า</button>
         <button class="ctrl-btn green" onclick="exportExcel()">💾 บันทึก</button>
@@ -3383,6 +3705,46 @@ body.dark .meter-correction-note.danger {
 </div>
 
 
+
+<!-- TENANT PROFILE / DOCUMENTS PAGE -->
+<div class="page-overlay" id="tenantDocsPage">
+  <div class="page-header">
+    <button class="back-btn" onclick="closeTenantDocs()">←</button>
+    <h2>🧾 ข้อมูลผู้เช่า / สัญญา / เอกสาร</h2>
+    <button class="meter-save-btn" onclick="refreshTenantDocsPage()">รีเฟรช</button>
+  </div>
+  <div class="tenant-docs-note">
+    เก็บข้อมูลผู้เช่าและเอกสารไว้ในระบบหลังบ้าน • ไฟล์รูป/PDF เก็บใน Cloudflare R2 และเปิดดูผ่าน Worker หลังยืนยัน PIN
+  </div>
+  <div class="tenant-docs-wrap">
+    <div id="tenantDocsSummary"></div>
+    <div class="tenant-docs-layout">
+      <section class="tenant-room-list-card">
+        <div class="tenant-doc-section-title">เลือกห้อง</div>
+        <input id="tenantRoomSearchInput" class="form-input" placeholder="ค้นหาเลขห้อง / ชื่อผู้เช่า" oninput="renderTenantDocsRoomList()">
+        <div id="tenantDocsRoomList" class="tenant-room-list"></div>
+      </section>
+      <section id="tenantProfileEditor" class="tenant-profile-editor"></section>
+    </div>
+  </div>
+</div>
+
+<!-- TENANT DOCUMENT PREVIEW MODAL -->
+<div class="modal-overlay" id="tenantDocPreviewOverlay" onclick="ignoreBackdropClick(event)">
+  <div class="tenant-doc-preview-modal">
+    <div class="modal-handle"></div>
+    <div class="tenant-doc-preview-head">
+      <div>
+        <div class="modal-title" id="tenantDocPreviewTitle" style="margin-bottom:2px;">ดูเอกสาร</div>
+        <div id="tenantDocPreviewMeta" class="tenant-doc-preview-meta"></div>
+      </div>
+      <button class="ctrl-btn outline" onclick="closeTenantDocumentPreview()">ปิด</button>
+    </div>
+    <div id="tenantDocPreviewBody" class="tenant-doc-preview-body"></div>
+  </div>
+</div>
+
+
 <!-- ROOM SETTINGS PAGE -->
 <div class="page-overlay" id="roomSettingsPage">
   <div class="page-header">
@@ -3733,6 +4095,10 @@ const defaultTenants = {
   21:'',22:'',23:'',24:'',25:'',26:'',27:'',28:'',29:'',30:'',
 };
 let tenants = {}; // { roomNum: { name, phone, lineId, startDate, endDate } }
+let tenantProfiles = {};
+try { tenantProfiles = JSON.parse(localStorage.getItem('pananth_tenant_profiles') || '{}') || {}; } catch(e) { tenantProfiles = {}; }
+let selectedTenantProfileRoom = '';
+let tenantDocPreviewObjectUrl = '';
 
 const WORKER_URL = 'https://white-rice-cf72.joteboony.workers.dev';
 const ADMIN_TOKEN_KEY = 'pananth_admin_token_v1';
@@ -3782,6 +4148,584 @@ async function workerPost(payload) {
   }
   return data;
 }
+
+
+
+// ===== TENANT PROFILE / DOCUMENT CENTER v15.4.2.42 =====
+const TENANT_DOCUMENT_TYPE_LABELS = {
+  contract: 'สัญญาเช่า',
+  id_front: 'บัตรประชาชนด้านหน้า',
+  id_back: 'บัตรประชาชนด้านหลัง',
+  house_registration: 'ทะเบียนบ้าน',
+  deposit_receipt: 'หลักฐานเงินประกัน / มัดจำ',
+  tenant_photo: 'รูปผู้เช่า',
+  vehicle_registration: 'ทะเบียนรถ',
+  guarantor_doc: 'เอกสารผู้ค้ำประกัน',
+  other: 'เอกสารอื่น ๆ',
+};
+
+function getTenantDocumentTypeLabel(type = 'other') {
+  return TENANT_DOCUMENT_TYPE_LABELS[String(type || 'other')] || TENANT_DOCUMENT_TYPE_LABELS.other;
+}
+
+function tenantDocumentFormatSize(bytes = 0) {
+  const n = Number(bytes || 0);
+  if (n >= 1024 * 1024) return (n / 1024 / 1024).toFixed(2) + ' MB';
+  if (n >= 1024) return (n / 1024).toFixed(1) + ' KB';
+  return n.toLocaleString('th-TH') + ' B';
+}
+
+function saveTenantProfilesLocal() {
+  try { localStorage.setItem('pananth_tenant_profiles', JSON.stringify(tenantProfiles || {})); } catch(e) {}
+}
+
+function getTenantDocsRoomNumbers() {
+  const nums = new Set();
+  try { (getManagedRoomNumbers() || []).forEach(n => nums.add(Number(n))); } catch(e) {}
+  try { Object.keys(rooms || {}).forEach(k => nums.add(Number(k))); } catch(e) {}
+  try { Object.keys(tenantProfiles || {}).forEach(k => nums.add(Number(k))); } catch(e) {}
+  return Array.from(nums)
+    .filter(n => Number.isFinite(n) && n > 0)
+    .sort((a, b) => a - b);
+}
+
+function getTenantProfileLocal(roomNum) {
+  const key = String(Number(roomNum) || roomNum || '').trim();
+  const raw = (tenantProfiles && tenantProfiles[key]) || {};
+  const docs = Array.isArray(raw.documents) ? raw.documents.filter(Boolean) : [];
+  return {
+    roomNum: key,
+    fullName: String(raw.fullName || raw.name || '').trim(),
+    phone: String(raw.phone || '').trim(),
+    idCardNumber: String(raw.idCardNumber || raw.idCard || '').trim(),
+    birthDate: String(raw.birthDate || '').trim(),
+    occupation: String(raw.occupation || '').trim(),
+    workplace: String(raw.workplace || '').trim(),
+    registeredAddress: String(raw.registeredAddress || raw.address || '').trim(),
+    emergencyName: String(raw.emergencyName || '').trim(),
+    emergencyRelation: String(raw.emergencyRelation || '').trim(),
+    emergencyPhone: String(raw.emergencyPhone || '').trim(),
+    contractStart: String(raw.contractStart || '').trim(),
+    contractEnd: String(raw.contractEnd || '').trim(),
+    deposit: Number(raw.deposit || 0) || 0,
+    moveInDate: String(raw.moveInDate || '').trim(),
+    profileNote: String(raw.profileNote || raw.note || '').trim(),
+    documents: docs,
+    createdAt: raw.createdAt || '',
+    updatedAt: raw.updatedAt || '',
+  };
+}
+
+function getTenantDisplayNameForDocs(roomNum) {
+  const key = String(roomNum);
+  const profile = getTenantProfileLocal(key);
+  return profile.fullName
+    || tenants?.[key]?.name
+    || rooms?.[key]?.tenantName
+    || rooms?.[Number(key)]?.tenantName
+    || '';
+}
+
+function getTenantProfileCompleteness(roomNum) {
+  const profile = getTenantProfileLocal(roomNum);
+  const docs = new Set((profile.documents || []).map(doc => String(doc.type || 'other')));
+  const hasCoreInfo = !!(profile.fullName || getTenantDisplayNameForDocs(roomNum)) && !!profile.phone;
+  const hasContract = docs.has('contract');
+  const hasIdFront = docs.has('id_front');
+  const complete = hasCoreInfo && hasContract && hasIdFront;
+  const docCount = (profile.documents || []).length;
+  if (complete) return { key:'complete', label:'เอกสารหลักครบ', docCount, complete:true };
+  if (hasCoreInfo || docCount) return { key:'partial', label:'มีข้อมูลบางส่วน', docCount, complete:false };
+  return { key:'empty', label:'ยังไม่มีแฟ้ม', docCount, complete:false };
+}
+
+function openTenantDocs(roomNum = '') {
+  const page = document.getElementById('tenantDocsPage');
+  if (!page) return;
+  if (roomNum) selectedTenantProfileRoom = String(roomNum);
+  if (!selectedTenantProfileRoom) {
+    const first = getTenantDocsRoomNumbers()[0];
+    selectedTenantProfileRoom = first ? String(first) : '';
+  }
+  renderTenantDocsPage();
+  page.classList.add('open');
+  refreshModalLockSafe();
+}
+
+function closeTenantDocs() {
+  const page = document.getElementById('tenantDocsPage');
+  if (page) page.classList.remove('open');
+  refreshModalLockSafe();
+}
+
+async function refreshTenantDocsPage() {
+  try {
+    await refreshData();
+    renderTenantDocsPage();
+  } catch(e) {
+    renderTenantDocsPage();
+  }
+}
+
+function renderTenantDocsPage() {
+  renderTenantDocsSummary();
+  renderTenantDocsRoomList();
+  renderTenantProfileEditor(selectedTenantProfileRoom);
+}
+
+function renderTenantDocsSummary() {
+  const box = document.getElementById('tenantDocsSummary');
+  if (!box) return;
+  const roomNums = getTenantDocsRoomNumbers().filter(n => Number(n) !== TEST_ROOM);
+  const total = roomNums.length;
+  const withProfiles = roomNums.filter(room => {
+    const p = getTenantProfileLocal(room);
+    return !!(p.fullName || p.phone || p.idCardNumber || (p.documents || []).length);
+  }).length;
+  const complete = roomNums.filter(room => getTenantProfileCompleteness(room).complete).length;
+  const totalDocs = roomNums.reduce((sum, room) => sum + (getTenantProfileLocal(room).documents || []).length, 0);
+
+  box.className = 'tenant-docs-summary';
+  box.innerHTML = `
+    <div class="tenant-doc-summary-card">
+      <div class="tenant-doc-summary-val">${total.toLocaleString('th-TH')}</div>
+      <div class="tenant-doc-summary-lbl">ห้องในแฟ้ม</div>
+    </div>
+    <div class="tenant-doc-summary-card">
+      <div class="tenant-doc-summary-val">${withProfiles.toLocaleString('th-TH')}</div>
+      <div class="tenant-doc-summary-lbl">ห้องที่มีข้อมูลผู้เช่า</div>
+    </div>
+    <div class="tenant-doc-summary-card">
+      <div class="tenant-doc-summary-val">${complete.toLocaleString('th-TH')}</div>
+      <div class="tenant-doc-summary-lbl">แฟ้มหลักครบ<br>ชื่อ+โทร+สัญญา+บัตรหน้า</div>
+    </div>
+    <div class="tenant-doc-summary-card">
+      <div class="tenant-doc-summary-val">${totalDocs.toLocaleString('th-TH')}</div>
+      <div class="tenant-doc-summary-lbl">ไฟล์เอกสารในระบบ</div>
+    </div>
+  `;
+}
+
+function renderTenantDocsRoomList() {
+  const box = document.getElementById('tenantDocsRoomList');
+  if (!box) return;
+  const q = String(document.getElementById('tenantRoomSearchInput')?.value || '').trim().toLowerCase();
+  const roomNums = getTenantDocsRoomNumbers();
+  const rows = roomNums.filter(room => {
+    if (!q) return true;
+    const name = getTenantDisplayNameForDocs(room).toLowerCase();
+    return String(room).includes(q) || name.includes(q);
+  });
+
+  if (!rows.length) {
+    box.innerHTML = '<div class="tenant-doc-empty">ไม่พบห้องที่ค้นหา</div>';
+    return;
+  }
+
+  box.innerHTML = rows.map(room => {
+    const status = getTenantProfileCompleteness(room);
+    const name = getTenantDisplayNameForDocs(room) || 'ยังไม่มีชื่อผู้เช่า';
+    const active = String(selectedTenantProfileRoom) === String(room) ? ' active' : '';
+    const roomLabel = Number(room) === TEST_ROOM ? 'ห้อง 99 TEST' : `ห้อง ${room}`;
+    return `<button class="tenant-room-item${active}" onclick="selectTenantProfileRoom('${escapeJsString(room)}')">
+      <div class="tenant-room-item-head">
+        <div class="tenant-room-item-room">🏠 ${escapeHtml(roomLabel)}</div>
+        <span class="tenant-status-pill ${status.key}">${escapeHtml(status.label)}</span>
+      </div>
+      <div class="tenant-room-item-name">${escapeHtml(name)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">เอกสาร ${Number(status.docCount || 0).toLocaleString('th-TH')} ไฟล์</div>
+    </button>`;
+  }).join('');
+}
+
+function selectTenantProfileRoom(roomNum) {
+  selectedTenantProfileRoom = String(roomNum || '');
+  renderTenantDocsRoomList();
+  renderTenantProfileEditor(selectedTenantProfileRoom);
+}
+
+function tenantProfileField(id) {
+  return String(document.getElementById(id)?.value || '').trim();
+}
+
+function renderTenantProfileEditor(roomNum) {
+  const box = document.getElementById('tenantProfileEditor');
+  if (!box) return;
+  if (!roomNum) {
+    box.innerHTML = '<div class="tenant-editor-placeholder">เลือกห้องจากด้านซ้ายเพื่อเริ่มบันทึกข้อมูลผู้เช่าและเอกสาร</div>';
+    return;
+  }
+
+  const profile = getTenantProfileLocal(roomNum);
+  const displayName = getTenantDisplayNameForDocs(roomNum) || 'ยังไม่มีชื่อผู้เช่า';
+  const status = getTenantProfileCompleteness(roomNum);
+  const roomLabel = Number(roomNum) === TEST_ROOM ? 'ห้อง 99 TEST' : `ห้อง ${roomNum}`;
+  const docsHtml = renderTenantDocumentsHtml(roomNum, profile.documents || []);
+
+  box.innerHTML = `
+    <div class="tenant-profile-head">
+      <div>
+        <div class="tenant-profile-title">🧾 ${escapeHtml(roomLabel)}</div>
+        <div class="tenant-profile-sub">${escapeHtml(displayName)} • <span class="tenant-status-pill ${status.key}">${escapeHtml(status.label)}</span></div>
+      </div>
+      <button class="ctrl-btn outline" onclick="renderTenantProfileEditor('${escapeJsString(roomNum)}')">↻ รีโหลดฟอร์ม</button>
+    </div>
+
+    <div class="tenant-doc-section-title">ข้อมูลผู้เช่า</div>
+    <div class="tenant-profile-grid">
+      <div class="form-row">
+        <label class="form-label">ชื่อ-นามสกุล</label>
+        <input id="tpFullName" class="form-input" value="${escapeHtml(profile.fullName)}" placeholder="ชื่อผู้เช่า">
+      </div>
+      <div class="form-row">
+        <label class="form-label">เบอร์โทร</label>
+        <input id="tpPhone" class="form-input" value="${escapeHtml(profile.phone)}" placeholder="08x-xxx-xxxx">
+      </div>
+      <div class="form-row">
+        <label class="form-label">เลขบัตรประชาชน</label>
+        <input id="tpIdCardNumber" class="form-input" value="${escapeHtml(profile.idCardNumber)}" placeholder="กรอกเฉพาะเมื่อจำเป็น">
+      </div>
+      <div class="form-row">
+        <label class="form-label">วันเกิด</label>
+        <input id="tpBirthDate" type="date" class="form-input" value="${escapeHtml(profile.birthDate)}">
+      </div>
+      <div class="form-row">
+        <label class="form-label">อาชีพ</label>
+        <input id="tpOccupation" class="form-input" value="${escapeHtml(profile.occupation)}" placeholder="อาชีพ">
+      </div>
+      <div class="form-row">
+        <label class="form-label">ที่ทำงาน</label>
+        <input id="tpWorkplace" class="form-input" value="${escapeHtml(profile.workplace)}" placeholder="ชื่อบริษัท / สถานที่ทำงาน">
+      </div>
+      <div class="form-row span-2">
+        <label class="form-label">ที่อยู่ตามเอกสาร</label>
+        <textarea id="tpRegisteredAddress" class="form-input" rows="2" placeholder="ที่อยู่ตามบัตร / ที่อยู่ติดต่อ">${escapeHtml(profile.registeredAddress)}</textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">วันเริ่มสัญญา</label>
+        <input id="tpContractStart" type="date" class="form-input" value="${escapeHtml(profile.contractStart)}">
+      </div>
+      <div class="form-row">
+        <label class="form-label">วันสิ้นสุดสัญญา</label>
+        <input id="tpContractEnd" type="date" class="form-input" value="${escapeHtml(profile.contractEnd)}">
+      </div>
+      <div class="form-row">
+        <label class="form-label">เงินประกัน / มัดจำ</label>
+        <input id="tpDeposit" type="number" min="0" class="form-input" value="${Number(profile.deposit || 0)}" placeholder="0">
+      </div>
+      <div class="form-row">
+        <label class="form-label">วันเข้าอยู่</label>
+        <input id="tpMoveInDate" type="date" class="form-input" value="${escapeHtml(profile.moveInDate)}">
+      </div>
+      <div class="form-row">
+        <label class="form-label">ผู้ติดต่อฉุกเฉิน</label>
+        <input id="tpEmergencyName" class="form-input" value="${escapeHtml(profile.emergencyName)}" placeholder="ชื่อบุคคลติดต่อ">
+      </div>
+      <div class="form-row">
+        <label class="form-label">ความสัมพันธ์</label>
+        <input id="tpEmergencyRelation" class="form-input" value="${escapeHtml(profile.emergencyRelation)}" placeholder="เช่น พ่อ / แม่ / คู่สมรส">
+      </div>
+      <div class="form-row">
+        <label class="form-label">เบอร์ฉุกเฉิน</label>
+        <input id="tpEmergencyPhone" class="form-input" value="${escapeHtml(profile.emergencyPhone)}" placeholder="เบอร์ติดต่อฉุกเฉิน">
+      </div>
+      <div class="form-row span-2">
+        <label class="form-label">หมายเหตุแฟ้มผู้เช่า</label>
+        <textarea id="tpProfileNote" class="form-input" rows="2" placeholder="ข้อมูลที่เจ้าของต้องการจำ">${escapeHtml(profile.profileNote)}</textarea>
+      </div>
+    </div>
+
+    <div class="tenant-profile-form-actions">
+      <button class="ctrl-btn green" onclick="saveTenantProfileFromForm('${escapeJsString(roomNum)}')">💾 บันทึกข้อมูลผู้เช่า</button>
+      <button class="ctrl-btn outline" onclick="copyTenantProfileSummary('${escapeJsString(roomNum)}')">📋 คัดลอกสรุปแฟ้ม</button>
+    </div>
+
+    <div class="tenant-documents-panel">
+      <div class="tenant-doc-section-title">ไฟล์เอกสาร</div>
+      <div class="tenant-doc-upload">
+        <select id="tenantDocType" class="form-input">${renderTenantDocumentTypeOptions()}</select>
+        <input id="tenantDocFile" class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
+        <button class="ctrl-btn primary" onclick="uploadTenantDocumentFromForm('${escapeJsString(roomNum)}')">☁️ อัปโหลด</button>
+      </div>
+      <div class="tenant-doc-upload-note">
+        รองรับ JPG, PNG, WEBP และ PDF • สูงสุด 8 MB ต่อไฟล์ • สัญญาหลายหน้าอัปโหลดซ้ำประเภท “สัญญาเช่า” ได้หลายไฟล์
+      </div>
+      <div id="tenantDocumentsGrid">${docsHtml}</div>
+    </div>
+  `;
+}
+
+function renderTenantDocumentTypeOptions(selected = '') {
+  return Object.entries(TENANT_DOCUMENT_TYPE_LABELS)
+    .map(([value, label]) => `<option value="${escapeHtml(value)}"${String(selected) === value ? ' selected' : ''}>${escapeHtml(label)}</option>`)
+    .join('');
+}
+
+function renderTenantDocumentsHtml(roomNum, docs = []) {
+  if (!Array.isArray(docs) || !docs.length) {
+    return '<div class="tenant-doc-empty">ยังไม่มีเอกสารในแฟ้มนี้<br>เริ่มจากอัปโหลดสัญญาเช่าและบัตรประชาชนด้านหน้าได้เลย</div>';
+  }
+  const cards = docs.slice().sort((a,b) => String(b.uploadedAt || '').localeCompare(String(a.uploadedAt || ''))).map(doc => {
+    const id = escapeJsString(doc.id || '');
+    const key = escapeJsString(doc.key || '');
+    const typeLabel = getTenantDocumentTypeLabel(doc.type);
+    return `<div class="tenant-doc-card">
+      <div class="tenant-doc-card-title">📄 ${escapeHtml(typeLabel)}</div>
+      <div class="tenant-doc-card-meta">
+        ${doc.label ? `ป้ายกำกับ: ${escapeHtml(doc.label)}<br>` : ''}
+        ไฟล์: ${escapeHtml(doc.fileName || '-')}<br>
+        ขนาด: ${escapeHtml(tenantDocumentFormatSize(doc.size || 0))}<br>
+        อัปโหลด: ${escapeHtml(doc.uploadedAtText || doc.uploadedAt || '-')}
+      </div>
+      <div class="tenant-doc-card-actions">
+        <button class="tenant-doc-preview-btn" onclick="previewTenantDocument('${escapeJsString(roomNum)}','${id}')">👁️ ดู</button>
+        <button class="tenant-doc-download-btn" onclick="downloadTenantDocument('${escapeJsString(roomNum)}','${id}')">⬇️ โหลด</button>
+        <button class="tenant-doc-delete-btn" onclick="deleteTenantDocumentFromProfile('${escapeJsString(roomNum)}','${id}','${key}')">🗑️ ลบ</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="tenant-doc-grid">${cards}</div>`;
+}
+
+async function saveTenantProfileFromForm(roomNum) {
+  const key = String(roomNum || '');
+  const existing = getTenantProfileLocal(key);
+  const now = new Date().toISOString();
+  const profile = {
+    ...existing,
+    roomNum: key,
+    fullName: tenantProfileField('tpFullName'),
+    phone: tenantProfileField('tpPhone'),
+    idCardNumber: tenantProfileField('tpIdCardNumber'),
+    birthDate: tenantProfileField('tpBirthDate'),
+    occupation: tenantProfileField('tpOccupation'),
+    workplace: tenantProfileField('tpWorkplace'),
+    registeredAddress: tenantProfileField('tpRegisteredAddress'),
+    emergencyName: tenantProfileField('tpEmergencyName'),
+    emergencyRelation: tenantProfileField('tpEmergencyRelation'),
+    emergencyPhone: tenantProfileField('tpEmergencyPhone'),
+    contractStart: tenantProfileField('tpContractStart'),
+    contractEnd: tenantProfileField('tpContractEnd'),
+    deposit: Number(tenantProfileField('tpDeposit') || 0) || 0,
+    moveInDate: tenantProfileField('tpMoveInDate'),
+    profileNote: tenantProfileField('tpProfileNote'),
+    documents: Array.isArray(existing.documents) ? existing.documents : [],
+    createdAt: existing.createdAt || now,
+    updatedAt: now,
+  };
+
+  tenantProfiles[key] = profile;
+  saveTenantProfilesLocal();
+
+  if (profile.fullName || profile.phone) {
+    tenants[key] = {
+      ...(tenants[key] || {}),
+      name: profile.fullName || tenants[key]?.name || '',
+      phone: profile.phone || tenants[key]?.phone || '',
+    };
+    try { saveTenants(); } catch(e) {}
+  }
+
+  try {
+    const result = await workerPost({ action: 'saveTenantProfiles', data: tenantProfiles });
+    if (result.tenantProfiles) {
+      tenantProfiles = result.tenantProfiles;
+      saveTenantProfilesLocal();
+    }
+    renderTenantDocsPage();
+    alert('✅ บันทึกข้อมูลผู้เช่าแล้วครับ');
+  } catch(e) {
+    alert('บันทึกในเครื่องแล้ว แต่ซิงค์ Worker ไม่สำเร็จ: ' + (e.message || e));
+  }
+}
+
+function tenantFileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      resolve(result.includes(',') ? result.split(',').pop() : result);
+    };
+    reader.onerror = () => reject(new Error('อ่านไฟล์ไม่สำเร็จ'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadTenantDocumentFromForm(roomNum) {
+  const fileInput = document.getElementById('tenantDocFile');
+  const docType = String(document.getElementById('tenantDocType')?.value || 'other');
+  const file = fileInput?.files?.[0];
+  if (!file) {
+    alert('กรุณาเลือกไฟล์ก่อนครับ');
+    return;
+  }
+  if (file.size > 8 * 1024 * 1024) {
+    alert('ไฟล์ใหญ่เกิน 8 MB กรุณาลดขนาดรูปก่อนอัปโหลด');
+    return;
+  }
+
+  const allowed = ['image/jpeg','image/png','image/webp','application/pdf'];
+  if (!allowed.includes(String(file.type || '').toLowerCase())) {
+    alert('รองรับเฉพาะ JPG, PNG, WEBP และ PDF');
+    return;
+  }
+
+  const button = document.activeElement && document.activeElement.tagName === 'BUTTON' ? document.activeElement : null;
+  const oldText = button?.textContent || '';
+  try {
+    if (button) { button.disabled = true; button.textContent = 'กำลังอัปโหลด...'; }
+    const base64 = await tenantFileToBase64(file);
+    const result = await workerPost({
+      action: 'uploadTenantDocument',
+      roomNum: String(roomNum),
+      docType,
+      fileName: file.name || 'tenant-document',
+      mimeType: file.type,
+      base64,
+    });
+    if (result.tenantProfiles) {
+      tenantProfiles = result.tenantProfiles;
+      saveTenantProfilesLocal();
+    }
+    if (fileInput) fileInput.value = '';
+    renderTenantDocsPage();
+    alert('✅ อัปโหลดเอกสารแล้วครับ');
+  } catch(e) {
+    alert('❌ อัปโหลดเอกสารไม่สำเร็จ: ' + (e.message || e));
+  } finally {
+    if (button) { button.disabled = false; button.textContent = oldText || '☁️ อัปโหลด'; }
+  }
+}
+
+function getTenantDocumentLocal(roomNum, documentId) {
+  const docs = getTenantProfileLocal(roomNum).documents || [];
+  return docs.find(doc => String(doc.id || '') === String(documentId || '')) || null;
+}
+
+async function fetchTenantDocumentBlob(doc) {
+  if (!doc || !doc.key) throw new Error('ไม่พบ key ของเอกสาร');
+  const res = await fetch(WORKER_URL + '?action=tenantDocument&key=' + encodeURIComponent(doc.key), { cache: 'no-store' });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || ('HTTP ' + res.status));
+  }
+  return await res.blob();
+}
+
+async function previewTenantDocument(roomNum, documentId) {
+  const doc = getTenantDocumentLocal(roomNum, documentId);
+  if (!doc) {
+    alert('ไม่พบเอกสารนี้ในแฟ้ม');
+    return;
+  }
+  const overlay = document.getElementById('tenantDocPreviewOverlay');
+  const body = document.getElementById('tenantDocPreviewBody');
+  const title = document.getElementById('tenantDocPreviewTitle');
+  const meta = document.getElementById('tenantDocPreviewMeta');
+  if (!overlay || !body || !title || !meta) return;
+
+  try {
+    title.textContent = getTenantDocumentTypeLabel(doc.type);
+    meta.textContent = `${doc.fileName || '-'} • ${tenantDocumentFormatSize(doc.size || 0)}`;
+    body.innerHTML = '<div style="color:var(--muted);font-weight:700;">กำลังโหลดเอกสาร...</div>';
+    overlay.classList.add('open');
+    refreshModalLockSafe();
+
+    const blob = await fetchTenantDocumentBlob(doc);
+    if (tenantDocPreviewObjectUrl) URL.revokeObjectURL(tenantDocPreviewObjectUrl);
+    tenantDocPreviewObjectUrl = URL.createObjectURL(blob);
+    const type = String(blob.type || doc.mimeType || '');
+    if (type.startsWith('image/')) {
+      body.innerHTML = `<img alt="${escapeHtml(doc.fileName || 'tenant-document')}" src="${tenantDocPreviewObjectUrl}">`;
+    } else if (type === 'application/pdf') {
+      body.innerHTML = `<iframe title="${escapeHtml(doc.fileName || 'tenant-document')}" src="${tenantDocPreviewObjectUrl}"></iframe>`;
+    } else {
+      body.innerHTML = '<div class="tenant-doc-empty">ไฟล์ประเภทนี้ไม่รองรับ preview แต่ยังดาวน์โหลดได้</div>';
+    }
+  } catch(e) {
+    body.innerHTML = `<div class="tenant-doc-empty" style="color:#c0392b;">เปิดเอกสารไม่สำเร็จ: ${escapeHtml(e.message || e)}</div>`;
+  }
+}
+
+function closeTenantDocumentPreview() {
+  const overlay = document.getElementById('tenantDocPreviewOverlay');
+  if (overlay) overlay.classList.remove('open');
+  if (tenantDocPreviewObjectUrl) {
+    try { URL.revokeObjectURL(tenantDocPreviewObjectUrl); } catch(e) {}
+    tenantDocPreviewObjectUrl = '';
+  }
+  const body = document.getElementById('tenantDocPreviewBody');
+  if (body) body.innerHTML = '';
+  refreshModalLockSafe();
+}
+
+async function downloadTenantDocument(roomNum, documentId) {
+  const doc = getTenantDocumentLocal(roomNum, documentId);
+  if (!doc) {
+    alert('ไม่พบเอกสารนี้ในแฟ้ม');
+    return;
+  }
+  try {
+    const blob = await fetchTenantDocumentBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = doc.fileName || 'tenant-document';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1200);
+  } catch(e) {
+    alert('ดาวน์โหลดไม่สำเร็จ: ' + (e.message || e));
+  }
+}
+
+async function deleteTenantDocumentFromProfile(roomNum, documentId, key = '') {
+  const doc = getTenantDocumentLocal(roomNum, documentId);
+  if (!doc) {
+    alert('ไม่พบเอกสารนี้ในแฟ้ม');
+    return;
+  }
+  if (!confirm('ลบเอกสาร "' + getTenantDocumentTypeLabel(doc.type) + '" ใช่ไหมครับ?')) return;
+  try {
+    const result = await workerPost({
+      action: 'deleteTenantDocument',
+      roomNum: String(roomNum),
+      documentId: String(documentId || ''),
+      key: key || doc.key || '',
+    });
+    if (result.tenantProfiles) {
+      tenantProfiles = result.tenantProfiles;
+      saveTenantProfilesLocal();
+    }
+    renderTenantDocsPage();
+    alert('✅ ลบเอกสารแล้วครับ');
+  } catch(e) {
+    alert('❌ ลบเอกสารไม่สำเร็จ: ' + (e.message || e));
+  }
+}
+
+async function copyTenantProfileSummary(roomNum) {
+  const p = getTenantProfileLocal(roomNum);
+  const docs = (p.documents || []).map(doc => '- ' + getTenantDocumentTypeLabel(doc.type)).join('\n') || '- ยังไม่มีเอกสาร';
+  const text = [
+    `แฟ้มผู้เช่า ห้อง ${roomNum}`,
+    `ชื่อ: ${p.fullName || getTenantDisplayNameForDocs(roomNum) || '-'}`,
+    `โทร: ${p.phone || '-'}`,
+    `เลขบัตร: ${p.idCardNumber || '-'}`,
+    `สัญญา: ${p.contractStart || '-'} ถึง ${p.contractEnd || '-'}`,
+    `เงินประกัน: ${(Number(p.deposit || 0)).toLocaleString('th-TH')} บาท`,
+    `ผู้ติดต่อฉุกเฉิน: ${p.emergencyName || '-'} ${p.emergencyPhone ? '(' + p.emergencyPhone + ')' : ''}`,
+    `เอกสาร:\n${docs}`,
+  ].join('\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    alert('✅ คัดลอกสรุปแฟ้มแล้ว');
+  } catch(e) {
+    prompt('คัดลอกข้อความนี้:', text);
+  }
+}
+
 
 
 // ===== TEST ROOM =====
@@ -4129,6 +5073,14 @@ async function initRooms() {
     } else {
       const savedT = localStorage.getItem('pananth_tenants');
       tenants = savedT ? JSON.parse(savedT) : {};
+    }
+
+    // โหลดแฟ้มข้อมูลผู้เช่า / เอกสาร
+    if (kvData.tenantProfiles) {
+      tenantProfiles = kvData.tenantProfiles || {};
+      saveTenantProfilesLocal();
+    } else {
+      try { tenantProfiles = JSON.parse(localStorage.getItem('pananth_tenant_profiles') || '{}') || {}; } catch(e) { tenantProfiles = {}; }
     }
 
     // โหลด history
@@ -6896,7 +7848,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.41'
+        createdFrom: 'web-v15.4.2.42'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -9246,6 +10198,10 @@ async function refreshData() {
       tenants = kvData.tenants;
       localStorage.setItem('pananth_tenants', JSON.stringify(tenants));
     }
+    if (kvData.tenantProfiles) {
+      tenantProfiles = kvData.tenantProfiles || {};
+      saveTenantProfilesLocal();
+    }
     if (kvData.history) {
       localStorage.setItem('pananth_history', JSON.stringify(kvData.history));
     }
@@ -9367,6 +10323,7 @@ function organizeMobileTools() {
           <div class="button-grid">
             <button class="ctrl-btn outline" onclick="openSettings()">⚙️ ตั้งค่า LINE</button>
             <button class="ctrl-btn outline" onclick="openRoomSettings()">🏘️ ตั้งค่าห้อง/ค่าเช่า</button>
+            <button class="ctrl-btn outline" onclick="openTenantDocs()">🧾 ผู้เช่า/เอกสาร</button>
             <button class="ctrl-btn outline" onclick="openMutedRooms()">🔕 งดแจ้งเตือน</button>
             <button class="ctrl-btn primary" onclick="openImport()">📂 นำเข้า Excel</button>
             <button class="ctrl-btn green" onclick="exportExcel()">💾 บันทึก Excel</button>
@@ -9454,33 +10411,6 @@ document.head.appendChild(s);
 })();
 </script>
 <!-- PWA END -->
-
-<!-- PANANTH_MONTH_BADGE_SHORT_TEXT_PATCH -->
-<script>
-(function(){
-  function pananthShortMonthBadgeText(){
-    try{
-      document.querySelectorAll('body *').forEach(function(el){
-        if (!el || el.children.length) return;
-        var text = (el.textContent || '').replace(/s+/g, ' ').trim();
-        if (!text) return;
-        if (text.length > 80) return;
-        var m = text.match(/^รอบบิลs+(.+?)s*/s*รับชำระs+.+$/);
-        if (m && m[1]) el.textContent = 'รอบเดือน ' + m[1].trim();
-      });
-    }catch(e){}
-  }
-  document.addEventListener('DOMContentLoaded', pananthShortMonthBadgeText);
-  setTimeout(pananthShortMonthBadgeText, 200);
-  setTimeout(pananthShortMonthBadgeText, 1000);
-  if (window.MutationObserver) {
-    var obs = new MutationObserver(function(){ pananthShortMonthBadgeText(); });
-    document.addEventListener('DOMContentLoaded', function(){
-      if (document.body) obs.observe(document.body, { childList:true, subtree:true, characterData:true });
-    });
-  }
-})();
-</script>
 
 <!-- ===== PANANTH v15.4.2.37 duplicate arrears repair ===== -->
 <script>
