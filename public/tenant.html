@@ -296,8 +296,7 @@
         return;
       }
 
-      const userName = portalData.user?.displayName || 'ผู้เช่า';
-      $('heroTenantName').textContent = userName;
+      $('heroTenantName').textContent = portalData.user?.displayName || 'ผู้เช่า';
       $('heroTotalOutstanding').textContent = money(portalData.totals?.totalOutstanding || 0);
 
       if (!portalData.rooms.length) {
@@ -359,6 +358,9 @@
       const amounts = room.amounts || {};
       const billing = room.billingMeta || {};
       const meters = room.meters || {};
+      const roomTenantName = String(room.tenantName || '').trim();
+      const lineDisplayName = String(portalData?.user?.displayName || '').trim();
+      $('heroTenantName').textContent = roomTenantName || lineDisplayName || 'ผู้เช่า';
 
       ['overviewSection','currentBillSection','arrearsSection','archiveSection','paymentSection'].forEach(id => {
         const el = $(id);
