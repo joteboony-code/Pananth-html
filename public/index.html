@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.51</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.52</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.51'
+        createdFrom: 'web-v15.4.2.52'
       })
     });
 
@@ -715,6 +715,7 @@ const SYSTEM_ACTIVITY_DEFINITIONS = {
   rollbackMonthClose: { group: 'billing', icon: '↩️', title: 'ย้อนกลับปิดรอบล่าสุด', actor: 'เจ้าของ/แอดมิน' },
   manualPayment: { group: 'payment', icon: '💰', title: 'รับชำระเอง', actor: 'เจ้าของ/แอดมิน' },
   tenantCheckout: { group: 'tenant', icon: '🚪', title: 'ผู้เช่าย้ายออก / เปลี่ยนห้องเป็นว่าง', actor: 'เจ้าของ/แอดมิน' },
+  tenantOnboarding: { group: 'tenant', icon: '🧍', title: 'รับผู้เช่าใหม่', actor: 'เจ้าของ/แอดมิน' },
   uploadTenantDocument: { group: 'document', icon: '📤', title: 'อัปโหลดเอกสารผู้เช่า', actor: 'เจ้าของ/แอดมิน' },
   deleteTenantDocument: { group: 'document', icon: '🗑️', title: 'ลบเอกสารผู้เช่า', actor: 'เจ้าของ/แอดมิน' },
   deleteCustomRoom: { group: 'room', icon: '🗑️', title: 'ลบห้องที่เพิ่มเอง', actor: 'เจ้าของ/แอดมิน' },
@@ -801,6 +802,17 @@ function getSystemActivityDetailsHtml(log = {}, def = null) {
       { label: 'ผู้เช่า', value: extra.tenantName || '-' },
       { label: 'บันทึกแฟ้มเก่า', value: extra.archived ? 'บันทึกแล้ว' : 'ไม่มีข้อมูลแฟ้มให้ย้าย' },
       { label: 'ยอดคืน/เก็บเพิ่ม', value: extra.diffText || '-' },
+    ]);
+  }
+
+  if (action === 'tenantOnboarding') {
+    return renderSystemActivityDetailRows([
+      { label: 'ห้อง', value: extra.roomNum ? 'ห้อง ' + extra.roomNum : (log.roomNum ? 'ห้อง ' + log.roomNum : '-') },
+      { label: 'ผู้เช่า', value: extra.tenantName || '-' },
+      { label: 'เริ่มสัญญา', value: extra.contractStart || '-' },
+      { label: 'สิ้นสุดสัญญา', value: extra.contractEnd || '-' },
+      { label: 'เงินประกัน', value: formatSystemActivityMoney(extra.deposit || 0) },
+      { label: 'แนบเอกสาร', value: Number(extra.uploadedDocumentCount || 0).toLocaleString('th-TH') + ' ไฟล์' },
     ]);
   }
 
@@ -4025,6 +4037,327 @@ function showBillingCyclePreview(options = {}) {
   }
 </style>
 
+
+<style>
+/* ===== Pananth v15.4.2.52: Tenant onboarding wizard ===== */
+.tenant-onboarding-note{
+  background:#e8f7ef;
+  padding:10px 16px;
+  font-size:12px;
+  color:#166534;
+  border-bottom:1px solid #bbf7d0;
+  line-height:1.55;
+  font-weight:700;
+}
+.tenant-onboarding-wrap{
+  max-width:980px;
+  margin:0 auto;
+  padding:16px 16px 110px;
+}
+.tenant-onboarding-progress{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:8px;
+  margin-bottom:14px;
+}
+.tenant-onboarding-step-pill{
+  min-height:58px;
+  border:1.5px solid var(--border);
+  border-radius:14px;
+  background:white;
+  padding:9px 8px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:2px;
+  text-align:center;
+  color:var(--muted);
+  font-weight:900;
+  transition:.18s ease;
+}
+.tenant-onboarding-step-pill b{
+  font-family:'Kanit',sans-serif;
+  font-size:14px;
+}
+.tenant-onboarding-step-pill span{
+  font-size:11px;
+  line-height:1.2;
+}
+.tenant-onboarding-step-pill.active{
+  background:linear-gradient(135deg,#1a3a5c,#2563eb);
+  color:white;
+  border-color:#2563eb;
+  box-shadow:0 10px 25px rgba(37,99,235,.18);
+}
+.tenant-onboarding-step-pill.done{
+  background:#e8f5ee;
+  color:#166534;
+  border-color:#86efac;
+}
+.tenant-onboarding-content{
+  background:white;
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  padding:16px;
+  box-shadow:0 8px 30px rgba(15,23,42,.07);
+}
+.tenant-onboarding-card-title{
+  font-family:'Kanit',sans-serif;
+  font-size:18px;
+  font-weight:900;
+  color:var(--primary);
+  margin-bottom:4px;
+}
+.tenant-onboarding-card-sub{
+  color:var(--muted);
+  font-size:13px;
+  font-weight:800;
+  line-height:1.5;
+  margin-bottom:14px;
+}
+.tenant-onboarding-room-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:10px;
+}
+.tenant-onboarding-room-card{
+  border:1.5px solid var(--border);
+  background:var(--bg);
+  border-radius:14px;
+  padding:12px;
+  text-align:left;
+  cursor:pointer;
+  color:var(--text);
+  min-height:104px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  transition:.18s ease;
+}
+.tenant-onboarding-room-card:hover{
+  transform:translateY(-1px);
+  border-color:#60a5fa;
+}
+.tenant-onboarding-room-card.selected{
+  background:linear-gradient(135deg,#e0f2fe,#dcfce7);
+  border-color:#2563eb;
+  box-shadow:0 9px 22px rgba(37,99,235,.12);
+}
+.tenant-onboarding-room-card.blocked{
+  cursor:not-allowed;
+  opacity:.74;
+  background:#fff7ed;
+  border-color:#fed7aa;
+}
+.tenant-onboarding-room-title{
+  font-family:'Kanit',sans-serif;
+  font-size:19px;
+  font-weight:900;
+  color:var(--primary);
+}
+.tenant-onboarding-room-meta{
+  font-size:12px;
+  font-weight:800;
+  color:var(--muted);
+  line-height:1.42;
+}
+.tenant-onboarding-room-state{
+  align-self:flex-start;
+  border-radius:999px;
+  padding:4px 9px;
+  background:#dcfce7;
+  color:#166534;
+  font-size:11px;
+  font-weight:900;
+}
+.tenant-onboarding-room-card.blocked .tenant-onboarding-room-state{
+  background:#ffedd5;
+  color:#9a3412;
+}
+.tenant-onboarding-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.tenant-onboarding-grid .span-2{
+  grid-column:1/-1;
+}
+.tenant-onboarding-input-hint{
+  margin-top:5px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:800;
+  line-height:1.4;
+}
+.tenant-onboarding-warning,
+.tenant-onboarding-good{
+  border-radius:14px;
+  padding:12px 13px;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.55;
+  margin:12px 0;
+}
+.tenant-onboarding-warning{
+  background:#fff7ed;
+  border:1px solid #fdba74;
+  color:#9a3412;
+}
+.tenant-onboarding-good{
+  background:#ecfdf5;
+  border:1px solid #86efac;
+  color:#166534;
+}
+.tenant-onboarding-doc-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.tenant-onboarding-doc-card{
+  background:var(--bg);
+  border:1.5px dashed var(--border);
+  border-radius:14px;
+  padding:12px;
+}
+.tenant-onboarding-doc-title{
+  font-weight:900;
+  color:var(--primary);
+  margin-bottom:8px;
+}
+.tenant-onboarding-doc-file{
+  margin-top:7px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+  line-height:1.4;
+  min-height:18px;
+}
+.tenant-onboarding-review{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.tenant-onboarding-review-card{
+  background:var(--bg);
+  border:1.5px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+}
+.tenant-onboarding-review-title{
+  font-family:'Kanit',sans-serif;
+  font-weight:900;
+  font-size:15px;
+  color:var(--primary);
+  margin-bottom:8px;
+}
+.tenant-onboarding-review-row{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  border-bottom:1px dashed var(--border);
+  padding:6px 0;
+  font-size:13px;
+}
+.tenant-onboarding-review-row:last-child{
+  border-bottom:none;
+}
+.tenant-onboarding-review-row span{
+  color:var(--muted);
+  font-weight:800;
+}
+.tenant-onboarding-review-row b{
+  color:var(--text);
+  font-weight:900;
+  text-align:right;
+  word-break:break-word;
+}
+.tenant-onboarding-actions{
+  position:sticky;
+  bottom:0;
+  margin-top:14px;
+  display:flex;
+  gap:10px;
+  background:rgba(240,244,248,.94);
+  backdrop-filter:blur(12px);
+  padding:12px;
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  z-index:2;
+}
+.tenant-onboarding-actions .ctrl-btn{
+  flex:1;
+  min-height:48px;
+  justify-content:center;
+  font-weight:900;
+}
+.tenant-onboarding-empty{
+  text-align:center;
+  padding:24px 14px;
+  border:1.5px dashed var(--border);
+  border-radius:14px;
+  color:var(--muted);
+  font-weight:900;
+  line-height:1.6;
+}
+body.dark .tenant-onboarding-note{
+  background:rgba(22,101,52,.20);
+  color:#bbf7d0;
+  border-color:rgba(134,239,172,.20);
+}
+body.dark .tenant-onboarding-step-pill,
+body.dark .tenant-onboarding-content,
+body.dark .tenant-onboarding-review-card{
+  background:rgba(15,23,42,.82);
+  border-color:rgba(148,163,184,.22);
+}
+body.dark .tenant-onboarding-step-pill.done{
+  background:rgba(22,101,52,.26);
+  color:#bbf7d0;
+  border-color:rgba(134,239,172,.32);
+}
+body.dark .tenant-onboarding-room-card,
+body.dark .tenant-onboarding-doc-card{
+  background:rgba(15,23,42,.72);
+  border-color:rgba(148,163,184,.22);
+}
+body.dark .tenant-onboarding-room-card.selected{
+  background:linear-gradient(135deg,rgba(14,116,144,.30),rgba(22,101,52,.28));
+  border-color:rgba(125,211,252,.50);
+}
+body.dark .tenant-onboarding-room-card.blocked,
+body.dark .tenant-onboarding-warning{
+  background:rgba(124,45,18,.28);
+  border-color:rgba(251,146,60,.35);
+  color:#fed7aa;
+}
+body.dark .tenant-onboarding-good{
+  background:rgba(22,101,52,.24);
+  border-color:rgba(134,239,172,.32);
+  color:#bbf7d0;
+}
+body.dark .tenant-onboarding-actions{
+  background:rgba(2,8,23,.92);
+  border-color:rgba(148,163,184,.24);
+}
+@media (max-width:768px){
+  .tenant-onboarding-wrap{padding:12px 12px 104px;}
+  .tenant-onboarding-progress{
+    grid-template-columns:repeat(5,minmax(98px,1fr));
+    overflow-x:auto;
+    padding-bottom:4px;
+  }
+  .tenant-onboarding-step-pill{min-width:98px;}
+  .tenant-onboarding-grid,
+  .tenant-onboarding-doc-grid,
+  .tenant-onboarding-review{
+    grid-template-columns:1fr;
+  }
+  .tenant-onboarding-actions{
+    flex-direction:column;
+  }
+}
+</style>
+
 </head>
 <body>
 
@@ -4164,6 +4497,7 @@ function showBillingCyclePreview(options = {}) {
       </div>
       <div class="tool-button-list">
         <button class="ctrl-btn important" onclick="openArrearsPage()">💳 รับชำระ / ยอดค้าง</button>
+        <button class="ctrl-btn important" onclick="openTenantOnboardingWizard()">🧍 รับผู้เช่าใหม่</button>
         <button class="ctrl-btn important" data-meter-cycle-action="1" onclick="openMeterPage()">📝 จดมิเตอร์รอบบิลใหม่</button>
         <button class="ctrl-btn danger" onclick="alertUnpaid()">🔔 แจ้งเตือนค้างชำระ</button>
         <button class="ctrl-btn purple" onclick="sendOwnerUnpaidSummary()">📋 สรุปค้างส่งเจ้าของ</button>
@@ -4796,6 +5130,25 @@ function showBillingCyclePreview(options = {}) {
       </section>
       <section id="tenantProfileEditor" class="tenant-profile-editor"></section>
     </div>
+  </div>
+</div>
+
+
+
+<!-- TENANT ONBOARDING WIZARD PAGE -->
+<div class="page-overlay" id="tenantOnboardingPage">
+  <div class="page-header">
+    <button class="back-btn" onclick="closeTenantOnboardingWizard()">←</button>
+    <h2>🧍 รับผู้เช่าใหม่</h2>
+    <button class="meter-save-btn" onclick="resetTenantOnboardingWizard(true)">เริ่มใหม่</button>
+  </div>
+  <div class="tenant-onboarding-note">
+    ขั้นตอนเดียวสำหรับรับผู้เช่าใหม่: เลือกห้องว่าง → กรอกข้อมูล → ระบุสัญญา/เงินประกัน → แนบเอกสาร → ยืนยันเปิดห้องเป็นใช้งาน
+  </div>
+  <div class="tenant-onboarding-wrap">
+    <div id="tenantOnboardingProgress" class="tenant-onboarding-progress"></div>
+    <div id="tenantOnboardingContent" class="tenant-onboarding-content"></div>
+    <div id="tenantOnboardingActions" class="tenant-onboarding-actions"></div>
   </div>
 </div>
 
@@ -5888,6 +6241,728 @@ function tenantFileToBase64(file) {
     reader.readAsDataURL(file);
   });
 }
+
+
+// ===== TENANT ONBOARDING WIZARD v15.4.2.52 =====
+const TENANT_ONBOARDING_STEPS = [
+  { key: 1, label: 'ห้อง', icon: '1' },
+  { key: 2, label: 'ข้อมูล', icon: '2' },
+  { key: 3, label: 'สัญญา', icon: '3' },
+  { key: 4, label: 'เอกสาร', icon: '4' },
+  { key: 5, label: 'ตรวจสอบ', icon: '5' },
+];
+
+let tenantOnboardingState = createTenantOnboardingState();
+
+function createTenantOnboardingState() {
+  return {
+    step: 1,
+    roomNum: '',
+    saving: false,
+    data: {
+      fullName: '',
+      phone: '',
+      idCardNumber: '',
+      birthDate: '',
+      occupation: '',
+      workplace: '',
+      registeredAddress: '',
+      emergencyName: '',
+      emergencyRelation: '',
+      emergencyPhone: '',
+      contractStart: '',
+      contractEnd: '',
+      deposit: '',
+      moveInDate: '',
+      profileNote: '',
+    },
+    docs: {
+      contract: null,
+      id_front: null,
+      id_back: null,
+      deposit_receipt: null,
+      other: null,
+    },
+  };
+}
+
+function resetTenantOnboardingWizard(askConfirm = false) {
+  if (askConfirm && tenantOnboardingHasDraft()) {
+    if (!confirm('ต้องการเริ่มฟอร์มรับผู้เช่าใหม่อีกครั้งใช่ไหมครับ?\nข้อมูลที่ยังไม่ได้บันทึกจะถูกล้าง')) return;
+  }
+  tenantOnboardingState = createTenantOnboardingState();
+  renderTenantOnboardingWizard();
+}
+
+function tenantOnboardingHasDraft() {
+  const state = tenantOnboardingState || {};
+  return !!(
+    state.roomNum ||
+    Object.values(state.data || {}).some(v => String(v || '').trim()) ||
+    Object.values(state.docs || {}).some(Boolean)
+  );
+}
+
+function openTenantOnboardingWizard() {
+  tenantOnboardingState = createTenantOnboardingState();
+  const today = tenantOnboardingTodayInputValue();
+  tenantOnboardingState.data.contractStart = today;
+  tenantOnboardingState.data.moveInDate = today;
+  renderTenantOnboardingWizard();
+  const page = document.getElementById('tenantOnboardingPage');
+  if (page) page.classList.add('open');
+  refreshModalLockSafe();
+}
+
+function closeTenantOnboardingWizard(force = false) {
+  if (!force && tenantOnboardingHasDraft() && !tenantOnboardingState.saving) {
+    if (!confirm('ยังไม่ได้บันทึกรับผู้เช่าใหม่\nต้องการออกจากหน้านี้ใช่ไหมครับ?')) return;
+  }
+  const page = document.getElementById('tenantOnboardingPage');
+  if (page) page.classList.remove('open');
+  tenantOnboardingState = createTenantOnboardingState();
+  refreshModalLockSafe();
+}
+
+function tenantOnboardingTodayInputValue() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getTenantOnboardingRoomCandidates() {
+  const nums = new Set();
+  try { (getAllManagedRoomNumbers() || []).forEach(n => nums.add(Number(n))); } catch(e) {}
+  try { Object.keys(rooms || {}).forEach(k => nums.add(Number(k))); } catch(e) {}
+  return Array.from(nums)
+    .filter(n => Number.isFinite(n) && n > 0 && n !== TEST_ROOM)
+    .filter(roomNum => {
+      const room = rooms?.[roomNum] || rooms?.[String(roomNum)] || {};
+      const setting = getRoomSetting(roomNum);
+      const status = String(setting?.status || room?.status || '').trim();
+      return room?.vacant === true || status === 'vacant';
+    })
+    .sort((a, b) => a - b);
+}
+
+function getTenantOnboardingRoomCheck(roomNum) {
+  const room = Number(roomNum || 0);
+  const key = String(room);
+  if (!Number.isFinite(room) || room <= 0 || room === TEST_ROOM) {
+    return { ok: false, reason: 'เลขห้องไม่ถูกต้อง' };
+  }
+
+  const roomData = rooms?.[room] || rooms?.[key] || {};
+  const setting = getRoomSetting(room);
+  const status = String(setting?.status || roomData?.status || '').trim();
+  const isDisabled = status === 'disabled' || roomData?.disabled === true;
+  const isVacant = !isDisabled && (roomData?.vacant === true || status === 'vacant');
+
+  if (isDisabled) return { ok: false, reason: 'ห้องนี้ถูกตั้งเป็นปิดใช้งาน' };
+  if (!isVacant) return { ok: false, reason: 'ห้องนี้ยังไม่อยู่สถานะห้องว่าง' };
+
+  const arrearsAmount = Number(getTotalArrears(room) || 0);
+  if (arrearsAmount > 0) {
+    return {
+      ok: false,
+      reason: `ยังมียอดค้างเก่า ${arrearsAmount.toLocaleString('th-TH')} ฿ กรุณาจัดการยอดค้างก่อน`,
+      arrearsAmount,
+    };
+  }
+
+  const profile = getTenantProfileLocal(key);
+  const tenant = tenants?.[key] || tenants?.[room] || {};
+  const hasCurrentProfile = typeof hasTenantProfileCurrentData === 'function'
+    ? hasTenantProfileCurrentData(profile)
+    : !!(profile.fullName || profile.phone || profile.idCardNumber || profile.contractStart || profile.contractEnd || (profile.documents || []).length);
+  const hasTenantRecord = !!(String(tenant?.name || '').trim() || String(tenant?.phone || '').trim());
+  if (hasCurrentProfile || hasTenantRecord) {
+    return {
+      ok: false,
+      reason: 'พบข้อมูลผู้เช่าปัจจุบันค้างอยู่ กรุณาตรวจแฟ้มผู้เช่าหรือแจ้งออกให้เรียบร้อยก่อน',
+    };
+  }
+
+  return { ok: true, reason: 'พร้อมรับผู้เช่าใหม่', arrearsAmount: 0 };
+}
+
+function selectTenantOnboardingRoom(roomNum) {
+  const check = getTenantOnboardingRoomCheck(roomNum);
+  if (!check.ok) {
+    alert(check.reason || 'ห้องนี้ยังรับผู้เช่าใหม่ไม่ได้');
+    return;
+  }
+  tenantOnboardingState.roomNum = String(Number(roomNum));
+  renderTenantOnboardingWizard();
+}
+
+function tenantOnboardingSyncStepInputs() {
+  const data = tenantOnboardingState.data || {};
+  const read = id => String(document.getElementById(id)?.value || '').trim();
+
+  if (tenantOnboardingState.step === 2) {
+    data.fullName = read('toFullName');
+    data.phone = read('toPhone');
+    data.idCardNumber = read('toIdCardNumber');
+    data.birthDate = read('toBirthDate');
+    data.occupation = read('toOccupation');
+    data.workplace = read('toWorkplace');
+    data.registeredAddress = read('toRegisteredAddress');
+    data.emergencyName = read('toEmergencyName');
+    data.emergencyRelation = read('toEmergencyRelation');
+    data.emergencyPhone = read('toEmergencyPhone');
+    data.profileNote = read('toProfileNote');
+  }
+
+  if (tenantOnboardingState.step === 3) {
+    data.contractStart = read('toContractStart');
+    data.contractEnd = read('toContractEnd');
+    data.deposit = read('toDeposit');
+    data.moveInDate = read('toMoveInDate');
+  }
+}
+
+function tenantOnboardingValidateStep(step = tenantOnboardingState.step) {
+  tenantOnboardingSyncStepInputs();
+  const state = tenantOnboardingState;
+  const data = state.data || {};
+
+  if (step === 1) {
+    if (!state.roomNum) {
+      alert('กรุณาเลือกห้องว่างก่อนครับ');
+      return false;
+    }
+    const check = getTenantOnboardingRoomCheck(state.roomNum);
+    if (!check.ok) {
+      alert(check.reason || 'ห้องนี้ยังรับผู้เช่าใหม่ไม่ได้');
+      return false;
+    }
+  }
+
+  if (step === 2) {
+    if (!String(data.fullName || '').trim()) {
+      alert('กรุณากรอกชื่อ-นามสกุลผู้เช่าก่อนครับ');
+      return false;
+    }
+    if (!String(data.phone || '').trim()) {
+      alert('กรุณากรอกเบอร์โทรผู้เช่าก่อนครับ');
+      return false;
+    }
+  }
+
+  if (step === 3) {
+    const deposit = Number(data.deposit || 0);
+    if (!Number.isFinite(deposit) || deposit < 0) {
+      alert('เงินประกันต้องเป็นตัวเลขตั้งแต่ 0 ขึ้นไปครับ');
+      return false;
+    }
+    if (!String(data.contractStart || '').trim()) {
+      alert('กรุณาระบุวันเริ่มสัญญาก่อนครับ');
+      return false;
+    }
+    if (data.contractEnd && data.contractStart && String(data.contractEnd) < String(data.contractStart)) {
+      alert('วันสิ้นสุดสัญญาต้องไม่น้อยกว่าวันเริ่มสัญญาครับ');
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function tenantOnboardingNextStep() {
+  if (!tenantOnboardingValidateStep()) return;
+  tenantOnboardingState.step = Math.min(5, Number(tenantOnboardingState.step || 1) + 1);
+  renderTenantOnboardingWizard();
+}
+
+function tenantOnboardingPrevStep() {
+  tenantOnboardingSyncStepInputs();
+  tenantOnboardingState.step = Math.max(1, Number(tenantOnboardingState.step || 1) - 1);
+  renderTenantOnboardingWizard();
+}
+
+function tenantOnboardingGotoStep(step) {
+  tenantOnboardingSyncStepInputs();
+  const target = Math.max(1, Math.min(5, Number(step || 1)));
+  // แถบขั้นตอนใช้ย้อนกลับดู/แก้ข้อมูลได้ แต่ไม่ให้กดข้ามขั้นไปข้างหน้า
+  if (target > Number(tenantOnboardingState.step || 1)) return;
+  tenantOnboardingState.step = target;
+  renderTenantOnboardingWizard();
+}
+
+function tenantOnboardingFileAllowed(file) {
+  if (!file) return { ok: true };
+  if (file.size > 8 * 1024 * 1024) return { ok: false, reason: 'ไฟล์ใหญ่เกิน 8 MB' };
+  const allowed = ['image/jpeg','image/png','image/webp','application/pdf'];
+  if (!allowed.includes(String(file.type || '').toLowerCase())) {
+    return { ok: false, reason: 'รองรับเฉพาะ JPG, PNG, WEBP และ PDF' };
+  }
+  return { ok: true };
+}
+
+function tenantOnboardingSelectDoc(docType, input) {
+  const file = input?.files?.[0] || null;
+  if (!file) {
+    tenantOnboardingState.docs[docType] = null;
+    renderTenantOnboardingWizard();
+    return;
+  }
+  const valid = tenantOnboardingFileAllowed(file);
+  if (!valid.ok) {
+    alert(valid.reason || 'ไฟล์ไม่ถูกต้อง');
+    if (input) input.value = '';
+    tenantOnboardingState.docs[docType] = null;
+    renderTenantOnboardingWizard();
+    return;
+  }
+  tenantOnboardingState.docs[docType] = file;
+  renderTenantOnboardingWizard();
+}
+
+function tenantOnboardingSelectedDocLabel(docType) {
+  const file = tenantOnboardingState.docs?.[docType];
+  return file ? `เลือกแล้ว: ${escapeHtml(file.name || 'ไฟล์เอกสาร')} (${tenantDocumentFormatSize(file.size || 0)})` : 'ยังไม่ได้เลือกไฟล์';
+}
+
+function renderTenantOnboardingProgress() {
+  const box = document.getElementById('tenantOnboardingProgress');
+  if (!box) return;
+  const current = Number(tenantOnboardingState.step || 1);
+  box.innerHTML = TENANT_ONBOARDING_STEPS.map(step => `
+    <button type="button"
+      class="tenant-onboarding-step-pill ${step.key === current ? 'active' : step.key < current ? 'done' : ''}"
+      onclick="tenantOnboardingGotoStep(${step.key})">
+      <b>${step.icon}</b>
+      <span>${escapeHtml(step.label)}</span>
+    </button>
+  `).join('');
+}
+
+function renderTenantOnboardingWizard() {
+  renderTenantOnboardingProgress();
+  renderTenantOnboardingStepContent();
+  renderTenantOnboardingActions();
+}
+
+function renderTenantOnboardingStepContent() {
+  const box = document.getElementById('tenantOnboardingContent');
+  if (!box) return;
+  const state = tenantOnboardingState;
+  const data = state.data || {};
+  const roomNum = state.roomNum ? String(state.roomNum) : '';
+  const selectedRoomLabel = roomNum ? `ห้อง ${escapeHtml(roomNum)}` : 'ยังไม่ได้เลือกห้อง';
+
+  if (state.step === 1) {
+    const rooms = getTenantOnboardingRoomCandidates();
+    const cards = rooms.map(room => {
+      const check = getTenantOnboardingRoomCheck(room);
+      const selected = String(room) === roomNum;
+      return `
+        <button type="button"
+          class="tenant-onboarding-room-card ${selected ? 'selected' : ''} ${check.ok ? '' : 'blocked'}"
+          onclick="${check.ok ? `selectTenantOnboardingRoom(${Number(room)})` : `alert('${escapeJsString(check.reason || 'ห้องนี้ยังรับผู้เช่าใหม่ไม่ได้')}')`}">
+          <div class="tenant-onboarding-room-title">ห้อง ${Number(room)}</div>
+          <div class="tenant-onboarding-room-state">${check.ok ? 'พร้อมรับผู้เช่า' : 'ตรวจสอบก่อน'}</div>
+          <div class="tenant-onboarding-room-meta">${escapeHtml(check.reason || '-')}</div>
+        </button>`;
+    }).join('');
+
+    box.innerHTML = `
+      <div class="tenant-onboarding-card-title">1. เลือกห้องว่าง</div>
+      <div class="tenant-onboarding-card-sub">ระบบจะแสดงเฉพาะห้องที่อยู่ในสถานะ “ห้องว่าง” และจะกันห้องที่ยังมียอดค้างหรือแฟ้มผู้เช่าเก่าค้างอยู่ไว้ก่อน</div>
+      ${rooms.length ? `<div class="tenant-onboarding-room-grid">${cards}</div>` : `<div class="tenant-onboarding-empty">ยังไม่พบห้องว่างที่เลือกได้<br>กรุณาตั้งสถานะห้องเป็น “ห้องว่าง” หรือเคลียร์ข้อมูลห้องเดิมก่อน</div>`}
+      ${roomNum ? `<div class="tenant-onboarding-good">✅ เลือก ${selectedRoomLabel} แล้ว พร้อมกรอกข้อมูลผู้เช่าใหม่</div>` : ''}
+    `;
+    return;
+  }
+
+  if (state.step === 2) {
+    box.innerHTML = `
+      <div class="tenant-onboarding-card-title">2. กรอกข้อมูลผู้เช่า</div>
+      <div class="tenant-onboarding-card-sub">${selectedRoomLabel} • ชื่อและเบอร์โทรเป็นข้อมูลหลักที่ต้องมี ส่วนช่องอื่นกรอกได้เท่าที่มีข้อมูล</div>
+      <div class="tenant-onboarding-grid">
+        <div class="form-row">
+          <label class="form-label">ชื่อ-นามสกุล *</label>
+          <input id="toFullName" class="form-input" value="${escapeHtml(data.fullName)}" placeholder="ชื่อผู้เช่า">
+        </div>
+        <div class="form-row">
+          <label class="form-label">เบอร์โทร *</label>
+          <input id="toPhone" class="form-input" value="${escapeHtml(data.phone)}" placeholder="08x-xxx-xxxx">
+        </div>
+        <div class="form-row">
+          <label class="form-label">เลขบัตรประชาชน</label>
+          <input id="toIdCardNumber" class="form-input" value="${escapeHtml(data.idCardNumber)}" placeholder="กรอกเฉพาะเมื่อจำเป็น">
+        </div>
+        <div class="form-row">
+          <label class="form-label">วันเกิด</label>
+          <input id="toBirthDate" type="date" class="form-input" value="${escapeHtml(data.birthDate)}">
+        </div>
+        <div class="form-row">
+          <label class="form-label">อาชีพ</label>
+          <input id="toOccupation" class="form-input" value="${escapeHtml(data.occupation)}" placeholder="อาชีพ">
+        </div>
+        <div class="form-row">
+          <label class="form-label">ที่ทำงาน</label>
+          <input id="toWorkplace" class="form-input" value="${escapeHtml(data.workplace)}" placeholder="ชื่อบริษัท / สถานที่ทำงาน">
+        </div>
+        <div class="form-row span-2">
+          <label class="form-label">ที่อยู่ตามเอกสาร</label>
+          <textarea id="toRegisteredAddress" class="form-input" rows="2" placeholder="ที่อยู่ตามบัตร / ที่อยู่ติดต่อ">${escapeHtml(data.registeredAddress)}</textarea>
+        </div>
+        <div class="form-row">
+          <label class="form-label">ผู้ติดต่อฉุกเฉิน</label>
+          <input id="toEmergencyName" class="form-input" value="${escapeHtml(data.emergencyName)}" placeholder="ชื่อบุคคลติดต่อ">
+        </div>
+        <div class="form-row">
+          <label class="form-label">ความสัมพันธ์</label>
+          <input id="toEmergencyRelation" class="form-input" value="${escapeHtml(data.emergencyRelation)}" placeholder="เช่น พ่อ / แม่">
+        </div>
+        <div class="form-row">
+          <label class="form-label">เบอร์ฉุกเฉิน</label>
+          <input id="toEmergencyPhone" class="form-input" value="${escapeHtml(data.emergencyPhone)}" placeholder="เบอร์ติดต่อฉุกเฉิน">
+        </div>
+        <div class="form-row span-2">
+          <label class="form-label">หมายเหตุแฟ้มผู้เช่า</label>
+          <textarea id="toProfileNote" class="form-input" rows="2" placeholder="ข้อมูลที่เจ้าของต้องการจำ">${escapeHtml(data.profileNote)}</textarea>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (state.step === 3) {
+    box.innerHTML = `
+      <div class="tenant-onboarding-card-title">3. เงินประกัน / สัญญา</div>
+      <div class="tenant-onboarding-card-sub">${selectedRoomLabel} • ใช้เก็บข้อมูลสัญญาและเป็นฐานสำหรับแจ้งเตือนสัญญาใกล้หมดในระบบถัดไป</div>
+      <div class="tenant-onboarding-grid">
+        <div class="form-row">
+          <label class="form-label">วันเริ่มสัญญา *</label>
+          <input id="toContractStart" type="date" class="form-input" value="${escapeHtml(data.contractStart)}">
+        </div>
+        <div class="form-row">
+          <label class="form-label">วันสิ้นสุดสัญญา</label>
+          <input id="toContractEnd" type="date" class="form-input" value="${escapeHtml(data.contractEnd)}">
+          <div class="tenant-onboarding-input-hint">ถ้ามีวันสิ้นสุด ระบบจะนำไปใช้เตือนสัญญาใกล้หมดภายหลัง</div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">เงินประกัน / มัดจำ</label>
+          <input id="toDeposit" type="number" min="0" class="form-input" value="${escapeHtml(String(data.deposit ?? ''))}" placeholder="0">
+        </div>
+        <div class="form-row">
+          <label class="form-label">วันเข้าอยู่</label>
+          <input id="toMoveInDate" type="date" class="form-input" value="${escapeHtml(data.moveInDate)}">
+          <div class="tenant-onboarding-input-hint">ถ้าเว้นว่าง ระบบจะใช้วันเริ่มสัญญาแทนตอนบันทึก</div>
+        </div>
+      </div>
+      <div class="tenant-onboarding-warning">ℹ️ การกดบันทึกขั้นสุดท้ายจะเปลี่ยน ${selectedRoomLabel} จาก “ห้องว่าง” เป็น “ใช้งาน” และสร้างแฟ้มผู้เช่าปัจจุบันให้ทันที</div>
+    `;
+    return;
+  }
+
+  if (state.step === 4) {
+    box.innerHTML = `
+      <div class="tenant-onboarding-card-title">4. อัปโหลดเอกสาร</div>
+      <div class="tenant-onboarding-card-sub">${selectedRoomLabel} • แนบได้ทันที หรือข้ามไปก่อนแล้วเพิ่มภายหลังในหน้า “ผู้เช่า/เอกสาร” ก็ได้</div>
+      <div class="tenant-onboarding-doc-grid">
+        <div class="tenant-onboarding-doc-card">
+          <div class="tenant-onboarding-doc-title">📄 สัญญาเช่า</div>
+          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="tenantOnboardingSelectDoc('contract', this)">
+          <div class="tenant-onboarding-doc-file">${tenantOnboardingSelectedDocLabel('contract')}</div>
+        </div>
+        <div class="tenant-onboarding-doc-card">
+          <div class="tenant-onboarding-doc-title">🪪 บัตรประชาชนด้านหน้า</div>
+          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="tenantOnboardingSelectDoc('id_front', this)">
+          <div class="tenant-onboarding-doc-file">${tenantOnboardingSelectedDocLabel('id_front')}</div>
+        </div>
+        <div class="tenant-onboarding-doc-card">
+          <div class="tenant-onboarding-doc-title">🪪 บัตรประชาชนด้านหลัง</div>
+          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="tenantOnboardingSelectDoc('id_back', this)">
+          <div class="tenant-onboarding-doc-file">${tenantOnboardingSelectedDocLabel('id_back')}</div>
+        </div>
+        <div class="tenant-onboarding-doc-card">
+          <div class="tenant-onboarding-doc-title">💰 หลักฐานเงินประกัน / มัดจำ</div>
+          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="tenantOnboardingSelectDoc('deposit_receipt', this)">
+          <div class="tenant-onboarding-doc-file">${tenantOnboardingSelectedDocLabel('deposit_receipt')}</div>
+        </div>
+        <div class="tenant-onboarding-doc-card">
+          <div class="tenant-onboarding-doc-title">📎 เอกสารอื่น ๆ</div>
+          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="tenantOnboardingSelectDoc('other', this)">
+          <div class="tenant-onboarding-doc-file">${tenantOnboardingSelectedDocLabel('other')}</div>
+        </div>
+      </div>
+      <div class="tenant-onboarding-warning">รองรับ JPG, PNG, WEBP และ PDF ขนาดไม่เกิน 8 MB ต่อไฟล์ • เอกสารจะเก็บเข้า R2 ตามระบบเดิม</div>
+    `;
+    return;
+  }
+
+  tenantOnboardingSyncStepInputs();
+  const docs = Object.entries(state.docs || {}).filter(([,file]) => !!file);
+  const deposit = Number(data.deposit || 0) || 0;
+  const docSummary = docs.length
+    ? docs.map(([type, file]) => `${getTenantDocumentTypeLabel(type)}: ${file.name || 'ไฟล์เอกสาร'}`).join(' • ')
+    : 'ยังไม่ได้แนบเอกสาร';
+
+  box.innerHTML = `
+    <div class="tenant-onboarding-card-title">5. ตรวจสอบก่อนบันทึก</div>
+    <div class="tenant-onboarding-card-sub">เมื่อยืนยัน ระบบจะสร้างแฟ้มผู้เช่าใหม่ เปิดห้องเป็นใช้งาน และอัปโหลดเอกสารที่เลือกไว้</div>
+    <div class="tenant-onboarding-review">
+      <div class="tenant-onboarding-review-card">
+        <div class="tenant-onboarding-review-title">🏠 ห้อง / ผู้เช่า</div>
+        <div class="tenant-onboarding-review-row"><span>ห้อง</span><b>${selectedRoomLabel}</b></div>
+        <div class="tenant-onboarding-review-row"><span>ชื่อ</span><b>${escapeHtml(data.fullName || '-')}</b></div>
+        <div class="tenant-onboarding-review-row"><span>โทร</span><b>${escapeHtml(data.phone || '-')}</b></div>
+        <div class="tenant-onboarding-review-row"><span>ผู้ติดต่อฉุกเฉิน</span><b>${escapeHtml(data.emergencyName || '-')}</b></div>
+      </div>
+      <div class="tenant-onboarding-review-card">
+        <div class="tenant-onboarding-review-title">📅 สัญญา / เงินประกัน</div>
+        <div class="tenant-onboarding-review-row"><span>เริ่มสัญญา</span><b>${escapeHtml(data.contractStart || '-')}</b></div>
+        <div class="tenant-onboarding-review-row"><span>สิ้นสุดสัญญา</span><b>${escapeHtml(data.contractEnd || '-')}</b></div>
+        <div class="tenant-onboarding-review-row"><span>วันเข้าอยู่</span><b>${escapeHtml(data.moveInDate || data.contractStart || '-')}</b></div>
+        <div class="tenant-onboarding-review-row"><span>เงินประกัน</span><b>${deposit.toLocaleString('th-TH')} ฿</b></div>
+      </div>
+      <div class="tenant-onboarding-review-card" style="grid-column:1/-1;">
+        <div class="tenant-onboarding-review-title">📎 เอกสารที่จะแนบ</div>
+        <div style="font-size:13px;font-weight:900;line-height:1.6;color:var(--text);">${escapeHtml(docSummary)}</div>
+      </div>
+    </div>
+    <div class="tenant-onboarding-good">✅ พร้อมบันทึก: ระบบจะตั้งสถานะ ${selectedRoomLabel} เป็น “ใช้งาน”, สร้างแฟ้มผู้เช่า, และเก็บ Log เหตุการณ์ “รับผู้เช่าใหม่”</div>
+  `;
+}
+
+function renderTenantOnboardingActions() {
+  const box = document.getElementById('tenantOnboardingActions');
+  if (!box) return;
+  const step = Number(tenantOnboardingState.step || 1);
+  const saving = !!tenantOnboardingState.saving;
+
+  if (step === 1) {
+    box.innerHTML = `
+      <button class="ctrl-btn outline" ${saving ? 'disabled' : ''} onclick="closeTenantOnboardingWizard()">ยกเลิก</button>
+      <button class="ctrl-btn green" ${saving ? 'disabled' : ''} onclick="tenantOnboardingNextStep()">ถัดไป: ข้อมูลผู้เช่า →</button>
+    `;
+    return;
+  }
+
+  if (step < 5) {
+    const nextLabel = step === 2 ? 'ถัดไป: สัญญา →' : step === 3 ? 'ถัดไป: เอกสาร →' : 'ถัดไป: ตรวจสอบ →';
+    box.innerHTML = `
+      <button class="ctrl-btn outline" ${saving ? 'disabled' : ''} onclick="tenantOnboardingPrevStep()">← ย้อนกลับ</button>
+      <button class="ctrl-btn green" ${saving ? 'disabled' : ''} onclick="tenantOnboardingNextStep()">${nextLabel}</button>
+    `;
+    return;
+  }
+
+  box.innerHTML = `
+    <button class="ctrl-btn outline" ${saving ? 'disabled' : ''} onclick="tenantOnboardingPrevStep()">← ย้อนกลับ</button>
+    <button class="ctrl-btn green" ${saving ? 'disabled' : ''} onclick="finalizeTenantOnboardingWizard()">${saving ? 'กำลังบันทึก...' : '✅ ยืนยันรับผู้เช่าใหม่'}</button>
+  `;
+}
+
+async function uploadTenantOnboardingDocuments(roomNum) {
+  const uploads = [];
+  const errors = [];
+  const docEntries = Object.entries(tenantOnboardingState.docs || {}).filter(([, file]) => !!file);
+
+  for (const [docType, file] of docEntries) {
+    const valid = tenantOnboardingFileAllowed(file);
+    if (!valid.ok) {
+      errors.push(`${getTenantDocumentTypeLabel(docType)}: ${valid.reason}`);
+      continue;
+    }
+
+    try {
+      const base64 = await tenantFileToBase64(file);
+      const result = await workerPost({
+        action: 'uploadTenantDocument',
+        roomNum: String(roomNum),
+        docType,
+        fileName: file.name || 'tenant-document',
+        mimeType: file.type,
+        base64,
+      });
+      if (result?.tenantProfiles) {
+        tenantProfiles = result.tenantProfiles;
+        saveTenantProfilesLocal();
+      }
+      uploads.push({ docType, fileName: file.name || '', size: file.size || 0 });
+    } catch (e) {
+      errors.push(`${getTenantDocumentTypeLabel(docType)}: ${e?.message || e}`);
+    }
+  }
+
+  return { uploads, errors };
+}
+
+async function finalizeTenantOnboardingWizard() {
+  if (tenantOnboardingState.saving) return;
+  tenantOnboardingSyncStepInputs();
+
+  if (!tenantOnboardingValidateStep(1) || !tenantOnboardingValidateStep(2) || !tenantOnboardingValidateStep(3)) return;
+
+  const state = tenantOnboardingState;
+  const roomNum = Number(state.roomNum || 0);
+  const key = String(roomNum);
+  const data = state.data || {};
+  const roomCheck = getTenantOnboardingRoomCheck(roomNum);
+  if (!roomCheck.ok) {
+    alert(roomCheck.reason || 'ห้องนี้ยังรับผู้เช่าใหม่ไม่ได้');
+    return;
+  }
+
+  if (!confirm(`ยืนยันรับผู้เช่าใหม่เข้าห้อง ${roomNum} ใช่ไหมครับ?\n\nผู้เช่า: ${data.fullName || '-'}\nระบบจะเปลี่ยนห้องเป็น “ใช้งาน” และสร้างแฟ้มผู้เช่าใหม่ทันที`)) return;
+
+  tenantOnboardingState.saving = true;
+  renderTenantOnboardingActions();
+
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const nowText = now.toLocaleString('th-TH');
+  const syncErrors = [];
+
+  try {
+    const existingProfile = getTenantProfileLocal(key);
+    const profile = {
+      roomNum: key,
+      fullName: String(data.fullName || '').trim(),
+      phone: String(data.phone || '').trim(),
+      idCardNumber: String(data.idCardNumber || '').trim(),
+      birthDate: String(data.birthDate || '').trim(),
+      occupation: String(data.occupation || '').trim(),
+      workplace: String(data.workplace || '').trim(),
+      registeredAddress: String(data.registeredAddress || '').trim(),
+      emergencyName: String(data.emergencyName || '').trim(),
+      emergencyRelation: String(data.emergencyRelation || '').trim(),
+      emergencyPhone: String(data.emergencyPhone || '').trim(),
+      contractStart: String(data.contractStart || '').trim(),
+      contractEnd: String(data.contractEnd || '').trim(),
+      deposit: Number(data.deposit || 0) || 0,
+      moveInDate: String(data.moveInDate || data.contractStart || '').trim(),
+      profileNote: String(data.profileNote || '').trim(),
+      documents: Array.isArray(existingProfile.documents) ? existingProfile.documents.slice() : [],
+      history: Array.isArray(existingProfile.history) ? existingProfile.history.slice() : [],
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    };
+
+    tenantProfiles[key] = profile;
+    saveTenantProfilesLocal();
+
+    tenants[key] = {
+      ...(tenants[key] || tenants[roomNum] || {}),
+      name: profile.fullName,
+      phone: profile.phone,
+      start: profile.contractStart || '',
+      end: profile.contractEnd || '',
+    };
+
+    if (!rooms[roomNum]) {
+      const base = defaultData?.[roomNum] || { ep: 0, ec: 0, wp: 0, wc: 0, wifi: 0 };
+      rooms[roomNum] = { ...base, paid: false };
+    }
+    rooms[roomNum].vacant = false;
+    rooms[roomNum].disabled = false;
+    rooms[roomNum].status = 'active';
+    rooms[roomNum].paid = false;
+    rooms[roomNum].manualPaidAmount = 0;
+    rooms[roomNum].manualRemaining = 0;
+    rooms[roomNum].manualPaidAt = '';
+    rooms[roomNum].manualPaidAtText = '';
+    rooms[roomNum].paidAt = '';
+    rooms[roomNum].paidAtText = '';
+
+    const cfg = loadConfig();
+    const settings = normalizeRoomSettingsMap(cfg.roomSettings || {});
+    const currentSetting = settings[key] || getRoomSetting(roomNum) || {};
+    settings[key] = {
+      room: roomNum,
+      rent: Number(currentSetting.rent ?? getRoomRentValue(roomNum, rooms[roomNum]) ?? BASE_RENT(roomNum)) || 0,
+      trash: Number(currentSetting.trash ?? getRoomTrashValue(roomNum, rooms[roomNum]) ?? TRASH) || 0,
+      status: 'active',
+      note: String(currentSetting.note || rooms[roomNum]?.roomSettingNote || '').trim(),
+      updatedAt: nowIso,
+    };
+    cfg.roomSettings = settings;
+    saveSafeConfig(cfg);
+
+    try {
+      const result = await workerPost({ action: 'saveTenantProfiles', data: tenantProfiles });
+      if (result?.tenantProfiles) {
+        tenantProfiles = result.tenantProfiles;
+        saveTenantProfilesLocal();
+      }
+    } catch(e) {
+      syncErrors.push('แฟ้มผู้เช่า: ' + (e?.message || e));
+    }
+
+    try {
+      await workerPost({ action: 'saveTenants', data: tenants });
+      localStorage.setItem('pananth_tenants', JSON.stringify(tenants));
+    } catch(e) {
+      syncErrors.push('รายชื่อผู้เช่า: ' + (e?.message || e));
+    }
+
+    try {
+      const okCfg = await saveConfigOnly(cfg);
+      if (okCfg?.ok === false) syncErrors.push('สถานะห้อง/ตั้งค่า: ' + (okCfg.error || 'sync failed'));
+    } catch(e) {
+      syncErrors.push('สถานะห้อง/ตั้งค่า: ' + (e?.message || e));
+    }
+
+    try {
+      localStorage.setItem('pananth_rooms', JSON.stringify(rooms));
+      const okRooms = await syncRoomsToWorkerWithoutMonthLock();
+      if (okRooms?.ok === false) syncErrors.push('ข้อมูลห้อง: ' + (okRooms.error || 'sync failed'));
+    } catch(e) {
+      syncErrors.push('ข้อมูลห้อง: ' + (e?.message || e));
+    }
+
+    const docResult = await uploadTenantOnboardingDocuments(roomNum);
+    if (docResult.errors.length) {
+      syncErrors.push('เอกสาร: ' + docResult.errors.join(' | '));
+    }
+
+    await recordSystemActivity(
+      'tenantOnboarding',
+      `รับผู้เช่าใหม่เข้าห้อง ${roomNum}: ${profile.fullName || '-'}`,
+      {
+        roomNum,
+        tenantName: profile.fullName || '',
+        phone: profile.phone || '',
+        contractStart: profile.contractStart || '',
+        contractEnd: profile.contractEnd || '',
+        deposit: profile.deposit || 0,
+        moveInDate: profile.moveInDate || '',
+        uploadedDocumentCount: docResult.uploads.length,
+        uploadedDocumentTypes: docResult.uploads.map(x => x.docType),
+        syncWarningCount: syncErrors.length,
+        completedAtText: nowText,
+      },
+      roomNum
+    );
+
+    renderAll();
+    try { renderTenantDocsPage(); } catch(e) {}
+    closeTenantOnboardingWizard(true);
+
+    const docText = docResult.uploads.length
+      ? `\nแนบเอกสารสำเร็จ ${docResult.uploads.length} ไฟล์`
+      : '\nยังไม่ได้แนบเอกสาร';
+    const warningText = syncErrors.length
+      ? `\n\n⚠️ บันทึกหลักเสร็จแล้ว แต่มีรายการซิงค์/อัปโหลดที่ต้องตรวจสอบ:\n- ${syncErrors.join('\n- ')}`
+      : '';
+    alert(`✅ รับผู้เช่าใหม่ห้อง ${roomNum} เรียบร้อยแล้วครับ\nผู้เช่า: ${profile.fullName || '-'}${docText}${warningText}`);
+
+    selectedTenantProfileRoom = key;
+    openTenantDocs(key);
+  } catch(e) {
+    alert('รับผู้เช่าใหม่ไม่สำเร็จ: ' + (e?.message || e));
+    tenantOnboardingState.saving = false;
+    renderTenantOnboardingActions();
+  }
+}
+
 
 async function uploadTenantDocumentFromForm(roomNum) {
   const fileInput = document.getElementById('tenantDocFile');
@@ -9260,7 +10335,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.51'
+        createdFrom: 'web-v15.4.2.52'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -12175,6 +13250,7 @@ function organizeMobileTools() {
         <div class="mobile-section-content">
           <div class="button-grid">
             <button class="ctrl-btn important" onclick="openArrearsPage()">💳 รับชำระ / ยอดค้าง</button>
+            <button class="ctrl-btn important" onclick="openTenantOnboardingWizard()">🧍 รับผู้เช่าใหม่</button>
             <button class="ctrl-btn important" data-meter-cycle-action="1" onclick="openMeterPage()">📝 จดมิเตอร์</button>
             <button class="ctrl-btn danger" onclick="alertUnpaid()">🔔 แจ้งเตือนค้าง</button>
             <button class="ctrl-btn purple" onclick="sendOwnerUnpaidSummary()">📋 สรุปค้าง</button>
