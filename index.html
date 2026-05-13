@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.46</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.47</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.46'
+        createdFrom: 'web-v15.4.2.47'
       })
     });
 
@@ -5240,7 +5240,9 @@ function ensureTestRoom() {
       };
     }
     rooms[TEST_ROOM].isTestRoom = true;
-    rooms[TEST_ROOM].vacant = false;
+    // v15.4.2.47: อย่าบังคับห้อง 99 ให้กลับมา "มีผู้เช่า" ทุกครั้ง
+    // เพื่อให้การทดสอบ flow แจ้งออกจากห้องเห็นผลเป็น "ห้องว่าง" ได้จริง
+    if (typeof rooms[TEST_ROOM].vacant !== 'boolean') rooms[TEST_ROOM].vacant = false;
     // ห้อง 99 เป็นห้องทดสอบ: ค่าเช่า 1 บาท / ค่าขยะ 0 บาท / ไม่รวมยอดจริง
     rooms[TEST_ROOM].customRent = 1;
     rooms[TEST_ROOM].rent = 1;
@@ -6197,7 +6199,7 @@ function saveRoom() {
   const alreadyMeterRecorded = hasRoomMeterForCurrentCycle(r);
   const savedEp = (!isNew && alreadyMeterRecorded) ? Number(rooms[r].ep || 0) : ep;
   const savedWp = (!isNew && alreadyMeterRecorded) ? Number(rooms[r].wp || 0) : wp;
-  const paid = meterChanged ? false : document.getElementById('paidToggle').checked;
+  const paid = (meterChanged || isNew) ? false : document.getElementById('paidToggle').checked;
   const testCustomRent = isTestRoom(r) ? (parseInt(document.getElementById('testRoomRent')?.value) || 1) : undefined;
 
   rooms[r] = {
@@ -6209,8 +6211,13 @@ function saveRoom() {
     customRent: isTestRoom(r) ? testCustomRent : undefined,
     trash: isTestRoom(r) ? 0 : getRoomTrashValue(r, rooms[r]),
     isTestRoom: isTestRoom(r) ? true : undefined,
-    manualPaidAmount: meterChanged ? 0 : (oldRoomForSave.manualPaidAmount || 0),
-    manualRemaining: meterChanged ? 0 : (oldRoomForSave.manualRemaining || 0),
+    // v15.4.2.47: ผู้เช่าใหม่ต้องเริ่มสถานะรับชำระจาก 0 ไม่รับยอดเก่าของคนก่อนติดมา
+    manualPaidAmount: (meterChanged || isNew) ? 0 : (oldRoomForSave.manualPaidAmount || 0),
+    manualRemaining: (meterChanged || isNew) ? 0 : (oldRoomForSave.manualRemaining || 0),
+    manualPaidAt: (meterChanged || isNew) ? '' : (oldRoomForSave.manualPaidAt || ''),
+    manualPaidAtText: (meterChanged || isNew) ? '' : (oldRoomForSave.manualPaidAtText || ''),
+    paidAt: (meterChanged || isNew) ? '' : (oldRoomForSave.paidAt || ''),
+    paidAtText: (meterChanged || isNew) ? '' : (oldRoomForSave.paidAtText || ''),
     note: document.getElementById('roomNote')?.value.trim() || '',
     meterCycleKey: oldRoomForSave.meterCycleKey || '',
     meterCyclePaymentMonthText: oldRoomForSave.meterCyclePaymentMonthText || '',
@@ -8338,7 +8345,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.46'
+        createdFrom: 'web-v15.4.2.47'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -10427,7 +10434,16 @@ async function confirmCheckout() {
 
   rooms[r].vacant = true;
   rooms[r].paid   = false;
+  rooms[r].status = 'vacant';
   rooms[r].prorateRent = null;
+  // v15.4.2.47: เมื่อผู้เช่าย้ายออก ห้ามเหลือยอดรับแล้วของผู้เช่าเก่าติดห้อง
+  // มิฉะนั้นถ้าห้องถูกเปิดใช้ใหม่ อาจแสดงสถานะชำระแล้ว/จ่ายบางส่วนผิดคนได้
+  rooms[r].manualPaidAmount = 0;
+  rooms[r].manualRemaining = 0;
+  rooms[r].manualPaidAt = '';
+  rooms[r].manualPaidAtText = '';
+  rooms[r].paidAt = '';
+  rooms[r].paidAtText = '';
   tenants[r] = { name: '', phone: '', start: '', end: '' };
 
   // ล้าง User ID เก่าออก
