@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.64</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.66</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -250,6 +250,23 @@ function getSavedR2BackupStatus() {
     if (saved && typeof saved === 'object') return saved;
   } catch(e) {}
   return {};
+}
+
+function savePortalMessageStateLocal(value = {}) {
+  portalMessageState = value && typeof value === 'object' ? value : {};
+  try { localStorage.setItem('pananth_portal_message_state', JSON.stringify(portalMessageState)); } catch(e) {}
+}
+function saveLineRoomMessagesLocal(value = {}) {
+  lineRoomMessages = value && typeof value === 'object' ? value : {};
+  try { localStorage.setItem('pananth_line_room_messages', JSON.stringify(lineRoomMessages)); } catch(e) {}
+}
+function savePendingSlipReviewsLocal(value = {}) {
+  pendingSlipReviews = value && typeof value === 'object' ? value : {};
+  try { localStorage.setItem('pananth_pending_slip_reviews', JSON.stringify(pendingSlipReviews)); } catch(e) {}
+}
+function saveMeterPhotosLocal(value = {}) {
+  meterPhotos = value && typeof value === 'object' ? value : {};
+  try { localStorage.setItem('pananth_meter_photos', JSON.stringify(meterPhotos)); } catch(e) {}
 }
 
 function renderAutoBackupStatus() {
@@ -4636,6 +4653,7 @@ body.dark #alertPageContent textarea::placeholder {
       <div class="tool-button-list two">
         <button class="ctrl-btn outline" onclick="openSettings()">⚙️ LINE</button>
         <button class="ctrl-btn outline" onclick="openLineTemplateSettings()">💬 Template LINE</button>
+        <button class="ctrl-btn outline" onclick="sendPortalUnreadReminders()">👀 เตือนยังไม่เปิด Portal</button>
         <button class="ctrl-btn outline" onclick="openRoomSettings()">🏘️ ห้อง/ค่าเช่า</button>
         <button class="ctrl-btn outline" onclick="openTenantDocs()">🧾 ผู้เช่า/เอกสาร</button>
         <button class="ctrl-btn outline" onclick="openMutedRooms()">🔕 งดแจ้งเตือน</button>
@@ -4775,6 +4793,12 @@ body.dark #alertPageContent textarea::placeholder {
         <button onclick="openReceiptEdit()" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:white;color:var(--primary);font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
           ✏️ แก้ไขรายละเอียดใบแจ้งค่าเช่า
         </button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+        <button onclick="setPaymentPromiseDay(currentRoom)" style="width:100%;padding:10px;border:1.5px solid #f0d06e;border-radius:10px;background:#fff8e6;color:#9a5b00;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:800;cursor:pointer;">📅 นัดวันชำระ</button>
+        <button onclick="clearPaymentPromiseDay(currentRoom)" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:white;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:12px;font-weight:800;cursor:pointer;">🗑️ ล้างนัด</button>
+        <button onclick="openLineRoomHistory(currentRoom)" style="width:100%;padding:10px;border:1.5px solid #cfe0ff;border-radius:10px;background:#eef4ff;color:#2547a8;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:800;cursor:pointer;">💬 ประวัติ LINE</button>
+        <button onclick="clearPendingSlipReviewFromCard(currentRoom)" style="width:100%;padding:10px;border:1.5px solid #f3c1c1;border-radius:10px;background:#fff0f0;color:#b42318;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:800;cursor:pointer;">⏳ ล้างรอตรวจสลิป</button>
       </div>
       <div style="margin-top:8px;">
         <button onclick="openCheckout()" style="width:100%;padding:10px;border:none;border-radius:10px;background:#e74c3c;color:white;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
@@ -4988,6 +5012,20 @@ body.dark #alertPageContent textarea::placeholder {
         <input type="number" class="form-input" id="rm_wp" readonly style="background:var(--bg);color:var(--muted);">
         <input type="number" class="form-input" id="rm_wc" placeholder="ครั้งหลัง" oninput="calcRoomMeterPreview()" inputmode="numeric" style="border-color:var(--accent);background:#fffbf0;font-weight:700;">
       </div>
+    </div>
+    <div style="margin:10px 0;padding:10px;border:1.5px dashed var(--border);border-radius:10px;background:var(--bg);">
+      <div style="font-size:12px;font-weight:900;color:var(--primary);margin-bottom:6px;">📷 แนบรูปมิเตอร์ (ไม่บังคับ)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <label style="display:block;padding:8px;border-radius:8px;background:white;border:1px solid var(--border);font-size:11px;font-weight:800;color:var(--primary);cursor:pointer;">
+          ⚡ รูปไฟ
+          <input type="file" accept="image/*" capture="environment" id="rm_photo_electric" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+        </label>
+        <label style="display:block;padding:8px;border-radius:8px;background:white;border:1px solid var(--border);font-size:11px;font-weight:800;color:var(--primary);cursor:pointer;">
+          💧 รูปน้ำ
+          <input type="file" accept="image/*" capture="environment" id="rm_photo_water" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+        </label>
+      </div>
+      <div id="rmMeterPhotoStatus" style="font-size:10px;color:var(--muted);margin-top:7px;"></div>
     </div>
     <div style="background:var(--bg);border-radius:10px;padding:12px;margin:10px 0;border:1.5px solid var(--border);" id="rmPreview"></div>
     <div class="modal-btns">
@@ -5367,6 +5405,14 @@ let lastCloseBackup = null;
 let arrears = {}; // { roomNum: [{id, monthKey, monthText, originalAmount, paidAmount, remaining, status, note}]
 let monthlyArchiveIndex = {}; // { monthKey: archive metadata } }
 let r2BackupStatus = {}; // สถานะ Backup ล่าสุดจาก Worker/KV
+let portalMessageState = {}; // { roomNum: last Portal prompt/opened state }
+let lineRoomMessages = {}; // { roomNum: LINE message history[] }
+let pendingSlipReviews = {}; // { roomNum: pending slip manual review }
+let meterPhotos = {}; // { roomNum: meter photo history[] }
+try { portalMessageState = JSON.parse(localStorage.getItem('pananth_portal_message_state') || '{}') || {}; } catch(e) { portalMessageState = {}; }
+try { lineRoomMessages = JSON.parse(localStorage.getItem('pananth_line_room_messages') || '{}') || {}; } catch(e) { lineRoomMessages = {}; }
+try { pendingSlipReviews = JSON.parse(localStorage.getItem('pananth_pending_slip_reviews') || '{}') || {}; } catch(e) { pendingSlipReviews = {}; }
+try { meterPhotos = JSON.parse(localStorage.getItem('pananth_meter_photos') || '{}') || {}; } catch(e) { meterPhotos = {}; }
 let activeMonthKey = null; // เดือนที่กำลังใช้งานจริง ใช้กันกดเปลี่ยนเดือนแล้วล้างข้อมูลผิดรอบ
 
 const DEFAULT_LINE_TEMPLATES = {
@@ -7978,6 +8024,12 @@ async function initRooms() {
       lineTemplates = getSavedLineTemplates();
     }
 
+    // โหลดสถานะ Portal / ประวัติ LINE / รอตรวจสลิป / รูปมิเตอร์
+    savePortalMessageStateLocal(kvData.portalMessageState || {});
+    saveLineRoomMessagesLocal(kvData.lineRoomMessages || {});
+    savePendingSlipReviewsLocal(kvData.pendingSlipReviews || {});
+    saveMeterPhotosLocal(kvData.meterPhotos || {});
+
     // โหลด history
     if (kvData.history) {
       localStorage.setItem('pananth_history', JSON.stringify(kvData.history));
@@ -8214,6 +8266,153 @@ function renderAll() {
   renderMeterCycleLockStatus();
 }
 
+
+function portalOpenInfo(roomNum) {
+  const row = portalMessageState?.[roomNum] || portalMessageState?.[String(roomNum)] || null;
+  if (!row) return { hasPrompt: false, openedAfterPrompt: false, unread: false, promptText: '', openedText: '' };
+  const promptMs = Date.parse(row.lastPortalPromptAt || '') || 0;
+  const openedMs = Date.parse(row.lastPortalOpenedAt || '') || 0;
+  return {
+    hasPrompt: !!promptMs,
+    openedAfterPrompt: !!openedMs && (!promptMs || openedMs >= promptMs),
+    unread: !!promptMs && (!openedMs || openedMs < promptMs),
+    promptText: row.lastPortalPromptAtText || row.lastPortalPromptAt || '',
+    openedText: row.lastPortalOpenedAtText || row.lastPortalOpenedAt || '',
+  };
+}
+
+function getUnreadPortalRooms() {
+  return getManagedRoomNumbers().filter(roomNum => {
+    const state = portalOpenInfo(roomNum);
+    const d = rooms?.[roomNum];
+    const cfg = loadConfig();
+    return !!d && !d.vacant && !!cfg.userIds?.[roomNum] && state.unread;
+  });
+}
+
+function getRoomLineHistory(roomNum) {
+  const rows = lineRoomMessages?.[roomNum] || lineRoomMessages?.[String(roomNum)] || [];
+  return Array.isArray(rows) ? rows.slice().reverse() : [];
+}
+
+function getPendingSlipReview(roomNum) {
+  return pendingSlipReviews?.[roomNum] || pendingSlipReviews?.[String(roomNum)] || null;
+}
+
+function getRoomMeterPhotos(roomNum) {
+  const rows = meterPhotos?.[roomNum] || meterPhotos?.[String(roomNum)] || [];
+  return Array.isArray(rows) ? rows.slice() : [];
+}
+
+function meterPhotoCountForCurrentCycle(roomNum, meterType = '') {
+  const monthKey = getCurrentBillingMonthKey();
+  return getRoomMeterPhotos(roomNum).filter(photo => {
+    const sameMonth = !monthKey || !photo.billingMonthKey || String(photo.billingMonthKey) === String(monthKey);
+    const sameType = !meterType || String(photo.meterType || '') === String(meterType || '');
+    return sameMonth && sameType;
+  }).length;
+}
+
+function getPaymentPromiseInfo(roomNum) {
+  const info = getReminderMuteInfo(roomNum);
+  if (!info) return null;
+  if (String(info.source || '') !== 'payment-promise') return null;
+  return {
+    ...info,
+    promiseDay: Number(info.promiseDay || info.untilDay || 0) || Number(info.untilDay || 0),
+  };
+}
+
+async function setPaymentPromiseDay(roomNum) {
+  const cfg = loadConfig();
+  if (!cfg.reminderMuteRooms) cfg.reminderMuteRooms = {};
+  const current = getPaymentPromiseInfo(roomNum) || getReminderMuteInfo(roomNum);
+  const rawDay = prompt('ผู้เช่าห้อง ' + roomNum + ' นัดชำระวันที่เท่าไร?\nตัวอย่าง: 25', current?.promiseDay || current?.untilDay || '25');
+  if (rawDay === null) return;
+  const promiseDay = parseInt(String(rawDay || '').trim(), 10);
+  if (!promiseDay || promiseDay < 1 || promiseDay > 31) {
+    alert('กรุณากรอกวันที่ 1-31');
+    return;
+  }
+  const note = prompt('หมายเหตุ (ไม่บังคับ)', current?.note || 'ผู้เช่าแจ้งว่าจะชำระวันที่ ' + promiseDay) ?? '';
+  cfg.reminderMuteRooms[roomNum] = {
+    untilDay: promiseDay,
+    promiseDay,
+    source: 'payment-promise',
+    note: String(note || '').trim(),
+    updatedAt: new Date().toISOString(),
+  };
+  await saveConfigOnly(cfg);
+  renderAll();
+  alert('📅 บันทึกนัดชำระวันที่ ' + promiseDay + ' แล้วครับ\nระบบจะข้ามแจ้งเตือนอัตโนมัติก่อนวันนัด');
+}
+
+async function clearPaymentPromiseDay(roomNum) {
+  await clearReminderMuteUntilDay(roomNum);
+  renderAll();
+}
+
+async function clearPendingSlipReviewFromCard(roomNum) {
+  if (!confirm('ล้างสถานะ “รอตรวจสอบสลิป” ของห้อง ' + roomNum + ' ใช่ไหมครับ?')) return;
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'clearPendingSlipReview', roomNum }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) throw new Error(data.error || 'ล้างสถานะไม่สำเร็จ');
+    savePendingSlipReviewsLocal(data.pendingSlipReviews || {});
+    renderAll();
+    alert('✅ ล้างสถานะรอตรวจสอบสลิปแล้ว');
+  } catch (err) {
+    alert('ล้างสถานะไม่สำเร็จ: ' + (err?.message || err));
+  }
+}
+
+function openLineRoomHistory(roomNum) {
+  const rows = getRoomLineHistory(roomNum);
+  setAlertPageTitle('💬 ประวัติ LINE — ห้อง ' + roomNum);
+  if (!rows.length) {
+    document.getElementById('alertPageContent').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);">ยังไม่มีประวัติข้อความ LINE ของห้องนี้</div>';
+    document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+    return;
+  }
+  document.getElementById('alertPageContent').innerHTML = rows.map(row => `
+    <div style="background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+        <div style="font-weight:900;color:var(--primary);font-size:13px;">${escapeHtml(row.kind || 'message')}</div>
+        <div style="font-size:11px;color:var(--muted);text-align:right;">${escapeHtml(row.sentAtText || row.sentAt || '-')}</div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">${row.source ? 'ที่มา: ' + escapeHtml(row.source) + ' • ' : ''}${row.recipient ? 'ผู้รับ: ' + escapeHtml(String(row.recipient).slice(0, 14)) + '…' : ''}</div>
+      <div style="margin-top:8px;padding:9px;background:var(--bg);border-radius:10px;white-space:pre-wrap;font-size:12px;line-height:1.55;">${escapeHtml(row.message || row.preview || '-')}</div>
+    </div>
+  `).join('');
+  document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+}
+
+async function sendPortalUnreadReminders() {
+  const roomsList = getUnreadPortalRooms();
+  if (!roomsList.length) {
+    alert('ไม่มีห้องที่ส่ง Portal ไปแล้วแต่ยังไม่เปิดดูครับ');
+    return;
+  }
+  if (!confirm('ส่งเตือนเฉพาะห้องที่ยังไม่เปิด Tenant Portal ใช่ไหมครับ?\n\n' + roomsList.map(x => 'ห้อง ' + x).join(', '))) return;
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'sendPortalUnreadReminders' }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok && res.status !== 207) throw new Error(data.error || 'ส่งเตือนไม่สำเร็จ');
+    alert(`✅ ส่งเตือน Portal แล้ว ${Number(data.sentCount || 0).toLocaleString('th-TH')} รายการ${data.failedCount ? '\n❌ ไม่สำเร็จ ' + Number(data.failedCount).toLocaleString('th-TH') + ' รายการ' : ''}`);
+    await refreshData();
+  } catch (err) {
+    alert('ส่งเตือน Portal ไม่สำเร็จ: ' + (err?.message || err));
+  }
+}
+
 function makeCard(r) {
   const d = rooms[r];
   const fullTotal = calcFullTotal(r);
@@ -8246,6 +8445,20 @@ function makeCard(r) {
   const meterBtnStyle = meterBtnDisabled
     ? 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:not-allowed;font-size:11px;font-weight:800;background:#d6d9de;color:#6b7280;box-shadow:none;white-space:nowrap;opacity:0.75;'
     : 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:pointer;font-size:11px;font-weight:800;background:var(--accent);color:#1a2036;box-shadow:0 2px 6px rgba(232,160,32,0.28);white-space:nowrap;';
+
+  const portalState = portalOpenInfo(r);
+  const paymentPromise = getPaymentPromiseInfo(r);
+  const pendingSlip = getPendingSlipReview(r);
+  const lineHistoryCount = getRoomLineHistory(r).length;
+  const roomMiniBadges = [
+    paymentPromise ? `<button onclick="event.stopPropagation();setPaymentPromiseDay(${r})" title="แก้ไขนัดชำระ" style="border:none;cursor:pointer;background:#fff2cc;color:#8a5a00;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">📅 นัดชำระ ${paymentPromise.promiseDay}</button>` : '',
+    pendingSlip ? `<button onclick="event.stopPropagation();clearPendingSlipReviewFromCard(${r})" title="กดเพื่อล้างสถานะ" style="border:none;cursor:pointer;background:#fff0f0;color:#b42318;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">⏳ รอตรวจสอบสลิป</button>` : '',
+    portalState.unread ? `<span title="ส่ง Portal ไปแล้วแต่ยังไม่เปิดดู" style="background:#fff4e6;color:#b45309;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">👀 ยังไม่เปิด Portal</span>` : (portalState.openedAfterPrompt ? `<span title="${escapeHtml(portalState.openedText || '')}" style="background:#eafaf6;color:#087443;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">✅ เปิด Portal แล้ว</span>` : ''),
+    lineHistoryCount ? `<button onclick="event.stopPropagation();openLineRoomHistory(${r})" title="ดูประวัติ LINE" style="border:none;cursor:pointer;background:#eef4ff;color:#2547a8;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">💬 LINE ${lineHistoryCount}</button>` : '',
+  ].filter(Boolean).join(' ');
+  const roomMiniBadgesHtml = roomMiniBadges
+    ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;">${roomMiniBadges}</div>`
+    : '';
 
   const card = document.createElement('div');
   card.id = `room-card-${r}`;
@@ -8284,6 +8497,7 @@ function makeCard(r) {
       <div>
         <div class="room-num">${testRoom ? 'ห้อง 99' : 'ห้อง ' + r} ${testRoom ? '<span style="font-size:11px;background:#8e44ad;color:white;border-radius:999px;padding:2px 6px;vertical-align:middle;">TEST</span>' : ''}</div>
         <div class="room-tier">${testRoom ? '🧪 ทดสอบระบบ / LINE ส่งหาเจ้าของ' : (tenants[r]?.name ? `👤 ${tenants[r].name}` : `ค่าเช่า ${d.prorateRent ? d.prorateRent.toLocaleString()+' ฿ 📅' : roomRent.toLocaleString()+' ฿'}`)}</div>
+        ${roomMiniBadgesHtml}
       </div>
       <div style="text-align:right;">
         <div class="paid-dot ${isClear ? 'paid' : 'unpaid'}" style="margin-left:auto;"></div>
@@ -9273,6 +9487,104 @@ function closeMeterPage() {
   document.getElementById('meterPage').classList.remove('open'); refreshModalLockSafe();
 }
 
+
+function meterBlobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('อ่านไฟล์รูปไม่สำเร็จ'));
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function compressMeterPhotoFile(file) {
+  if (!file) return null;
+  if (!String(file.type || '').startsWith('image/')) throw new Error('รองรับเฉพาะไฟล์รูปภาพ');
+  const img = await new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
+    image.onerror = () => { URL.revokeObjectURL(url); reject(new Error('เปิดรูปไม่สำเร็จ')); };
+    image.src = url;
+  });
+  const maxSide = 1600;
+  let width = Number(img.naturalWidth || img.width || 0);
+  let height = Number(img.naturalHeight || img.height || 0);
+  if (!width || !height) throw new Error('ขนาดรูปไม่ถูกต้อง');
+  const scale = Math.min(1, maxSide / Math.max(width, height));
+  width = Math.max(1, Math.round(width * scale));
+  height = Math.max(1, Math.round(height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('เตรียมรูปไม่สำเร็จ');
+  ctx.drawImage(img, 0, 0, width, height);
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(next => next ? resolve(next) : reject(new Error('บีบอัดรูปไม่สำเร็จ')), 'image/jpeg', 0.78);
+  });
+  const base64 = await meterBlobToBase64(blob);
+  return {
+    base64,
+    mimeType: 'image/jpeg',
+    fileName: String(file.name || 'meter-photo').replace(/\.[^.]+$/, '') + '.jpg',
+    size: blob.size || 0,
+  };
+}
+
+async function uploadMeterPhotoForRoom(roomNum, meterType, file, prevReading, currReading) {
+  if (!file) return null;
+  const prepared = await compressMeterPhotoFile(file);
+  const data = await workerPost({
+    action: 'uploadMeterPhoto',
+    roomNum,
+    meterType,
+    fileName: prepared.fileName,
+    mimeType: prepared.mimeType,
+    base64: prepared.base64,
+    prevReading,
+    currReading,
+  });
+  if (data?.meterPhotos) saveMeterPhotosLocal(data.meterPhotos);
+  return data?.photo || null;
+}
+
+async function uploadSelectedMeterPhotos(roomNum, {
+  electricFile = null,
+  waterFile = null,
+  ep = 0,
+  ec = 0,
+  wp = 0,
+  wc = 0,
+  statusEl = null,
+} = {}) {
+  const uploaded = [];
+  const failed = [];
+  if (statusEl) statusEl.textContent = '⏳ กำลังอัปโหลดรูปมิเตอร์...';
+  if (electricFile) {
+    try {
+      const photo = await uploadMeterPhotoForRoom(roomNum, 'electric', electricFile, ep, ec);
+      if (photo) uploaded.push('ไฟ');
+    } catch (err) {
+      failed.push('ไฟ: ' + (err?.message || err));
+    }
+  }
+  if (waterFile) {
+    try {
+      const photo = await uploadMeterPhotoForRoom(roomNum, 'water', waterFile, wp, wc);
+      if (photo) uploaded.push('น้ำ');
+    } catch (err) {
+      failed.push('น้ำ: ' + (err?.message || err));
+    }
+  }
+  if (statusEl) {
+    statusEl.textContent = failed.length
+      ? `⚠️ อัปโหลดรูปสำเร็จ ${uploaded.length} รายการ • ไม่สำเร็จ ${failed.length} รายการ`
+      : (uploaded.length ? `✅ อัปโหลดรูป ${uploaded.join(' / ')} แล้ว` : 'ไม่ได้แนบรูป');
+  }
+  return { uploaded, failed };
+}
+
 function makeMeterCard(r) {
   const d = rooms[r];
   const isCorrection = hasRoomMeterForCurrentCycle(r);
@@ -9331,6 +9643,21 @@ function makeMeterCard(r) {
         </div>
       </div>
 
+      <div style="margin-top:10px;padding:10px;border:1.5px dashed var(--border);border-radius:10px;background:var(--bg);">
+        <div style="font-size:12px;font-weight:900;color:var(--primary);margin-bottom:6px;">📷 แนบรูปมิเตอร์ (ไม่บังคับ)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <label style="display:block;padding:8px;border-radius:8px;background:white;border:1px solid var(--border);font-size:11px;font-weight:800;color:var(--primary);cursor:pointer;">
+            ⚡ รูปไฟ
+            <input type="file" accept="image/*" capture="environment" id="mp-electric-${r}" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+          </label>
+          <label style="display:block;padding:8px;border-radius:8px;background:white;border:1px solid var(--border);font-size:11px;font-weight:800;color:var(--primary);cursor:pointer;">
+            💧 รูปน้ำ
+            <input type="file" accept="image/*" capture="environment" id="mp-water-${r}" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+          </label>
+        </div>
+        <div id="meter-photo-status-${r}" style="font-size:10px;color:var(--muted);margin-top:7px;">เก็บแล้วรอบนี้: ⚡ ${meterPhotoCountForCurrentCycle(r, 'electric')} รูป • 💧 ${meterPhotoCountForCurrentCycle(r, 'water')} รูป</div>
+      </div>
+
       <div class="meter-total-preview" id="mtp-${r}">
         <span class="lbl">ยอดรวมห้อง ${r}</span>
         <span class="val" id="mtpv-${r}">รอกรอกมิเตอร์</span>
@@ -9363,7 +9690,7 @@ function updateMeterPreview(r) {
   }
 }
 
-function saveSingleMeter(r) {
+async function saveSingleMeter(r) {
   if (!requireMeterCycleOpenedForRoom(r)) return;
   const meterPage = document.getElementById('meterPage');
   const _meterScrollTop = meterPage ? meterPage.scrollTop : 0;
@@ -9371,6 +9698,9 @@ function saveSingleMeter(r) {
   const wcEl = document.getElementById(`wc-${r}`);
   const newEc = parseInt(ecEl?.value);
   const newWc = parseInt(wcEl?.value);
+  const electricPhotoFile = document.getElementById(`mp-electric-${r}`)?.files?.[0] || null;
+  const waterPhotoFile = document.getElementById(`mp-water-${r}`)?.files?.[0] || null;
+  const meterPhotoStatusEl = document.getElementById(`meter-photo-status-${r}`);
 
   if (isNaN(newEc) || isNaN(newWc)) {
     alert(`ห้อง ${r}: กรุณากรอกค่ามิเตอร์ให้ครบ`);
@@ -9400,8 +9730,20 @@ function saveSingleMeter(r) {
   rooms[r].manualRemaining = 0;
   markRoomMeterSavedForCurrentCycle(r, beforeMeterSnapshot, isCorrection ? 'meterCorrection' : 'meterEntry', isCorrection ? 'แก้ไขมิเตอร์รอบปัจจุบัน' : 'จดมิเตอร์รอบใหม่');
   saveData(r);
+  const meterPhotoResult = await uploadSelectedMeterPhotos(r, {
+    electricFile: electricPhotoFile,
+    waterFile: waterPhotoFile,
+    ep: baseEp,
+    ec: newEc,
+    wp: baseWp,
+    wc: newWc,
+    statusEl: meterPhotoStatusEl,
+  });
   renderAll();
   requestAnimationFrame(() => restoreMeterPagePosition(r, _meterScrollTop));
+  if (meterPhotoResult.failed.length) {
+    alert('บันทึกมิเตอร์แล้ว แต่รูปบางรายการอัปโหลดไม่สำเร็จ:\n' + meterPhotoResult.failed.join('\n'));
+  }
 
   // แสดง toast
   const toast = document.createElement('div');
@@ -9411,7 +9753,7 @@ function saveSingleMeter(r) {
   setTimeout(() => toast.remove(), 1800);
 }
 
-function saveAllMeters() {
+async function saveAllMeters() {
   if (!requireMeterCycleOpenedForRoom(null)) return;
   if (isMonthLocked() && !window._bypassMonthLock) {
     alert('รอบนี้ถูกล็อกอยู่ครับ กรุณาปลดล็อกก่อนจดมิเตอร์');
@@ -9419,6 +9761,8 @@ function saveAllMeters() {
   }
   let count = 0;
   let skippedPaid = 0;
+  const meterPhotoJobs = [];
+  const meterPhotoFailures = [];
   for (const i of getManagedRoomNumbers()) {
     const ecEl = document.getElementById(`ec-${i}`);
     const wcEl = document.getElementById(`wc-${i}`);
@@ -9458,14 +9802,35 @@ function saveAllMeters() {
     rooms[i].manualPaidAmount = 0;
     rooms[i].manualRemaining = 0;
     markRoomMeterSavedForCurrentCycle(i, beforeMeterSnapshot, isCorrection ? 'meterCorrectionFromBulk' : 'meterEntryFromBulk', isCorrection ? 'แก้ไขมิเตอร์จากหน้าจดรวม' : 'จดมิเตอร์จากหน้าจดรวม');
+    const electricPhotoFile = document.getElementById(`mp-electric-${i}`)?.files?.[0] || null;
+    const waterPhotoFile = document.getElementById(`mp-water-${i}`)?.files?.[0] || null;
+    if (electricPhotoFile || waterPhotoFile) {
+      meterPhotoJobs.push({
+        roomNum: i,
+        electricFile: electricPhotoFile,
+        waterFile: waterPhotoFile,
+        ep: baseEp,
+        ec: newEc,
+        wp: baseWp,
+        wc: newWc,
+        statusEl: document.getElementById(`meter-photo-status-${i}`),
+      });
+    }
     count++;
   }
   if (skippedPaid > 0) {
     alert(`มี ${skippedPaid} ห้องที่มีประวัติรับชำระแล้ว ระบบข้ามการแก้ไขมิเตอร์เพื่อกันยอดเพี้ยนครับ`);
   }
   saveData();
+  for (const job of meterPhotoJobs) {
+    const result = await uploadSelectedMeterPhotos(job.roomNum, job);
+    if (result.failed.length) meterPhotoFailures.push('ห้อง ' + job.roomNum + ': ' + result.failed.join(', '));
+  }
   renderAll();
   closeMeterPage();
+  if (meterPhotoFailures.length) {
+    alert('บันทึกมิเตอร์แล้ว แต่รูปบางรายการอัปโหลดไม่สำเร็จ:\n' + meterPhotoFailures.join('\n'));
+  }
   const toast = document.createElement('div');
   toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2e7d52;color:white;padding:10px 20px;border-radius:20px;font-weight:700;font-size:14px;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
   toast.textContent = `✅ บันทึกมิเตอร์ ${count} ห้องแล้ว`;
@@ -9484,6 +9849,12 @@ function openRoomMeter(r) {
   document.getElementById('rm_ec').value = isCorrection ? d.ec : '';
   document.getElementById('rm_wp').value = isCorrection ? d.wp : d.wc;
   document.getElementById('rm_wc').value = isCorrection ? d.wc : '';
+  const rmElectricPhoto = document.getElementById('rm_photo_electric');
+  const rmWaterPhoto = document.getElementById('rm_photo_water');
+  if (rmElectricPhoto) rmElectricPhoto.value = '';
+  if (rmWaterPhoto) rmWaterPhoto.value = '';
+  const rmPhotoStatus = document.getElementById('rmMeterPhotoStatus');
+  if (rmPhotoStatus) rmPhotoStatus.textContent = `เก็บแล้วรอบนี้: ⚡ ${meterPhotoCountForCurrentCycle(r, 'electric')} รูป • 💧 ${meterPhotoCountForCurrentCycle(r, 'water')} รูป`;
   setMeterCorrectionNote('rmModeNote', r);
   document.getElementById('rmPreview').innerHTML = '— รอกรอกมิเตอร์';
   if (isCorrection) calcRoomMeterPreview();
@@ -9509,7 +9880,7 @@ function calcRoomMeterPreview() {
     <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;border-top:1px dashed var(--border);margin-top:6px;padding-top:6px;color:var(--primary);"><span>รวม</span><span>${total.toLocaleString()} ฿</span></div>`;
 }
 
-function saveRoomMeter() {
+async function saveRoomMeter() {
   const _saveMeterScrollY = getWindowScrollY();
   if (!requireMeterCycleOpenedForRoom(currentRoom)) return;
   if (shouldBlockMonthLockForRoom(currentRoom)) {
@@ -9519,6 +9890,9 @@ function saveRoomMeter() {
   const r = currentRoom;
   const ec = parseInt(document.getElementById('rm_ec').value);
   const wc = parseInt(document.getElementById('rm_wc').value);
+  const electricPhotoFile = document.getElementById('rm_photo_electric')?.files?.[0] || null;
+  const waterPhotoFile = document.getElementById('rm_photo_water')?.files?.[0] || null;
+  const meterPhotoStatusEl = document.getElementById('rmMeterPhotoStatus');
   if (isNaN(ec) || isNaN(wc)) { alert('กรุณากรอกค่ามิเตอร์ให้ครบครับ'); return; }
   const baseEp = parseInt(document.getElementById('rm_ep').value) || 0;
   const baseWp = parseInt(document.getElementById('rm_wp').value) || 0;
@@ -9542,8 +9916,20 @@ function saveRoomMeter() {
   markRoomMeterSavedForCurrentCycle(r, beforeMeterSnapshot, isCorrection ? 'meterCorrectionFromRoomPopup' : 'meterEntryFromRoomPopup', isCorrection ? 'แก้ไขมิเตอร์จากปุ่มรายห้อง' : 'จดมิเตอร์จากปุ่มรายห้อง');
 
   saveData(r);
+  const meterPhotoResult = await uploadSelectedMeterPhotos(r, {
+    electricFile: electricPhotoFile,
+    waterFile: waterPhotoFile,
+    ep: baseEp,
+    ec,
+    wp: baseWp,
+    wc,
+    statusEl: meterPhotoStatusEl,
+  });
   renderAll();
   closeModal('roomMeterOverlay');
+  if (meterPhotoResult.failed.length) {
+    alert('บันทึกมิเตอร์แล้ว แต่รูปบางรายการอัปโหลดไม่สำเร็จ:\n' + meterPhotoResult.failed.join('\n'));
+  }
   requestAnimationFrame(() => {
     requestAnimationFrame(() => scrollBackToRoomCard(r, _saveMeterScrollY));
   });
@@ -9639,7 +10025,7 @@ async function sendLineFromEdit() {
     const res = await fetch(cfg.worker, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(testRoom ? { action: 'sendOwnerMessage', message } : { userId, message }),
+      body: JSON.stringify(testRoom ? { action: 'sendOwnerMessage', message } : { userId, message, roomNum: r, messageKind: 'rentNotice' }),
     });
     const result = await res.json();
     if (result.sentMessages || res.ok) {
@@ -9842,7 +10228,7 @@ async function sendAlertSelected() {
       const res = await fetch(WORKER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, message }),
+        body: JSON.stringify({ userId, message, roomNum: r, messageKind: 'overdueReminder' }),
       });
       if (!res.ok) throw new Error(await res.text());
       sent++;
@@ -9891,7 +10277,13 @@ function getReminderMuteInfo(r) {
   if (!info) return null;
   const untilDay = Number(info.untilDay || 0);
   if (!untilDay || untilDay < 1 || untilDay > 31) return null;
-  return { untilDay, note: String(info.note || ''), updatedAt: info.updatedAt || '' };
+  return {
+    untilDay,
+    promiseDay: Number(info.promiseDay || 0) || untilDay,
+    source: String(info.source || ''),
+    note: String(info.note || ''),
+    updatedAt: info.updatedAt || ''
+  };
 }
 
 function toggleMuteRoom(r) {
@@ -9943,9 +10335,10 @@ function openMutedRooms() {
       <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:4px;">🔕 งดแจ้งเตือนรายห้อง</div>
       <div style="font-size:12px;color:var(--muted);line-height:1.55;">
         <b>งดแจ้งถาวร</b> = ข้ามห้องนั้นทุกครั้ง<br>
-        <b>งดถึงวันที่</b> = ข้ามเฉพาะแจ้งเตือนอัตโนมัติก่อนวันนั้น เช่น ตั้ง 25 จะข้ามวันที่ 5/10/15/20 และวันที่ 25 แจ้งได้ถ้ายังค้าง
+        <b>นัดวันชำระ</b> = ใช้ระบบงดแจ้งเตือนชั่วคราวร่วมกัน เช่น นัดวันที่ 25 จะข้ามเตือนวันที่ 5/10/15/20 และแจ้งได้อีกในวันที่ 25 ถ้ายังค้าง<br>
+        <b>งดถึงวันที่</b> = ใช้กรณีพิเศษที่ไม่ใช่นัดวันชำระ
       </div>
-      <div style="font-size:12px;color:#e67e22;margin-top:6px;font-weight:700;">ตอนนี้งดถาวร ${mutedCount} ห้อง • งดถึงวันที่ ${tempMutedCount} ห้อง</div>
+      <div style="font-size:12px;color:#e67e22;margin-top:6px;font-weight:700;">ตอนนี้งดถาวร ${mutedCount} ห้อง • นัดชำระ/งดชั่วคราว ${tempMutedCount} ห้อง</div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">`;
 
@@ -9958,12 +10351,12 @@ function openMutedRooms() {
         <div style="font-family:Kanit,sans-serif;font-size:15px;font-weight:700;color:var(--primary);">ห้อง ${i}</div>
         ${tenantName ? `<div style="font-size:10px;color:var(--muted);">${tenantName}</div>` : '<div style="font-size:10px;color:var(--muted);">-</div>'}
         <div style="font-size:12px;font-weight:700;color:${isMuted?'#e67e22':(tempMute?'#d35400':'var(--green)')};margin-top:4px;">
-          ${isMuted?'🔕 งดถาวร':(tempMute?`⏸️ งดถึงวันที่ ${tempMute.untilDay}`:'🔔 แจ้งปกติ')}
+          ${isMuted?'🔕 งดถาวร':(tempMute?(tempMute.source==='payment-promise'?`📅 นัดชำระ ${tempMute.promiseDay || tempMute.untilDay}`:`⏸️ งดถึงวันที่ ${tempMute.untilDay}`):'🔔 แจ้งปกติ')}
         </div>
         ${tempMute?.note ? `<div style="font-size:10px;color:var(--muted);margin-top:3px;">${escapeHtml(tempMute.note)}</div>` : ''}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;">
           <button onclick="event.stopPropagation();toggleMuteRoom(${i})" style="padding:8px;border-radius:8px;border:1px solid ${isMuted?'#e67e22':'var(--border)'};background:${isMuted?'#fff':'var(--bg)'};font-size:11px;font-weight:800;color:${isMuted?'#e67e22':'var(--primary)'};cursor:pointer;">${isMuted?'เปิดแจ้ง':'งดถาวร'}</button>
-          <button onclick="event.stopPropagation();setReminderMuteUntilDay(${i})" style="padding:8px;border-radius:8px;border:1px solid #f0d06e;background:#fff8e6;font-size:11px;font-weight:800;color:#d35400;cursor:pointer;">งดถึงวันที่</button>
+          <button onclick="event.stopPropagation();setPaymentPromiseDay(${i})" style="padding:8px;border-radius:8px;border:1px solid #f0d06e;background:#fff8e6;font-size:11px;font-weight:800;color:#d35400;cursor:pointer;">นัดวันชำระ</button>
         </div>
         ${tempMute ? `<button onclick="event.stopPropagation();clearReminderMuteUntilDay(${i})" style="width:100%;margin-top:6px;padding:7px;border-radius:8px;border:1px solid var(--border);background:var(--card);font-size:11px;font-weight:800;color:var(--muted);cursor:pointer;">ล้างงดถึงวันที่</button>` : ''}
       </div>`;
@@ -11890,7 +12283,7 @@ async function sendBulkMonthlySelected() {
       const res = await fetch(WORKER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, message }),
+        body: JSON.stringify({ userId, message, roomNum: r, messageKind: 'rentNotice' }),
       });
       if (!res.ok) throw new Error(await res.text());
       sent++;
@@ -13505,7 +13898,7 @@ async function sendLineAPI() {
     const res = await fetch(cfg.worker, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, message }),
+      body: JSON.stringify({ userId, message, roomNum: r, messageKind: 'rentNotice' }),
     });
     const result = await res.json();
 
@@ -14240,6 +14633,10 @@ async function refreshData() {
     if (kvData.lineTemplates) {
       saveLineTemplatesLocal(kvData.lineTemplates || {});
     }
+    savePortalMessageStateLocal(kvData.portalMessageState || {});
+    saveLineRoomMessagesLocal(kvData.lineRoomMessages || {});
+    savePendingSlipReviewsLocal(kvData.pendingSlipReviews || {});
+    saveMeterPhotosLocal(kvData.meterPhotos || {});
     if (kvData.history) {
       localStorage.setItem('pananth_history', JSON.stringify(kvData.history));
     }
@@ -14363,6 +14760,7 @@ function organizeMobileTools() {
           <div class="button-grid">
             <button class="ctrl-btn outline" onclick="openSettings()">⚙️ ตั้งค่า LINE</button>
             <button class="ctrl-btn outline" onclick="openLineTemplateSettings()">💬 Template LINE</button>
+            <button class="ctrl-btn outline" onclick="sendPortalUnreadReminders()">👀 เตือนยังไม่เปิด Portal</button>
             <button class="ctrl-btn outline" onclick="openRoomSettings()">🏘️ ตั้งค่าห้อง/ค่าเช่า</button>
             <button class="ctrl-btn outline" onclick="openTenantDocs()">🧾 ผู้เช่า/เอกสาร</button>
             <button class="ctrl-btn outline" onclick="openMutedRooms()">🔕 งดแจ้งเตือน</button>

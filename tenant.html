@@ -74,6 +74,14 @@
     .skeleton{animation:pulse 1.2s infinite ease-in-out;background:linear-gradient(90deg,#eef3fb,#f8fbff,#eef3fb);background-size:200% 100%;color:transparent;border-radius:12px}
     @keyframes pulse{0%{background-position:0 0}100%{background-position:-200% 0}}
     .footer-note{font-size:12px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.55}
+    .meter-photo-list{display:grid;gap:10px}
+    .meter-photo-card{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:18px;background:#fff}
+    .meter-photo-icon{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#eef5ff;font-size:20px;flex:0 0 auto}
+    .meter-photo-main{min-width:0;flex:1}
+    .meter-photo-title{font-family:'Kanit',sans-serif;font-size:14px;font-weight:900;color:var(--primary)}
+    .meter-photo-sub{font-size:12px;color:var(--muted);line-height:1.45;margin-top:2px}
+    .meter-photo-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:999px;padding:8px 11px;background:var(--primary);color:#fff;font-size:12px;font-weight:900;white-space:nowrap}
+    .meter-photo-empty{padding:14px;color:var(--muted);font-weight:800;line-height:1.55}
 
     .qr-toggle-card{
       margin-top:14px;
@@ -302,6 +310,16 @@
 
     </section>
 
+    <section class="section" id="meterPhotoSection" style="display:none;">
+      <div class="section-head">
+        <div>
+          <div class="section-title">📷 ประวัติรูปมิเตอร์น้ำ–ไฟ</div>
+          <div class="section-sub">รูปหลักฐานที่บันทึกคู่กับค่ามิเตอร์ของห้องนี้</div>
+        </div>
+      </div>
+      <div class="meter-photo-list" id="meterPhotoList"></div>
+    </section>
+
     <section class="section" id="arrearsSection" style="display:none;">
       <div class="section-head">
         <div>
@@ -517,7 +535,7 @@
       const lineDisplayName = String(portalData?.user?.displayName || '').trim();
       $('heroTenantName').textContent = roomTenantName || lineDisplayName || 'ผู้เช่า';
 
-      ['overviewSection','currentBillSection','arrearsSection','archiveSection','paymentSection'].forEach(id => {
+      ['overviewSection','currentBillSection','meterPhotoSection','arrearsSection','archiveSection','paymentSection'].forEach(id => {
         const el = $(id);
         if (el) el.style.display = 'block';
       });
@@ -546,9 +564,37 @@
         : 0;
       $('billProgressBar').style.width = pct.toFixed(2) + '%';
 
+      renderMeterPhotos(room.meterPhotos || []);
       renderArrears(room.arrears || []);
       renderArchives(room.history?.archives || [], room.history?.historyCutoffText || '');
       renderPayments(room.history?.payments || [], room.history?.historyCutoffText || '');
+    }
+
+    function renderMeterPhotos(items) {
+      const box = $('meterPhotoList');
+      if (!box) return;
+      const rows = Array.isArray(items) ? items.filter(item => item && item.viewUrl) : [];
+      if (!rows.length) {
+        box.innerHTML = '<div class="meter-photo-empty">ยังไม่มีรูปมิเตอร์ที่แสดงได้</div>';
+        return;
+      }
+      box.innerHTML = rows.map(item => {
+        const isElectric = String(item.meterType || '') === 'electric';
+        const icon = isElectric ? '⚡' : '💧';
+        const title = isElectric ? 'รูปมิเตอร์ไฟ' : 'รูปมิเตอร์น้ำ';
+        const monthText = item.billingMonthText || item.billingMonthKey || '-';
+        const readings = `${Number(item.prevReading || 0).toLocaleString('th-TH')} → ${Number(item.currReading || 0).toLocaleString('th-TH')}`;
+        return `
+          <div class="meter-photo-card">
+            <div class="meter-photo-icon">${icon}</div>
+            <div class="meter-photo-main">
+              <div class="meter-photo-title">${title} • ${escapeHtml(monthText)}</div>
+              <div class="meter-photo-sub">เลขมิเตอร์ ${escapeHtml(readings)}<br>${escapeHtml(item.uploadedAtText || item.uploadedAt || '-')}</div>
+            </div>
+            <a class="meter-photo-link" href="${escapeHtml(item.viewUrl)}" target="_blank" rel="noopener">ดูรูป</a>
+          </div>
+        `;
+      }).join('');
     }
 
     function renderArrears(items) {
