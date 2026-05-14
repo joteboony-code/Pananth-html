@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.66</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.67</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -267,6 +267,10 @@ function savePendingSlipReviewsLocal(value = {}) {
 function saveMeterPhotosLocal(value = {}) {
   meterPhotos = value && typeof value === 'object' ? value : {};
   try { localStorage.setItem('pananth_meter_photos', JSON.stringify(meterPhotos)); } catch(e) {}
+}
+function saveRepairRequestsLocal(value = []) {
+  repairRequests = Array.isArray(value) ? value : [];
+  try { localStorage.setItem('pananth_repair_requests', JSON.stringify(repairRequests)); } catch(e) {}
 }
 
 function renderAutoBackupStatus() {
@@ -4638,6 +4642,8 @@ body.dark #alertPageContent textarea::placeholder {
         <button class="ctrl-btn outline" onclick="openPaymentSearch()">🔎 ค้นหาชำระ</button>
         <button class="ctrl-btn outline" onclick="openTenantDocumentSearch()">🔎 ค้นหาผู้เช่า/เอกสาร</button>
         <button class="ctrl-btn outline" onclick="openAnomalyReport()">🚨 ห้องผิดปกติ</button>
+        <button class="ctrl-btn outline" onclick="openContractExpiryCenter()">📌 สัญญาใกล้หมด</button>
+        <button class="ctrl-btn outline" onclick="openRepairCenter()">🛠️ งานแจ้งซ่อม</button>
         <button class="ctrl-btn outline" onclick="openRoomEditHistory()">🧾 ประวัติแก้ไข</button>
       </div>
     </div>
@@ -5409,10 +5415,12 @@ let portalMessageState = {}; // { roomNum: last Portal prompt/opened state }
 let lineRoomMessages = {}; // { roomNum: LINE message history[] }
 let pendingSlipReviews = {}; // { roomNum: pending slip manual review }
 let meterPhotos = {}; // { roomNum: meter photo history[] }
+let repairRequests = []; // tenant repair / maintenance requests
 try { portalMessageState = JSON.parse(localStorage.getItem('pananth_portal_message_state') || '{}') || {}; } catch(e) { portalMessageState = {}; }
 try { lineRoomMessages = JSON.parse(localStorage.getItem('pananth_line_room_messages') || '{}') || {}; } catch(e) { lineRoomMessages = {}; }
 try { pendingSlipReviews = JSON.parse(localStorage.getItem('pananth_pending_slip_reviews') || '{}') || {}; } catch(e) { pendingSlipReviews = {}; }
 try { meterPhotos = JSON.parse(localStorage.getItem('pananth_meter_photos') || '{}') || {}; } catch(e) { meterPhotos = {}; }
+try { repairRequests = JSON.parse(localStorage.getItem('pananth_repair_requests') || '[]') || []; } catch(e) { repairRequests = []; }
 let activeMonthKey = null; // เดือนที่กำลังใช้งานจริง ใช้กันกดเปลี่ยนเดือนแล้วล้างข้อมูลผิดรอบ
 
 const DEFAULT_LINE_TEMPLATES = {
@@ -8029,6 +8037,7 @@ async function initRooms() {
     saveLineRoomMessagesLocal(kvData.lineRoomMessages || {});
     savePendingSlipReviewsLocal(kvData.pendingSlipReviews || {});
     saveMeterPhotosLocal(kvData.meterPhotos || {});
+    saveRepairRequestsLocal(kvData.repairRequests || []);
 
     // โหลด history
     if (kvData.history) {
@@ -8303,7 +8312,13 @@ function getRoomMeterPhotos(roomNum) {
   const rows = meterPhotos?.[roomNum] || meterPhotos?.[String(roomNum)] || [];
   return Array.isArray(rows) ? rows.slice() : [];
 }
-
+function getRoomRepairRequests(roomNum) {
+  const target = String(parseInt(roomNum || 0, 10) || '').trim();
+  return (Array.isArray(repairRequests) ? repairRequests : []).filter(row => String(row?.roomNum || '') === target);
+}
+function getOpenRepairRequestCount(roomNum) {
+  return getRoomRepairRequests(roomNum).filter(row => !['done','closed'].includes(String(row?.status || 'open'))).length;
+}
 function meterPhotoCountForCurrentCycle(roomNum, meterType = '') {
   const monthKey = getCurrentBillingMonthKey();
   return getRoomMeterPhotos(roomNum).filter(photo => {
@@ -8450,10 +8465,14 @@ function makeCard(r) {
   const paymentPromise = getPaymentPromiseInfo(r);
   const pendingSlip = getPendingSlipReview(r);
   const lineHistoryCount = getRoomLineHistory(r).length;
+  const contractAlert = getTenantContractAlert(r);
+  const openRepairCount = getOpenRepairRequestCount(r);
   const roomMiniBadges = [
     paymentPromise ? `<button onclick="event.stopPropagation();setPaymentPromiseDay(${r})" title="แก้ไขนัดชำระ" style="border:none;cursor:pointer;background:#fff2cc;color:#8a5a00;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">📅 นัดชำระ ${paymentPromise.promiseDay}</button>` : '',
     pendingSlip ? `<button onclick="event.stopPropagation();clearPendingSlipReviewFromCard(${r})" title="กดเพื่อล้างสถานะ" style="border:none;cursor:pointer;background:#fff0f0;color:#b42318;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">⏳ รอตรวจสอบสลิป</button>` : '',
     portalState.unread ? `<span title="ส่ง Portal ไปแล้วแต่ยังไม่เปิดดู" style="background:#fff4e6;color:#b45309;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">👀 ยังไม่เปิด Portal</span>` : (portalState.openedAfterPrompt ? `<span title="${escapeHtml(portalState.openedText || '')}" style="background:#eafaf6;color:#087443;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">✅ เปิด Portal แล้ว</span>` : ''),
+    contractAlert ? `<button onclick="event.stopPropagation();openTenantDocs(${r})" title="ดูแฟ้มผู้เช่า" style="border:none;cursor:pointer;background:#fff7e6;color:#9a6700;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">📌 ${escapeHtml(contractAlert.label)}</button>` : '',
+    openRepairCount ? `<button onclick="event.stopPropagation();openRepairCenter()" title="ดูงานแจ้งซ่อม" style="border:none;cursor:pointer;background:#eaf3ff;color:#175cd3;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">🛠️ แจ้งซ่อม ${openRepairCount}</button>` : '',
     lineHistoryCount ? `<button onclick="event.stopPropagation();openLineRoomHistory(${r})" title="ดูประวัติ LINE" style="border:none;cursor:pointer;background:#eef4ff;color:#2547a8;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;">💬 LINE ${lineHistoryCount}</button>` : '',
   ].filter(Boolean).join(' ');
   const roomMiniBadgesHtml = roomMiniBadges
@@ -12158,6 +12177,28 @@ function exportMonthlyReportCsv() {
   downloadTextFile(`monthly-report-${document.getElementById('monthPicker').value}.csv`, csv, 'text/csv;charset=utf-8');
 }
 
+
+function getRoomPreBillWarnings(roomNum) {
+  const r = parseInt(roomNum, 10);
+  const d = rooms[r];
+  if (!d || d.vacant) return [];
+  const warnings = [];
+  const elecUnit = (Number(d.ec) || 0) - (Number(d.ep) || 0);
+  const waterUnit = (Number(d.wc) || 0) - (Number(d.wp) || 0);
+  if (!hasRoomMeterForCurrentCycle(r)) warnings.push({ key:'meter', level:'danger', label:'ยังไม่ได้จดมิเตอร์รอบนี้' });
+  if (elecUnit < 0) warnings.push({ key:'elec-down', level:'danger', label:'มิเตอร์ไฟลดลง' });
+  if (waterUnit < 0) warnings.push({ key:'water-down', level:'danger', label:'มิเตอร์น้ำลดลง' });
+  if (elecUnit >= 250) warnings.push({ key:'elec-high', level:'warn', label:`ไฟสูง ${elecUnit.toLocaleString('th-TH')} หน่วย` });
+  if (waterUnit >= 40) warnings.push({ key:'water-high', level:'warn', label:`น้ำสูง ${waterUnit.toLocaleString('th-TH')} หน่วย` });
+  if (getPendingSlipReview(r)) warnings.push({ key:'pending-slip', level:'warn', label:'รอตรวจสอบสลิป' });
+  return warnings;
+}
+
+function renderPreBillWarningBadges(warnings = []) {
+  if (!Array.isArray(warnings) || !warnings.length) return '';
+  return `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">${warnings.map(w => `<span style="background:${w.level === 'danger' ? '#fff0f0' : '#fff7e6'};color:${w.level === 'danger' ? '#b42318' : '#9a6700'};border-radius:999px;padding:2px 7px;font-size:10px;font-weight:900;">⚠️ ${escapeHtml(w.label)}</span>`).join('')}</div>`;
+}
+
 async function openBulkMonthlySend() {
   setAlertPageTitle('📣 ส่งยอดรอบบิลทั้งหมด');
   await refreshData();
@@ -12178,14 +12219,15 @@ async function openBulkMonthlySend() {
       userId: cfg.userIds?.[i] || '',
       muted: !!cfg.mutedRooms?.[i],
       note: d.note || tenants[i]?.note || '',
+      warnings: getRoomPreBillWarnings(i),
     });
   }
 
   const rowHtml = rows.map(x => `
-    <label style="display:grid;grid-template-columns:34px 70px 1fr 100px 85px;gap:8px;padding:10px 8px;border-bottom:1px solid #d5dde5;font-size:12px;align-items:center;color:#1a3a5c;opacity:${x.muted?0.55:1};">
+    <label style="display:grid;grid-template-columns:34px 70px minmax(180px,1fr) 110px 95px;gap:8px;padding:10px 8px;border-bottom:1px solid #d5dde5;font-size:12px;align-items:center;color:#1a3a5c;opacity:${x.muted?0.55:1};">
       <input type="checkbox" class="bulk-send-check" value="${x.room}" ${x.userId && !x.muted ? 'checked' : ''} ${!x.userId || x.muted ? 'disabled' : ''}>
       <b style="color:#1a3a5c;">ห้อง ${x.room}</b>
-      <span style="color:#1a3a5c;font-weight:700;">${x.tenant || '-'}</span>
+      <span style="color:#1a3a5c;font-weight:700;">${x.tenant || '-'}${renderPreBillWarningBadges(x.warnings || [])}</span>
       <span style="text-align:right;color:#e67e22;font-weight:900;">${x.due.toLocaleString('th-TH')} ฿${x.manualPaid ? `<br><small style="color:#2e7d52;">หักแล้ว ${x.manualPaid.toLocaleString('th-TH')}฿</small>` : ''}</span>
       <span style="font-size:11px;color:#5d6d7e;font-weight:800;">${x.muted ? 'งดแจ้ง' : (x.userId ? 'พร้อมส่ง' : 'ไม่มี User ID')}</span>
     </label>
@@ -12200,6 +12242,19 @@ async function openBulkMonthlySend() {
     <div style="background:#fff8e6;border:1px solid #f0d06e;border-radius:12px;padding:12px;margin-bottom:12px;font-size:12px;color:#7a5800;">
       ⚠️ กดส่งแล้วจะส่ง LINE จริงให้ผู้เช่าที่เลือก กรุณาตรวจรายชื่อก่อนส่ง
     </div>
+
+    ${(() => {
+      const withWarnings = rows.filter(x => Array.isArray(x.warnings) && x.warnings.length);
+      const noUserId = rows.filter(x => !x.userId).length;
+      const muted = rows.filter(x => x.muted).length;
+      const danger = withWarnings.reduce((sum, x) => sum + x.warnings.filter(w => w.level === 'danger').length, 0);
+      return `<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;">
+        <div style="background:#eef5ff;border:1px solid #cfe1f4;border-radius:12px;padding:10px;"><div style="font-size:11px;color:#5d6d7e;font-weight:800;">ห้องที่ต้องตรวจ</div><div style="font-family:Kanit,sans-serif;font-size:22px;font-weight:900;color:#175cd3;">${withWarnings.length}</div></div>
+        <div style="background:#fff0f0;border:1px solid #f4c7c7;border-radius:12px;padding:10px;"><div style="font-size:11px;color:#8b4a4a;font-weight:800;">เตือนสำคัญ</div><div style="font-family:Kanit,sans-serif;font-size:22px;font-weight:900;color:#b42318;">${danger}</div></div>
+        <div style="background:#fff7e6;border:1px solid #f0d06e;border-radius:12px;padding:10px;"><div style="font-size:11px;color:#8a5a00;font-weight:800;">ไม่มี User ID</div><div style="font-family:Kanit,sans-serif;font-size:22px;font-weight:900;color:#9a6700;">${noUserId}</div></div>
+        <div style="background:#f3f4f6;border:1px solid #d0d5dd;border-radius:12px;padding:10px;"><div style="font-size:11px;color:#475467;font-weight:800;">งดแจ้ง</div><div style="font-family:Kanit,sans-serif;font-size:22px;font-weight:900;color:#344054;">${muted}</div></div>
+      </div>`;
+    })()}
 
     <div style="background:white;border-radius:12px;padding:8px 12px;border:1.5px solid var(--border);max-height:55vh;overflow:auto;margin-bottom:12px;">
       ${rowHtml || '<div style="padding:20px;text-align:center;color:var(--muted);">ไม่มีห้องค้างชำระที่ต้องส่ง</div>'}
@@ -12272,6 +12327,15 @@ async function sendBulkMonthlySelected() {
 
 ระบบจะส่ง LINE จริงให้ผู้เช่าที่เลือก`;
   if (!confirm(confirmText)) return;
+  const selectedWarningRooms = selected.filter(roomNum => getRoomPreBillWarnings(roomNum).length > 0);
+  if (selectedWarningRooms.length) {
+    const details = selectedWarningRooms.map(roomNum => `ห้อง ${roomNum}: ` + getRoomPreBillWarnings(roomNum).map(w => w.label).join(', ')).join('\n');
+    if (!confirm(`พบห้องที่มีจุดควรตรวจสอบก่อนส่ง ${selectedWarningRooms.length} ห้อง
+
+${details}
+
+ยังต้องการส่งต่อหรือไม่?`)) return;
+  }
   if (!confirm('ยืนยันอีกครั้ง: ส่ง LINE จริงตอนนี้ใช่ไหมครับ?')) return;
 
   let sent = 0, failed = 0;
@@ -13468,6 +13532,136 @@ async function openRoomEditHistory() {
 }
 
 
+
+function openContractExpiryCenter() {
+  setAlertPageTitle('📌 สัญญาเช่าใกล้หมด / หมดสัญญา');
+  const rows = getTenantDocsRoomNumbers()
+    .filter(room => Number(room) !== TEST_ROOM)
+    .map(room => ({ room, alert: getTenantContractAlert(room), profile: getTenantProfileLocal(room) }))
+    .filter(item => !!item.alert)
+    .sort((a, b) => Number(a.alert.days || 0) - Number(b.alert.days || 0));
+  const expired = rows.filter(x => x.alert.days < 0).length;
+  const dueSoon = rows.filter(x => x.alert.days >= 0 && x.alert.days <= 7).length;
+  const within30 = rows.filter(x => x.alert.days > 7 && x.alert.days <= 30).length;
+  const html = `
+    <div style="background:white;border-radius:12px;padding:14px;margin-bottom:14px;border:1.5px solid var(--border);">
+      <div style="font-family:Kanit,sans-serif;font-size:18px;font-weight:900;color:var(--primary);">📌 สัญญาเช่าใกล้หมด</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">ดึงจากแฟ้มผู้เช่าและวันสิ้นสุดสัญญาที่บันทึกไว้</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px;">
+      <div style="background:#fff0f0;border:1px solid #f4c7c7;border-radius:12px;padding:10px;"><div style="font-size:11px;color:#8b4a4a;font-weight:800;">หมดสัญญาแล้ว</div><div style="font-family:Kanit,sans-serif;font-size:22px;font-weight:900;color:#b42318;">${expired}</div></div>
+      <div style="background:#fff7e6;border:1px solid #f0d06e;border-radius:12px;padding:10px;"><div style="font-size:11px;color:#8a5a00;font-weight:800;">เหลือไม่เกิน 7 วัน</div><div style="font-family:Kanit,sans-serif;font-size:22px;font-weight:900;color:#9a6700;">${dueSoon}</div></div>
+      <div style="background:#eef5ff;border:1px solid #cfe1f4;border-radius:12px;padding:10px;"><div style="font-size:11px;color:#175cd3;font-weight:800;">เหลือ 8–30 วัน</div><div style="font-family:Kanit,sans-serif;font-size:22px;font-weight:900;color:#175cd3;">${within30}</div></div>
+    </div>
+    ${rows.length ? rows.map(item => `
+      <div style="background:white;border:1.5px solid var(--border);border-left:6px solid ${item.alert.days < 0 ? '#b42318' : item.alert.days <= 7 ? '#f59e0b' : '#175cd3'};border-radius:12px;padding:12px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+          <div>
+            <div style="font-family:Kanit,sans-serif;font-size:16px;font-weight:900;color:var(--primary);">ห้อง ${item.room} ${escapeHtml(item.profile.fullName || item.profile.name || '')}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px;">สิ้นสุดสัญญา ${escapeHtml(item.profile.contractEnd || '-')}</div>
+          </div>
+          <div style="background:${item.alert.days < 0 ? '#fff0f0' : '#fff7e6'};color:${item.alert.days < 0 ? '#b42318' : '#9a6700'};border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;">${escapeHtml(item.alert.label)}</div>
+        </div>
+        <button onclick="openTenantDocs(${item.room})" style="margin-top:10px;border:none;border-radius:10px;padding:8px 12px;background:var(--primary);color:white;font-weight:900;cursor:pointer;">เปิดแฟ้มผู้เช่า</button>
+      </div>
+    `).join('') : '<div style="background:white;border:1.5px solid var(--border);border-radius:12px;padding:18px;text-align:center;color:var(--muted);font-weight:900;">ยังไม่พบสัญญาใกล้หมดหรือหมดสัญญา</div>'}
+  `;
+  document.getElementById('alertPageContent').innerHTML = html;
+  document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+}
+
+function repairStatusBadge(status = '') {
+  const key = String(status || 'open');
+  if (key === 'done') return { text:'✅ เสร็จแล้ว', bg:'#eafaf6', fg:'#087443' };
+  if (key === 'closed') return { text:'📁 ปิดงาน', bg:'#f2f4f7', fg:'#475467' };
+  if (key === 'in_progress') return { text:'🟠 กำลังดำเนินการ', bg:'#fff7e6', fg:'#9a6700' };
+  return { text:'🔴 รอรับเรื่อง', bg:'#fff0f0', fg:'#b42318' };
+}
+
+async function openRepairCenter() {
+  setAlertPageTitle('🛠️ งานแจ้งซ่อมจาก Tenant Portal');
+  document.getElementById('alertPageContent').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-weight:900;">กำลังโหลดรายการแจ้งซ่อม...</div>';
+  document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  try {
+    const data = await workerPost({ action: 'getRepairRequests' });
+    saveRepairRequestsLocal(data.repairRequests || []);
+    renderRepairCenter(data.repairRequests || []);
+    renderAll();
+  } catch (err) {
+    document.getElementById('alertPageContent').innerHTML = `<div style="padding:18px;background:#fff0f0;border:1px solid #f4c7c7;border-radius:12px;color:#b42318;font-weight:900;">โหลดงานแจ้งซ่อมไม่สำเร็จ: ${escapeHtml(err?.message || err)}</div>`;
+  }
+}
+
+function renderRepairCenter(items = []) {
+  const rows = Array.isArray(items) ? items : [];
+  const openCount = rows.filter(x => String(x.status || 'open') === 'open').length;
+  const progressCount = rows.filter(x => String(x.status || '') === 'in_progress').length;
+  const doneCount = rows.filter(x => ['done','closed'].includes(String(x.status || ''))).length;
+  const cards = rows.map(item => {
+    const badge = repairStatusBadge(item.status);
+    const photos = Array.isArray(item.photos) ? item.photos.filter(p => p?.viewUrl) : [];
+    const photoHtml = photos.length
+      ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${photos.map((photo, idx) => `<a href="${escapeHtml(photo.viewUrl)}" target="_blank" rel="noopener" style="text-decoration:none;background:#eef5ff;color:#175cd3;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900;">📷 รูป ${idx + 1}</a>`).join('')}</div>`
+      : '';
+    return `
+      <div style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+          <div>
+            <div style="font-family:Kanit,sans-serif;font-size:16px;font-weight:900;color:var(--primary);">ห้อง ${escapeHtml(item.roomNum || '-')} • ${escapeHtml(item.category || 'แจ้งซ่อม')}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px;">${escapeHtml(item.tenantName || 'ผู้เช่า')} • ${escapeHtml(item.createdAtText || item.createdAt || '-')}</div>
+          </div>
+          <span style="background:${badge.bg};color:${badge.fg};border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;white-space:nowrap;">${badge.text}</span>
+        </div>
+        <div style="margin-top:8px;background:#f8fbff;border:1px dashed var(--border);border-radius:12px;padding:10px;font-size:13px;line-height:1.55;color:#1a3a5c;">${escapeHtml(item.detail || '-')}</div>
+        ${item.adminNote ? `<div style="margin-top:8px;background:#fff7e6;border:1px dashed #f0d06e;border-radius:12px;padding:10px;font-size:12px;line-height:1.55;color:#7a5800;">หมายเหตุเจ้าของ: ${escapeHtml(item.adminNote)}</div>` : ''}
+        ${photoHtml}
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
+          <button onclick="updateRepairRequestStatus('${escapeJsString(item.id || '')}','open')" style="border:none;border-radius:10px;padding:8px 10px;background:#fff0f0;color:#b42318;font-weight:900;cursor:pointer;">รอรับเรื่อง</button>
+          <button onclick="updateRepairRequestStatus('${escapeJsString(item.id || '')}','in_progress')" style="border:none;border-radius:10px;padding:8px 10px;background:#fff7e6;color:#9a6700;font-weight:900;cursor:pointer;">กำลังทำ</button>
+          <button onclick="updateRepairRequestStatus('${escapeJsString(item.id || '')}','done')" style="border:none;border-radius:10px;padding:8px 10px;background:#eafaf6;color:#087443;font-weight:900;cursor:pointer;">เสร็จแล้ว</button>
+          <button onclick="updateRepairRequestStatus('${escapeJsString(item.id || '')}','closed')" style="border:none;border-radius:10px;padding:8px 10px;background:#f2f4f7;color:#475467;font-weight:900;cursor:pointer;">ปิดงาน</button>
+          <button onclick="saveRepairAdminNote('${escapeJsString(item.id || '')}')" style="border:none;border-radius:10px;padding:8px 10px;background:#eef5ff;color:#175cd3;font-weight:900;cursor:pointer;">📝 หมายเหตุ</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('alertPageContent').innerHTML = `
+    <div style="background:white;border-radius:12px;padding:14px;margin-bottom:14px;border:1.5px solid var(--border);">
+      <div style="font-family:Kanit,sans-serif;font-size:18px;font-weight:900;color:var(--primary);">🛠️ ศูนย์งานแจ้งซ่อม</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">รายการจาก Tenant Portal พร้อมสถานะและรูปแนบ</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px;">
+      <div style="background:#fff0f0;border:1px solid #f4c7c7;border-radius:12px;padding:10px;"><div style="font-size:11px;color:#8b4a4a;font-weight:800;">รอรับเรื่อง</div><div style="font-family:Kanit,sans-serif;font-size:22px;font-weight:900;color:#b42318;">${openCount}</div></div>
+      <div style="background:#fff7e6;border:1px solid #f0d06e;border-radius:12px;padding:10px;"><div style="font-size:11px;color:#8a5a00;font-weight:800;">กำลังทำ</div><div style="font-family:Kanit,sans-serif;font-size:22px;font-weight:900;color:#9a6700;">${progressCount}</div></div>
+      <div style="background:#eafaf6;border:1px solid #9ee6d0;border-radius:12px;padding:10px;"><div style="font-size:11px;color:#087443;font-weight:800;">เสร็จ/ปิด</div><div style="font-family:Kanit,sans-serif;font-size:22px;font-weight:900;color:#087443;">${doneCount}</div></div>
+    </div>
+    ${cards || '<div style="background:white;border:1.5px solid var(--border);border-radius:12px;padding:18px;text-align:center;color:var(--muted);font-weight:900;">ยังไม่มีงานแจ้งซ่อม</div>'}
+  `;
+}
+
+async function updateRepairRequestStatus(requestId, status) {
+  try {
+    const data = await workerPost({ action:'updateRepairRequest', requestId, status });
+    saveRepairRequestsLocal(data.repairRequests || []);
+    await openRepairCenter();
+  } catch (err) {
+    alert('อัปเดตสถานะงานซ่อมไม่สำเร็จ: ' + (err?.message || err));
+  }
+}
+
+async function saveRepairAdminNote(requestId) {
+  const current = (Array.isArray(repairRequests) ? repairRequests : []).find(x => String(x.id || '') === String(requestId || ''));
+  const note = prompt('หมายเหตุถึงผู้เช่า / บันทึกเจ้าของ', current?.adminNote || '');
+  if (note === null) return;
+  try {
+    const data = await workerPost({ action:'updateRepairRequest', requestId, status: current?.status || 'open', adminNote: note });
+    saveRepairRequestsLocal(data.repairRequests || []);
+    await openRepairCenter();
+  } catch (err) {
+    alert('บันทึกหมายเหตุไม่สำเร็จ: ' + (err?.message || err));
+  }
+}
+
 // ===== DASHBOARD =====
 function openDashboard() {
   const history = JSON.parse(localStorage.getItem('pananth_history') || '{}');
@@ -14637,6 +14831,7 @@ async function refreshData() {
     saveLineRoomMessagesLocal(kvData.lineRoomMessages || {});
     savePendingSlipReviewsLocal(kvData.pendingSlipReviews || {});
     saveMeterPhotosLocal(kvData.meterPhotos || {});
+    saveRepairRequestsLocal(kvData.repairRequests || []);
     if (kvData.history) {
       localStorage.setItem('pananth_history', JSON.stringify(kvData.history));
     }
@@ -14746,6 +14941,8 @@ function organizeMobileTools() {
             <button class="ctrl-btn outline" onclick="openPaymentSearch()">🔎 ค้นหาชำระ</button>
             <button class="ctrl-btn outline" onclick="openTenantDocumentSearch()">🔎 ค้นหาผู้เช่า/เอกสาร</button>
             <button class="ctrl-btn outline" onclick="openAnomalyReport()">🚨 ห้องผิดปกติ</button>
+            <button class="ctrl-btn outline" onclick="openContractExpiryCenter()">📌 สัญญาใกล้หมด</button>
+            <button class="ctrl-btn outline" onclick="openRepairCenter()">🛠️ งานแจ้งซ่อม</button>
             <button class="ctrl-btn outline" onclick="openRoomEditHistory()">🧾 ประวัติแก้ไข</button>
           </div>
         </div>
