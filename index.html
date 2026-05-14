@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.65</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.64</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -4443,45 +4443,6 @@ body.dark #alertPageContent textarea::placeholder {
 
 </style>
 
-
-<style>
-/* ===== v15.4.2.65: สถานะดาวการชำระ ===== */
-.payment-star-badge{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  margin-top:5px;
-  padding:3px 7px;
-  border-radius:999px;
-  border:1px solid rgba(234,179,8,.34);
-  background:linear-gradient(135deg,rgba(255,248,213,.98),rgba(255,255,255,.92));
-  color:#b77905;
-  font-size:10px;
-  line-height:1;
-  letter-spacing:1px;
-  font-weight:900;
-  box-shadow:0 3px 9px rgba(180,116,5,.12);
-  white-space:nowrap;
-}
-.payment-star-badge.star-5{
-  border-color:rgba(245,158,11,.48);
-  background:linear-gradient(135deg,#fff1b8,#fffaf0);
-}
-.payment-star-badge.star-4{
-  border-color:rgba(234,179,8,.36);
-  background:linear-gradient(135deg,#fff7d6,#fffaf5);
-}
-.payment-star-badge.star-3{
-  border-color:rgba(148,163,184,.32);
-  background:linear-gradient(135deg,#fff9e8,#ffffff);
-}
-body.dark .payment-star-badge{
-  background:linear-gradient(135deg,rgba(234,179,8,.18),rgba(15,23,42,.92));
-  color:#fde68a;
-  border-color:rgba(253,230,138,.32);
-}
-</style>
-
 </head>
 <body>
 
@@ -8163,101 +8124,6 @@ function getRoomPaymentLabel(r) {
   return 'รอชำระ';
 }
 
-// ===== v15.4.2.65: สถานะดาวการชำระ =====
-function paymentStarMs(value = '') {
-  const ms = Date.parse(String(value || '').trim());
-  return Number.isFinite(ms) ? ms : 0;
-}
-
-function getPaymentCycleOpenedAtSafe() {
-  try {
-    const cfg = loadConfig();
-    return String(cfg.currentPaymentCycleOpenedAt || cfg.paymentCycleOpenedAt || '').trim();
-  } catch(e) {
-    return '';
-  }
-}
-
-function paymentStarAfterCycleOpen(paidAt = '', cycleOpenedAt = '') {
-  const paidMs = paymentStarMs(paidAt);
-  const openMs = paymentStarMs(cycleOpenedAt);
-  if (!paidMs) return false;
-  // ข้อมูลเดิมก่อนมีวันที่เปิดรอบแบบใหม่ ยังให้ระบบแสดงดาวได้
-  if (!openMs) return true;
-  return paidMs >= openMs;
-}
-
-function buildPaymentStarStatus(paidAt = '', paidAtText = '', paymentMonthKey = '', cycleOpenedAt = '') {
-  const paidMs = paymentStarMs(paidAt);
-  const key = String(paymentMonthKey || '').trim();
-  if (!paidMs || !/^\d{4}-\d{2}$/.test(key)) return null;
-  if (!paymentStarAfterCycleOpen(paidAt, cycleOpenedAt)) return null;
-
-  const day5StartMs = Date.parse(`${key}-05T00:00:00+07:00`);
-  const day11StartMs = Date.parse(`${key}-11T00:00:00+07:00`);
-  if (!Number.isFinite(day5StartMs) || !Number.isFinite(day11StartMs)) return null;
-
-  const stars = paidMs < day5StartMs ? 5 : (paidMs < day11StartMs ? 4 : 3);
-  return {
-    stars,
-    text: '⭐'.repeat(stars),
-    paidAt: String(paidAt || ''),
-    paidAtText: String(paidAtText || paidAt || ''),
-  };
-}
-
-function getRoomPaymentCompletionForStars(roomNum, roomData = {}) {
-  const meta = getBillingMetaFromPaymentMonth(getMonthKey());
-  const cycleOpenedAt = getPaymentCycleOpenedAtSafe();
-  const candidates = [];
-
-  const directPaidAt = String(roomData?.paidAt || roomData?.manualPaidAt || '').trim();
-  const directPaidAtText = String(roomData?.paidAtText || roomData?.manualPaidAtText || directPaidAt || '').trim();
-  if (directPaidAt && paymentStarAfterCycleOpen(directPaidAt, cycleOpenedAt)) {
-    candidates.push({ paidAt: directPaidAt, paidAtText: directPaidAtText, source: 'room' });
-  }
-
-  const targetRoom = String(roomNum || '').trim();
-  const targetBillingMonthKey = String(meta.billingMonthKey || '').trim();
-  for (const payment of getPaymentHistoryListSafe()) {
-    if (String(payment?.roomNum || payment?.room || '').trim() !== targetRoom) continue;
-    const appliedItems = Array.isArray(payment?.appliedItems) ? payment.appliedItems : [];
-    const isCurrentCyclePayment = appliedItems.some(item =>
-      String(item?.type || '').trim() === 'current' &&
-      String(item?.monthKey || '').trim() === targetBillingMonthKey
-    );
-    if (!isCurrentCyclePayment) continue;
-
-    const remainingKnown = payment?.remainingTotal !== undefined && payment?.remainingTotal !== null && payment?.remainingTotal !== '';
-    const statusKey = String(payment?.status || '').trim().toLowerCase();
-    const completed = remainingKnown
-      ? Number(payment.remainingTotal || 0) <= 0
-      : (statusKey === 'paid' || statusKey === 'verified');
-    if (!completed) continue;
-
-    const paidAt = String(payment?.paidAt || payment?.createdAt || '').trim();
-    if (!paidAt || !paymentStarAfterCycleOpen(paidAt, cycleOpenedAt)) continue;
-    candidates.push({
-      paidAt,
-      paidAtText: String(payment?.paidAtText || payment?.createdAtText || paidAt || '').trim(),
-      source: 'paymentHistory',
-    });
-  }
-
-  candidates.sort((a, b) => paymentStarMs(a.paidAt) - paymentStarMs(b.paidAt));
-  return candidates[0] || null;
-}
-
-function getRoomPaymentStars(roomNum, roomData = {}) {
-  if (!roomData || roomData.vacant || roomData.paid !== true) return null;
-  const meta = getBillingMetaFromPaymentMonth(getMonthKey());
-  const cycleOpenedAt = getPaymentCycleOpenedAtSafe();
-  const completion = getRoomPaymentCompletionForStars(roomNum, roomData);
-  return completion
-    ? buildPaymentStarStatus(completion.paidAt, completion.paidAtText, meta.paymentMonthKey, cycleOpenedAt)
-    : null;
-}
-
 // ===== RENDER =====
 function getMonthText() {
   const v = document.getElementById('monthPicker').value;
@@ -8381,11 +8247,6 @@ function makeCard(r) {
     ? 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:not-allowed;font-size:11px;font-weight:800;background:#d6d9de;color:#6b7280;box-shadow:none;white-space:nowrap;opacity:0.75;'
     : 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:pointer;font-size:11px;font-weight:800;background:var(--accent);color:#1a2036;box-shadow:0 2px 6px rgba(232,160,32,0.28);white-space:nowrap;';
 
-  const paymentStars = getRoomPaymentStars(r, d);
-  const paymentStarsBadge = paymentStars
-    ? `<div class="payment-star-badge star-${paymentStars.stars}">${paymentStars.text}</div>`
-    : '';
-
   const card = document.createElement('div');
   card.id = `room-card-${r}`;
   card.dataset.room = String(r);
@@ -8427,7 +8288,6 @@ function makeCard(r) {
       <div style="text-align:right;">
         <div class="paid-dot ${isClear ? 'paid' : 'unpaid'}" style="margin-left:auto;"></div>
         <div style="font-size:10px;color:${statusColor};font-weight:700;margin-top:3px;">${statusText}</div>
-        ${paymentStarsBadge}
       </div>
     </div>
     <div class="room-card-body" onclick="openEdit(${r})" style="cursor:pointer;">
@@ -10781,20 +10641,13 @@ function setActiveBillingMonth(monthKey) {
   localStorage.setItem('pananth_active_month_key', monthKey);
 }
 
-async function saveActiveBillingMonthToWorker(monthKey, extra = {}) {
+async function saveActiveBillingMonthToWorker(monthKey) {
   const meta = getBillingMetaFromPaymentMonth(monthKey);
   const cfg = loadConfig();
   cfg.currentPaymentMonthKey = meta.paymentMonthKey;
   cfg.currentPaymentMonthText = meta.paymentMonthText;
   cfg.currentBillingMonthKey = meta.billingMonthKey;
   cfg.currentBillingMonthText = meta.billingMonthText;
-
-  const openedAt = String(extra.currentPaymentCycleOpenedAt || '').trim();
-  if (openedAt) {
-    cfg.currentPaymentCycleOpenedAt = openedAt;
-    cfg.currentPaymentCycleOpenedAtText = String(extra.currentPaymentCycleOpenedAtText || '').trim() || new Date().toLocaleString('th-TH');
-  }
-
   cfg.cycleUpdatedAt = new Date().toISOString();
   await saveConfigOnly(cfg, { throwOnError: true });
   return meta;
@@ -11082,16 +10935,9 @@ async function openNewBillingMonth(fromMonthKeyArg, toMonthKeyArg) {
   rooms = nextRooms;
   ensureTestRoom();
 
-  const cycleOpenedNow = new Date();
-  const currentPaymentCycleOpenedAt = cycleOpenedNow.toISOString();
-  const currentPaymentCycleOpenedAtText = cycleOpenedNow.toLocaleString('th-TH');
-
   setActiveBillingMonth(toMonthKey);
   document.getElementById('monthPicker').value = toMonthKey;
-  await saveActiveBillingMonthToWorker(toMonthKey, {
-    currentPaymentCycleOpenedAt,
-    currentPaymentCycleOpenedAtText,
-  });
+  await saveActiveBillingMonthToWorker(toMonthKey);
   await markMeterCycleOpenedForMonth(toMonthKey);
 
   localStorage.setItem('pananth_rooms', JSON.stringify(rooms));
@@ -11116,10 +10962,7 @@ async function openNewBillingMonth(fromMonthKeyArg, toMonthKeyArg) {
     });
     await saveMonthControlToWorker({ monthClosures, lockedMonths, lastCloseBackup, arrears });
     // บันทึกรอบบิลซ้ำอีกครั้งท้ายกระบวนการ เพื่อกันกรณี Worker/KV ยังไม่ทันได้ค่า currentPaymentMonth/currentBillingMonth
-    await saveActiveBillingMonthToWorker(toMonthKey, {
-      currentPaymentCycleOpenedAt,
-      currentPaymentCycleOpenedAtText,
-    });
+    await saveActiveBillingMonthToWorker(toMonthKey);
     window._bypassMonthLock = false;
     await recordSystemActivity(
       'openNewBillingMonth',

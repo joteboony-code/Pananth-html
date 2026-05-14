@@ -190,24 +190,6 @@
       .history-card>:last-child{grid-column:2;justify-self:start}
       .arrears-card,.progress-top{align-items:flex-start;flex-direction:column}
     }
-
-    /* ===== v15.4.2.65: สถานะดาวการชำระ ===== */
-    .overview-status-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-    .star-status{
-      display:inline-flex;align-items:center;justify-content:center;
-      padding:7px 11px;border-radius:999px;
-      border:1px solid rgba(245,158,11,.38);
-      background:linear-gradient(135deg,rgba(255,241,184,.98),rgba(255,255,255,.94));
-      color:#b77905;font-size:14px;font-weight:900;letter-spacing:1.4px;line-height:1;
-      box-shadow:0 8px 20px rgba(180,116,5,.12);white-space:nowrap;
-    }
-    .star-status.star-5{border-color:rgba(245,158,11,.58);background:linear-gradient(135deg,#ffe99a,#fffdf4)}
-    .star-status.star-4{border-color:rgba(234,179,8,.42);background:linear-gradient(135deg,#fff4c6,#fffdf7)}
-    .star-status.star-3{border-color:rgba(148,163,184,.34);background:linear-gradient(135deg,#fff8dd,#ffffff)}
-    @media (max-width:720px){
-      .overview-status-wrap{align-items:flex-start}
-    }
-
   </style>
 </head>
 <body>
@@ -254,10 +236,7 @@
           <div class="section-title">📊 สรุปห้อง <span id="overviewRoomNum">-</span></div>
           <div class="section-sub" id="overviewBillingText">-</div>
         </div>
-        <div class="overview-status-wrap">
-          <div class="chip" id="overviewStatusChip">-</div>
-          <div class="star-status" id="overviewPaymentStars" style="display:none;"></div>
-        </div>
+        <div class="chip" id="overviewStatusChip">-</div>
       </div>
       <div class="summary-grid">
         <div class="summary-card">
@@ -546,16 +525,6 @@
       $('overviewRoomNum').textContent = room.roomNum || '-';
       $('overviewBillingText').textContent = `รอบบิล ${text(billing.billingMonthText)} • รับชำระใน ${text(billing.paymentMonthText)}`;
       $('overviewStatusChip').textContent = status.icon + ' ' + status.label;
-      const starsBox = $('overviewPaymentStars');
-      const paymentStars = room.paymentStars || null;
-      if (starsBox && paymentStars?.text) {
-        starsBox.className = 'star-status star-' + String(paymentStars.stars || '');
-        starsBox.textContent = paymentStars.text;
-        starsBox.style.display = 'inline-flex';
-      } else if (starsBox) {
-        starsBox.textContent = '';
-        starsBox.style.display = 'none';
-      }
       $('overviewWaterMeter').textContent = `${text(meters.wp, '0')} → ${text(meters.wc, '0')}`;
       $('overviewElectricMeter').textContent = `${text(meters.ep, '0')} → ${text(meters.ec, '0')}`;
       $('overviewArrears').textContent = money(amounts.arrearsTotal || 0);
