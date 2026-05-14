@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.62</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.65</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.62'
+        createdFrom: 'web-v15.4.2.63'
       })
     });
 
@@ -1799,7 +1799,6 @@ function renderSystemActivityHistory() {
   }
   .room-num { font-family: 'Kanit',sans-serif; font-size: 20px; font-weight: 700; color: var(--primary); }
   .room-tier { font-size: 11px; color: var(--muted); font-weight: 600; }
-  .payment-rating-badge{display:inline-flex;align-items:center;justify-content:center;margin-top:5px;padding:4px 7px;border-radius:999px;background:linear-gradient(135deg,#fff7cc,#ffe08a);color:#8a5a00;border:1px solid rgba(194,135,0,.26);box-shadow:0 6px 14px rgba(176,112,0,.12);font-size:10px;font-weight:900;letter-spacing:.7px;white-space:nowrap}
   .paid-dot { width: 10px; height: 10px; border-radius: 50%; }
   .paid-dot.paid { background: var(--green); }
   .paid-dot.unpaid { background: var(--accent); }
@@ -4381,7 +4380,7 @@ body.dark .tenant-onboarding-actions{
 }
 
 
-/* ===== Pananth v15.4.2.62: อ่านชัดขึ้นในหน้ากลุ่ม Alert Utility เมื่อเปิด Dark Mode =====
+/* ===== Pananth v15.4.2.63: อ่านชัดขึ้นในหน้ากลุ่ม Alert Utility เมื่อเปิด Dark Mode =====
    หน้ากลุ่มนี้ใช้การ์ดพื้นสว่างอยู่ภายในหน้าหลักโทนมืด จึงต้องใช้ชุดสีข้อความอ่านง่ายเฉพาะบริเวณนี้ */
 body.dark #alertPageContent {
   --primary: #145e96;
@@ -4442,6 +4441,45 @@ body.dark #alertPageContent textarea::placeholder {
   opacity: 1;
 }
 
+</style>
+
+
+<style>
+/* ===== v15.4.2.65: สถานะดาวการชำระ ===== */
+.payment-star-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:5px;
+  padding:3px 7px;
+  border-radius:999px;
+  border:1px solid rgba(234,179,8,.34);
+  background:linear-gradient(135deg,rgba(255,248,213,.98),rgba(255,255,255,.92));
+  color:#b77905;
+  font-size:10px;
+  line-height:1;
+  letter-spacing:1px;
+  font-weight:900;
+  box-shadow:0 3px 9px rgba(180,116,5,.12);
+  white-space:nowrap;
+}
+.payment-star-badge.star-5{
+  border-color:rgba(245,158,11,.48);
+  background:linear-gradient(135deg,#fff1b8,#fffaf0);
+}
+.payment-star-badge.star-4{
+  border-color:rgba(234,179,8,.36);
+  background:linear-gradient(135deg,#fff7d6,#fffaf5);
+}
+.payment-star-badge.star-3{
+  border-color:rgba(148,163,184,.32);
+  background:linear-gradient(135deg,#fff9e8,#ffffff);
+}
+body.dark .payment-star-badge{
+  background:linear-gradient(135deg,rgba(234,179,8,.18),rgba(15,23,42,.92));
+  color:#fde68a;
+  border-color:rgba(253,230,138,.32);
+}
 </style>
 
 </head>
@@ -4636,6 +4674,7 @@ body.dark #alertPageContent textarea::placeholder {
       </div>
       <div class="tool-button-list two">
         <button class="ctrl-btn outline" onclick="openSettings()">⚙️ LINE</button>
+        <button class="ctrl-btn outline" onclick="openLineTemplateSettings()">💬 Template LINE</button>
         <button class="ctrl-btn outline" onclick="openRoomSettings()">🏘️ ห้อง/ค่าเช่า</button>
         <button class="ctrl-btn outline" onclick="openTenantDocs()">🧾 ผู้เช่า/เอกสาร</button>
         <button class="ctrl-btn outline" onclick="openMutedRooms()">🔕 งดแจ้งเตือน</button>
@@ -5368,6 +5407,258 @@ let arrears = {}; // { roomNum: [{id, monthKey, monthText, originalAmount, paidA
 let monthlyArchiveIndex = {}; // { monthKey: archive metadata } }
 let r2BackupStatus = {}; // สถานะ Backup ล่าสุดจาก Worker/KV
 let activeMonthKey = null; // เดือนที่กำลังใช้งานจริง ใช้กันกดเปลี่ยนเดือนแล้วล้างข้อมูลผิดรอบ
+
+const DEFAULT_LINE_TEMPLATES = {
+  rentNotice: `🏠 {shopName} — ห้อง {room}
+{tenantNameLine}📅 รอบบิล {billingMonth}
+📆 วันที่จด {date}
+━━━━━━━━━━━━━━
+{detailLines}
+━━━━━━━━━━━━━━
+💰 ยอดคงเหลือที่ต้องชำระ: {totalDue}฿
+━━━━━━━━━━━━━━
+📲 {bank}
+
+กรุณาตรวจสอบความถูกต้อง หากมีข้อผิดพลาดประการใด กรุณาแจ้งให้เราทราบด้วยครับ`,
+  overdueReminder: `{autoLabel}🔔 แจ้งเตือนค่าเช่า — ห้อง {room}
+{tenantNameLine}📅 รอบบิล {billingMonth}
+🗓️ วันที่แจ้ง {date}
+━━━━━━━━━━━━━━
+{detailLines}
+━━━━━━━━━━━━━━
+💰 ยอดคงเหลือที่ต้องชำระ: {totalDue}฿
+━━━━━━━━━━━━━━
+📲 {bank}`,
+  paymentConfirmation: `✅ {paymentTitle}
+
+ห้อง {room}
+รอบบิล {billingMonth}
+สถานะ: {status}
+รับชำระแล้ว: {paidAmount} บาท
+ยอดคงเหลือ: {remaining} บาท
+
+{paymentNote}`,
+  announcement: `📢 ประกาศถึงผู้เช่า
+{announcement}`,
+};
+
+const LINE_TEMPLATE_DEFINITIONS = [
+  {
+    key: 'rentNotice',
+    title: '1. แจ้งค่าเช่า / ส่งยอด',
+    desc: 'ใช้ตอนส่งยอดรายห้อง และส่งยอดทั้งหมด',
+    variables: ['shopName','room','tenantName','tenantNameLine','billingMonth','date','detailLines','totalDue','bank','portalUrl'],
+  },
+  {
+    key: 'overdueReminder',
+    title: '2. แจ้งเตือนค้างชำระ',
+    desc: 'ใช้ทั้งแจ้งเตือนกดเอง และ Cron แจ้งเตือนอัตโนมัติ',
+    variables: ['autoLabel','room','tenantName','tenantNameLine','billingMonth','date','detailLines','totalDue','bank','portalUrl'],
+  },
+  {
+    key: 'paymentConfirmation',
+    title: '3. ยืนยันรับชำระ',
+    desc: 'ใช้ตอนตรวจสลิปผ่าน / รับชำระบางส่วน / เจ้าของกดรับชำระเองแล้วแจ้งผู้เช่า',
+    variables: ['paymentTitle','room','billingMonth','status','paidAmount','remaining','paymentNote','portalUrl'],
+  },
+  {
+    key: 'announcement',
+    title: '4. ประกาศถึงผู้เช่า',
+    desc: 'ข้อความที่พิมพ์หน้า “ประกาศผู้เช่า” จะถูกแทนที่ใน {announcement}',
+    variables: ['announcement','room','tenantName','tenantNameLine','portalUrl'],
+  },
+];
+
+const LINE_TEMPLATE_ALL_VARIABLES = Array.from(new Set(
+  LINE_TEMPLATE_DEFINITIONS.flatMap(item => item.variables || [])
+));
+
+let lineTemplates = getSavedLineTemplates();
+
+function sanitizeLineTemplatesClient(input = {}) {
+  const source = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
+  const out = {};
+  LINE_TEMPLATE_DEFINITIONS.forEach(item => {
+    const raw = typeof source[item.key] === 'string' ? String(source[item.key]).trim() : '';
+    out[item.key] = raw ? raw.slice(0, 4500) : DEFAULT_LINE_TEMPLATES[item.key];
+  });
+  return out;
+}
+
+function getSavedLineTemplates() {
+  try {
+    return sanitizeLineTemplatesClient(JSON.parse(localStorage.getItem('pananth_line_templates') || '{}'));
+  } catch(e) {
+    return sanitizeLineTemplatesClient({});
+  }
+}
+
+function saveLineTemplatesLocal(templates = {}) {
+  lineTemplates = sanitizeLineTemplatesClient(templates);
+  try { localStorage.setItem('pananth_line_templates', JSON.stringify(lineTemplates)); } catch(e) {}
+  return lineTemplates;
+}
+
+function getLineTemplatesLocal() {
+  return sanitizeLineTemplatesClient(lineTemplates || getSavedLineTemplates());
+}
+
+function renderLineTemplateLocal(templateKey, vars = {}, templates = null) {
+  const templateMap = sanitizeLineTemplatesClient(templates || getLineTemplatesLocal());
+  const template = templateMap[templateKey] || DEFAULT_LINE_TEMPLATES[templateKey] || '';
+  return String(template).replace(/\{([a-zA-Z0-9_]+)\}/g, (_, token) => {
+    const value = vars && Object.prototype.hasOwnProperty.call(vars, token) ? vars[token] : '';
+    return value === undefined || value === null ? '' : String(value);
+  }).replace(/\n{4,}/g, '\n\n\n').trim();
+}
+
+function getLineTemplateUnknownVariables(templates = {}) {
+  const unknown = [];
+  const allowed = new Set(LINE_TEMPLATE_ALL_VARIABLES);
+  Object.entries(templates || {}).forEach(([key, text]) => {
+    const found = String(text || '').match(/\{([a-zA-Z0-9_]+)\}/g) || [];
+    found.forEach(token => {
+      const name = token.slice(1, -1);
+      if (!allowed.has(name)) unknown.push(`${key}: ${token}`);
+    });
+  });
+  return Array.from(new Set(unknown));
+}
+
+function getLineTemplateSampleVars() {
+  return {
+    shopName: 'ห้องเช่าป่านันท์',
+    room: '7',
+    tenantName: 'คุณตัวอย่าง',
+    tenantNameLine: '👤 คุณตัวอย่าง\n',
+    billingMonth: 'เมษายน 2569',
+    date: '14/05/2569',
+    detailLines: '⚡ ค่าไฟ: 100 → 120 (20 หน่วย × 8฿) = 160฿\n💧 ค่าน้ำ: 20 → 24 (4 หน่วย × 35฿) = 140฿\n🏠 ค่าเช่า: 2,500฿\n🗑️ ค่าขยะ: 50฿',
+    totalDue: '2,850',
+    bank: 'ttb 919-7-253892\nนายบุญรัตน์ ชลา\nส่งสลิปที่ไลน์นี้นะครับ',
+    autoLabel: 'ระบบอัตโนมัติ\n',
+    paymentTitle: 'อัปเดตยอดชำระแล้ว',
+    status: 'รับชำระบางส่วน',
+    paidAmount: '1,000',
+    remaining: '1,850',
+    paymentNote: 'เจ้าของตรวจสอบยอดและอัปเดตให้เรียบร้อยแล้ว',
+    announcement: 'วันนี้มีการซ่อมระบบน้ำช่วงเวลา 13:00–15:00 น. ขออภัยในความไม่สะดวกครับ',
+    portalUrl: 'https://liff.line.me/2010080282-Fe44Yy7Z',
+  };
+}
+
+function insertLineTemplateVariable(templateKey, variable) {
+  const textarea = document.getElementById('lineTemplate_' + templateKey);
+  if (!textarea) return;
+  const token = `{${variable}}`;
+  const start = Number(textarea.selectionStart || textarea.value.length);
+  const end = Number(textarea.selectionEnd || textarea.value.length);
+  const before = textarea.value.slice(0, start);
+  const after = textarea.value.slice(end);
+  textarea.value = before + token + after;
+  textarea.focus();
+  textarea.selectionStart = textarea.selectionEnd = start + token.length;
+  renderLineTemplatePreview(templateKey);
+}
+
+function resetLineTemplateField(templateKey) {
+  const textarea = document.getElementById('lineTemplate_' + templateKey);
+  if (!textarea) return;
+  if (!confirm('คืนค่า Template นี้เป็นค่าเริ่มต้นใช่ไหมครับ?')) return;
+  textarea.value = DEFAULT_LINE_TEMPLATES[templateKey] || '';
+  renderLineTemplatePreview(templateKey);
+}
+
+function renderLineTemplatePreview(templateKey) {
+  const textarea = document.getElementById('lineTemplate_' + templateKey);
+  const preview = document.getElementById('lineTemplatePreview_' + templateKey);
+  const counter = document.getElementById('lineTemplateCount_' + templateKey);
+  if (!textarea || !preview) return;
+  const draft = { ...getLineTemplatesLocal(), [templateKey]: textarea.value || '' };
+  const text = renderLineTemplateLocal(templateKey, getLineTemplateSampleVars(), draft);
+  preview.textContent = text || 'ยังไม่มีข้อความพรีวิว';
+  preview.style.color = text ? 'var(--text)' : 'var(--muted)';
+  if (counter) counter.textContent = `${String(textarea.value || '').length.toLocaleString('th-TH')} / 4,500 ตัวอักษร`;
+}
+
+function renderAllLineTemplatePreviews() {
+  LINE_TEMPLATE_DEFINITIONS.forEach(item => renderLineTemplatePreview(item.key));
+}
+
+function openLineTemplateSettings() {
+  setAlertPageTitle('💬 Template ข้อความ LINE');
+  const templates = getLineTemplatesLocal();
+  const cards = LINE_TEMPLATE_DEFINITIONS.map(item => {
+    const buttons = (item.variables || []).map(variable =>
+      `<button class="ctrl-btn outline" style="padding:6px 9px;font-size:11px;" onclick="insertLineTemplateVariable('${escapeJsString(item.key)}','${escapeJsString(variable)}')">{${escapeHtml(variable)}}</button>`
+    ).join('');
+    return `
+      <div style="background:white;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+          <div>
+            <div style="font-family:Kanit,sans-serif;font-size:17px;font-weight:900;color:var(--primary);">${escapeHtml(item.title)}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px;line-height:1.55;">${escapeHtml(item.desc)}</div>
+          </div>
+          <button class="ctrl-btn outline" onclick="resetLineTemplateField('${escapeJsString(item.key)}')">↺ คืนค่าเริ่มต้น</button>
+        </div>
+        <div style="margin-top:10px;font-size:12px;font-weight:900;color:var(--primary);">กดแทรกตัวแปร</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;">${buttons}</div>
+        <textarea id="lineTemplate_${escapeHtml(item.key)}" class="form-input" rows="8" maxlength="4500"
+          oninput="renderLineTemplatePreview('${escapeJsString(item.key)}')"
+          style="margin-top:10px;resize:vertical;min-height:165px;line-height:1.55;">${escapeHtml(templates[item.key] || '')}</textarea>
+        <div id="lineTemplateCount_${escapeHtml(item.key)}" style="font-size:12px;color:var(--muted);margin-top:5px;text-align:right;"></div>
+        <div style="font-size:12px;font-weight:900;color:var(--primary);margin-top:10px;">พรีวิวตัวอย่าง</div>
+        <div id="lineTemplatePreview_${escapeHtml(item.key)}"
+          style="background:var(--bg);border-radius:10px;padding:12px;min-height:72px;border:1px dashed var(--border);white-space:pre-wrap;line-height:1.6;color:var(--text);font-size:14px;margin-top:6px;"></div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('alertPageContent').innerHTML = `
+    <div style="background:#eef6ff;border:1px solid #cfe1f4;border-radius:12px;padding:12px;margin-bottom:12px;line-height:1.6;font-size:13px;color:#24415f;">
+      <b>ใช้สำหรับแก้ข้อความ LINE จากหน้าเว็บได้เอง</b><br>
+      บันทึกแล้วระบบจะใช้กับ แจ้งค่าเช่า / แจ้งเตือนค้าง / ยืนยันรับชำระ / ประกาศผู้เช่า โดยไม่ต้องแก้โค้ด<br>
+      ลิงก์ Tenant Portal จะยังถูกแนบให้อัตโนมัติในข้อความที่ส่งถึงผู้เช่าตามระบบเดิม หากใส่ <b>{portalUrl}</b> เอง ระบบจะไม่เติมซ้ำ
+    </div>
+    ${cards}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--bg);padding:12px 0 4px;">
+      <button class="ctrl-btn green" style="flex:1;justify-content:center;min-height:48px;" onclick="saveLineTemplatesFromPage()">💾 บันทึก Template ข้อความ LINE</button>
+      <button class="ctrl-btn outline" style="justify-content:center;min-height:48px;" onclick="document.getElementById('alertPage').classList.remove('open');refreshModalLockSafe();">ปิด</button>
+    </div>
+    <div id="lineTemplateSaveStatus" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+  `;
+  document.getElementById('alertPage').classList.add('open');
+  refreshModalLockSafe();
+  renderAllLineTemplatePreviews();
+}
+
+async function saveLineTemplatesFromPage() {
+  const draft = {};
+  LINE_TEMPLATE_DEFINITIONS.forEach(item => {
+    draft[item.key] = String(document.getElementById('lineTemplate_' + item.key)?.value || '').trim();
+  });
+  const unknown = getLineTemplateUnknownVariables(draft);
+  if (unknown.length) {
+    const proceed = confirm('พบตัวแปรที่ระบบยังไม่รู้จัก:\n- ' + unknown.join('\n- ') + '\n\nบันทึกต่อหรือไม่? ตัวแปรเหล่านี้จะไม่ถูกแทนค่า');
+    if (!proceed) return;
+  }
+
+  const normalized = sanitizeLineTemplatesClient(draft);
+  const status = document.getElementById('lineTemplateSaveStatus');
+  try {
+    if (status) status.textContent = 'กำลังบันทึก Template...';
+    const result = await workerPost({ action: 'saveLineTemplates', data: normalized });
+    saveLineTemplatesLocal(result.lineTemplates || normalized);
+    if (status) status.textContent = '✅ บันทึก Template แล้ว';
+    alert('✅ บันทึก Template ข้อความ LINE แล้วครับ');
+    renderAllLineTemplatePreviews();
+  } catch(e) {
+    saveLineTemplatesLocal(normalized);
+    if (status) status.textContent = '⚠️ บันทึกในเครื่องแล้ว แต่ซิงค์ Worker ไม่สำเร็จ: ' + (e.message || e);
+    alert('บันทึกในเครื่องแล้ว แต่ซิงค์ Worker ไม่สำเร็จ: ' + (e.message || e));
+  }
+}
+
 
 // ===== v15.4.2.30 ใช้งานจริง: ตั้งค่าห้อง / ค่าเช่ารายห้อง =====
 function normalizeRoomSettingsMap(input = {}) {
@@ -6149,7 +6440,7 @@ function renderTenantProfileEditor(roomNum) {
       <div class="tenant-doc-section-title">ไฟล์เอกสาร</div>
       <div class="tenant-doc-upload">
         <select id="tenantDocType" class="form-input">${renderTenantDocumentTypeOptions()}</select>
-        <input id="tenantDocFile" class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
+        <input id="tenantDocFile" class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple>
         <button class="ctrl-btn primary" onclick="uploadTenantDocumentFromForm('${escapeJsString(roomNum)}')">☁️ อัปโหลด</button>
       </div>
       <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
@@ -6157,7 +6448,7 @@ function renderTenantProfileEditor(roomNum) {
         <span style="font-size:12px;font-weight:800;color:var(--muted);">ใช้โหลดต้นฉบับสัญญาเช่าเมื่อเตรียมรับผู้เช่าใหม่</span>
       </div>
       <div class="tenant-doc-upload-note">
-        รองรับ JPG, PNG, WEBP และ PDF • สูงสุด 8 MB ต่อไฟล์ • สัญญาหลายหน้าอัปโหลดซ้ำประเภท “สัญญาเช่า” ได้หลายไฟล์
+        รองรับ JPG, PNG, WEBP และ PDF • สูงสุด 8 MB ต่อไฟล์ • เลือกหลายรูป/หลายไฟล์พร้อมกันได้ เช่น สัญญาเช่า 2 หน้าอัปโหลดครั้งเดียว
       </div>
       <div id="tenantDocumentsGrid">${docsHtml}</div>
     </div>
@@ -6385,11 +6676,11 @@ function createTenantOnboardingState() {
       profileNote: '',
     },
     docs: {
-      contract: null,
-      id_front: null,
-      id_back: null,
-      deposit_receipt: null,
-      other: null,
+      contract: [],
+      id_front: [],
+      id_back: [],
+      deposit_receipt: [],
+      other: [],
     },
   };
 }
@@ -6407,7 +6698,7 @@ function tenantOnboardingHasDraft() {
   return !!(
     state.roomNum ||
     Object.values(state.data || {}).some(v => String(v || '').trim()) ||
-    Object.values(state.docs || {}).some(Boolean)
+    Object.values(state.docs || {}).some(files => Array.isArray(files) ? files.length > 0 : !!files)
   );
 }
 
@@ -6611,27 +6902,37 @@ function tenantOnboardingFileAllowed(file) {
 }
 
 function tenantOnboardingSelectDoc(docType, input) {
-  const file = input?.files?.[0] || null;
-  if (!file) {
-    tenantOnboardingState.docs[docType] = null;
+  const files = Array.from(input?.files || []);
+  if (!files.length) {
+    tenantOnboardingState.docs[docType] = [];
     renderTenantOnboardingWizard();
     return;
   }
-  const valid = tenantOnboardingFileAllowed(file);
-  if (!valid.ok) {
-    alert(valid.reason || 'ไฟล์ไม่ถูกต้อง');
-    if (input) input.value = '';
-    tenantOnboardingState.docs[docType] = null;
-    renderTenantOnboardingWizard();
-    return;
+
+  const validFiles = [];
+  const errors = [];
+  files.forEach(file => {
+    const valid = tenantOnboardingFileAllowed(file);
+    if (!valid.ok) errors.push(`${file?.name || 'ไฟล์เอกสาร'}: ${valid.reason || 'ไฟล์ไม่ถูกต้อง'}`);
+    else validFiles.push(file);
+  });
+
+  if (errors.length) {
+    alert('มีไฟล์ที่เลือกไม่ได้:\n- ' + errors.join('\n- '));
   }
-  tenantOnboardingState.docs[docType] = file;
+
+  tenantOnboardingState.docs[docType] = validFiles;
+  if (!validFiles.length && input) input.value = '';
   renderTenantOnboardingWizard();
 }
 
 function tenantOnboardingSelectedDocLabel(docType) {
-  const file = tenantOnboardingState.docs?.[docType];
-  return file ? `เลือกแล้ว: ${escapeHtml(file.name || 'ไฟล์เอกสาร')} (${tenantDocumentFormatSize(file.size || 0)})` : 'ยังไม่ได้เลือกไฟล์';
+  const files = Array.isArray(tenantOnboardingState.docs?.[docType]) ? tenantOnboardingState.docs[docType] : [];
+  if (!files.length) return 'ยังไม่ได้เลือกไฟล์';
+  const names = files.slice(0, 3).map(file => escapeHtml(file.name || 'ไฟล์เอกสาร')).join(', ');
+  const more = files.length > 3 ? ` และอีก ${files.length - 3} ไฟล์` : '';
+  const totalSize = files.reduce((sum, file) => sum + Number(file.size || 0), 0);
+  return `เลือกแล้ว ${files.length} ไฟล์: ${names}${more} (รวม ${tenantDocumentFormatSize(totalSize)})`;
 }
 
 function renderTenantOnboardingProgress() {
@@ -6780,37 +7081,37 @@ function renderTenantOnboardingStepContent() {
       <div class="tenant-onboarding-doc-grid">
         <div class="tenant-onboarding-doc-card">
           <div class="tenant-onboarding-doc-title">📄 สัญญาเช่า</div>
-          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="tenantOnboardingSelectDoc('contract', this)">
+          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple onchange="tenantOnboardingSelectDoc('contract', this)">
           <div class="tenant-onboarding-doc-file">${tenantOnboardingSelectedDocLabel('contract')}</div>
         </div>
         <div class="tenant-onboarding-doc-card">
           <div class="tenant-onboarding-doc-title">🪪 บัตรประชาชนด้านหน้า</div>
-          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="tenantOnboardingSelectDoc('id_front', this)">
+          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple onchange="tenantOnboardingSelectDoc('id_front', this)">
           <div class="tenant-onboarding-doc-file">${tenantOnboardingSelectedDocLabel('id_front')}</div>
         </div>
         <div class="tenant-onboarding-doc-card">
           <div class="tenant-onboarding-doc-title">🪪 บัตรประชาชนด้านหลัง</div>
-          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="tenantOnboardingSelectDoc('id_back', this)">
+          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple onchange="tenantOnboardingSelectDoc('id_back', this)">
           <div class="tenant-onboarding-doc-file">${tenantOnboardingSelectedDocLabel('id_back')}</div>
         </div>
         <div class="tenant-onboarding-doc-card">
           <div class="tenant-onboarding-doc-title">💰 หลักฐานเงินประกัน / มัดจำ</div>
-          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="tenantOnboardingSelectDoc('deposit_receipt', this)">
+          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple onchange="tenantOnboardingSelectDoc('deposit_receipt', this)">
           <div class="tenant-onboarding-doc-file">${tenantOnboardingSelectedDocLabel('deposit_receipt')}</div>
         </div>
         <div class="tenant-onboarding-doc-card">
           <div class="tenant-onboarding-doc-title">📎 เอกสารอื่น ๆ</div>
-          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onchange="tenantOnboardingSelectDoc('other', this)">
+          <input class="form-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple onchange="tenantOnboardingSelectDoc('other', this)">
           <div class="tenant-onboarding-doc-file">${tenantOnboardingSelectedDocLabel('other')}</div>
         </div>
       </div>
-      <div class="tenant-onboarding-warning">รองรับ JPG, PNG, WEBP และ PDF ขนาดไม่เกิน 8 MB ต่อไฟล์ • เอกสารจะเก็บเข้า R2 ตามระบบเดิม</div>
+      <div class="tenant-onboarding-warning">รองรับ JPG, PNG, WEBP และ PDF ขนาดไม่เกิน 8 MB ต่อไฟล์ • เลือกหลายไฟล์ในหมวดเดียวกันได้ • เอกสารจะเก็บเข้า R2 ตามระบบเดิม</div>
     `;
     return;
   }
 
   tenantOnboardingSyncStepInputs();
-  const docs = Object.entries(state.docs || {}).filter(([,file]) => !!file);
+  const docs = Object.entries(state.docs || {}).flatMap(([type, files]) => (Array.isArray(files) ? files : (files ? [files] : [])).map(file => [type, file]));
   const deposit = Number(data.deposit || 0) || 0;
   const docSummary = docs.length
     ? docs.map(([type, file]) => `${getTenantDocumentTypeLabel(type)}: ${file.name || 'ไฟล์เอกสาร'}`).join(' • ')
@@ -6875,12 +7176,13 @@ function renderTenantOnboardingActions() {
 async function uploadTenantOnboardingDocuments(roomNum) {
   const uploads = [];
   const errors = [];
-  const docEntries = Object.entries(tenantOnboardingState.docs || {}).filter(([, file]) => !!file);
+  const docEntries = Object.entries(tenantOnboardingState.docs || {})
+    .flatMap(([docType, files]) => (Array.isArray(files) ? files : (files ? [files] : [])).map(file => [docType, file]));
 
   for (const [docType, file] of docEntries) {
     const valid = tenantOnboardingFileAllowed(file);
     if (!valid.ok) {
-      errors.push(`${getTenantDocumentTypeLabel(docType)}: ${valid.reason}`);
+      errors.push(`${getTenantDocumentTypeLabel(docType)} • ${file?.name || 'ไฟล์เอกสาร'}: ${valid.reason}`);
       continue;
     }
 
@@ -6900,7 +7202,7 @@ async function uploadTenantOnboardingDocuments(roomNum) {
       }
       uploads.push({ docType, fileName: file.name || '', size: file.size || 0 });
     } catch (e) {
-      errors.push(`${getTenantDocumentTypeLabel(docType)}: ${e?.message || e}`);
+      errors.push(`${getTenantDocumentTypeLabel(docType)} • ${file?.name || 'ไฟล์เอกสาร'}: ${e?.message || e}`);
     }
   }
 
@@ -7079,44 +7381,75 @@ async function finalizeTenantOnboardingWizard() {
 async function uploadTenantDocumentFromForm(roomNum) {
   const fileInput = document.getElementById('tenantDocFile');
   const docType = String(document.getElementById('tenantDocType')?.value || 'other');
-  const file = fileInput?.files?.[0];
-  if (!file) {
+  const files = Array.from(fileInput?.files || []);
+  if (!files.length) {
     alert('กรุณาเลือกไฟล์ก่อนครับ');
-    return;
-  }
-  if (file.size > 8 * 1024 * 1024) {
-    alert('ไฟล์ใหญ่เกิน 8 MB กรุณาลดขนาดรูปก่อนอัปโหลด');
     return;
   }
 
   const allowed = ['image/jpeg','image/png','image/webp','application/pdf'];
-  if (!allowed.includes(String(file.type || '').toLowerCase())) {
-    alert('รองรับเฉพาะ JPG, PNG, WEBP และ PDF');
+  const validFiles = [];
+  const invalidFiles = [];
+  files.forEach(file => {
+    if (file.size > 8 * 1024 * 1024) {
+      invalidFiles.push(`${file.name || 'ไฟล์เอกสาร'}: ใหญ่เกิน 8 MB`);
+      return;
+    }
+    if (!allowed.includes(String(file.type || '').toLowerCase())) {
+      invalidFiles.push(`${file.name || 'ไฟล์เอกสาร'}: รองรับเฉพาะ JPG, PNG, WEBP และ PDF`);
+      return;
+    }
+    validFiles.push(file);
+  });
+
+  if (!validFiles.length) {
+    alert('ไม่พบไฟล์ที่อัปโหลดได้:\n- ' + invalidFiles.join('\n- '));
     return;
+  }
+
+  if (invalidFiles.length) {
+    const proceed = confirm('มีไฟล์ที่ระบบข้ามเพราะไม่ผ่านเงื่อนไข:\n- ' + invalidFiles.join('\n- ') + '\n\nต้องการอัปโหลดไฟล์ที่ใช้ได้ต่อหรือไม่?');
+    if (!proceed) return;
   }
 
   const button = document.activeElement && document.activeElement.tagName === 'BUTTON' ? document.activeElement : null;
   const oldText = button?.textContent || '';
+  const uploaded = [];
+  const errors = [];
   try {
-    if (button) { button.disabled = true; button.textContent = 'กำลังอัปโหลด...'; }
-    const base64 = await tenantFileToBase64(file);
-    const result = await workerPost({
-      action: 'uploadTenantDocument',
-      roomNum: String(roomNum),
-      docType,
-      fileName: file.name || 'tenant-document',
-      mimeType: file.type,
-      base64,
-    });
-    if (result.tenantProfiles) {
-      tenantProfiles = result.tenantProfiles;
-      saveTenantProfilesLocal();
+    if (button) { button.disabled = true; button.textContent = `กำลังอัปโหลด 0/${validFiles.length}...`; }
+    for (let index = 0; index < validFiles.length; index++) {
+      const file = validFiles[index];
+      try {
+        if (button) button.textContent = `กำลังอัปโหลด ${index + 1}/${validFiles.length}...`;
+        const base64 = await tenantFileToBase64(file);
+        const result = await workerPost({
+          action: 'uploadTenantDocument',
+          roomNum: String(roomNum),
+          docType,
+          fileName: file.name || 'tenant-document',
+          mimeType: file.type,
+          base64,
+        });
+        if (result.tenantProfiles) {
+          tenantProfiles = result.tenantProfiles;
+          saveTenantProfilesLocal();
+        }
+        uploaded.push(file.name || 'tenant-document');
+      } catch(e) {
+        errors.push(`${file.name || 'tenant-document'}: ${e.message || e}`);
+      }
     }
+
     if (fileInput) fileInput.value = '';
     renderTenantDocsPage();
-    alert('✅ อัปโหลดเอกสารแล้วครับ');
-  } catch(e) {
-    alert('❌ อัปโหลดเอกสารไม่สำเร็จ: ' + (e.message || e));
+
+    const lines = [
+      uploaded.length ? `✅ อัปโหลดสำเร็จ ${uploaded.length} ไฟล์` : '',
+      invalidFiles.length ? `⚠️ ข้ามไฟล์ไม่ผ่านเงื่อนไข ${invalidFiles.length} ไฟล์` : '',
+      errors.length ? `❌ อัปโหลดไม่สำเร็จ ${errors.length} ไฟล์\n- ${errors.join('\n- ')}` : '',
+    ].filter(Boolean);
+    alert(lines.join('\n'));
   } finally {
     if (button) { button.disabled = false; button.textContent = oldText || '☁️ อัปโหลด'; }
   }
@@ -7677,6 +8010,13 @@ async function initRooms() {
       try { tenantProfiles = JSON.parse(localStorage.getItem('pananth_tenant_profiles') || '{}') || {}; } catch(e) { tenantProfiles = {}; }
     }
 
+    // โหลด Template ข้อความ LINE
+    if (kvData.lineTemplates) {
+      saveLineTemplatesLocal(kvData.lineTemplates || {});
+    } else {
+      lineTemplates = getSavedLineTemplates();
+    }
+
     // โหลด history
     if (kvData.history) {
       localStorage.setItem('pananth_history', JSON.stringify(kvData.history));
@@ -7823,38 +8163,99 @@ function getRoomPaymentLabel(r) {
   return 'รอชำระ';
 }
 
-function paymentRatingFromDate(dateText = '') {
-  const paidDate = new Date(String(dateText || ''));
-  if (!Number.isFinite(paidDate.getTime())) return null;
-  const day = paidDate.getDate();
-  const stars = day < 5 ? 5 : (day <= 10 ? 4 : 3);
-  return { stars, text: '★'.repeat(stars) + '☆'.repeat(5 - stars) };
+// ===== v15.4.2.65: สถานะดาวการชำระ =====
+function paymentStarMs(value = '') {
+  const ms = Date.parse(String(value || '').trim());
+  return Number.isFinite(ms) ? ms : 0;
 }
 
-function getLatestRoomPayment(roomNum) {
-  let list = [];
+function getPaymentCycleOpenedAtSafe() {
   try {
-    list = typeof getPaymentHistoryLocal === 'function'
-      ? getPaymentHistoryLocal()
-      : JSON.parse(localStorage.getItem('pananth_payment_history') || '[]');
-  } catch (e) {
-    list = [];
+    const cfg = loadConfig();
+    return String(cfg.currentPaymentCycleOpenedAt || cfg.paymentCycleOpenedAt || '').trim();
+  } catch(e) {
+    return '';
+  }
+}
+
+function paymentStarAfterCycleOpen(paidAt = '', cycleOpenedAt = '') {
+  const paidMs = paymentStarMs(paidAt);
+  const openMs = paymentStarMs(cycleOpenedAt);
+  if (!paidMs) return false;
+  // ข้อมูลเดิมก่อนมีวันที่เปิดรอบแบบใหม่ ยังให้ระบบแสดงดาวได้
+  if (!openMs) return true;
+  return paidMs >= openMs;
+}
+
+function buildPaymentStarStatus(paidAt = '', paidAtText = '', paymentMonthKey = '', cycleOpenedAt = '') {
+  const paidMs = paymentStarMs(paidAt);
+  const key = String(paymentMonthKey || '').trim();
+  if (!paidMs || !/^\d{4}-\d{2}$/.test(key)) return null;
+  if (!paymentStarAfterCycleOpen(paidAt, cycleOpenedAt)) return null;
+
+  const day5StartMs = Date.parse(`${key}-05T00:00:00+07:00`);
+  const day11StartMs = Date.parse(`${key}-11T00:00:00+07:00`);
+  if (!Number.isFinite(day5StartMs) || !Number.isFinite(day11StartMs)) return null;
+
+  const stars = paidMs < day5StartMs ? 5 : (paidMs < day11StartMs ? 4 : 3);
+  return {
+    stars,
+    text: '⭐'.repeat(stars),
+    paidAt: String(paidAt || ''),
+    paidAtText: String(paidAtText || paidAt || ''),
+  };
+}
+
+function getRoomPaymentCompletionForStars(roomNum, roomData = {}) {
+  const meta = getBillingMetaFromPaymentMonth(getMonthKey());
+  const cycleOpenedAt = getPaymentCycleOpenedAtSafe();
+  const candidates = [];
+
+  const directPaidAt = String(roomData?.paidAt || roomData?.manualPaidAt || '').trim();
+  const directPaidAtText = String(roomData?.paidAtText || roomData?.manualPaidAtText || directPaidAt || '').trim();
+  if (directPaidAt && paymentStarAfterCycleOpen(directPaidAt, cycleOpenedAt)) {
+    candidates.push({ paidAt: directPaidAt, paidAtText: directPaidAtText, source: 'room' });
   }
 
-  return (Array.isArray(list) ? list : [])
-    .filter(item => String(item?.roomNum || item?.room || '') === String(roomNum))
-    .filter(item => item?.paidAt || item?.createdAt)
-    .sort((a, b) => Date.parse(b.paidAt || b.createdAt || '') - Date.parse(a.paidAt || a.createdAt || ''))[0] || null;
+  const targetRoom = String(roomNum || '').trim();
+  const targetBillingMonthKey = String(meta.billingMonthKey || '').trim();
+  for (const payment of getPaymentHistoryListSafe()) {
+    if (String(payment?.roomNum || payment?.room || '').trim() !== targetRoom) continue;
+    const appliedItems = Array.isArray(payment?.appliedItems) ? payment.appliedItems : [];
+    const isCurrentCyclePayment = appliedItems.some(item =>
+      String(item?.type || '').trim() === 'current' &&
+      String(item?.monthKey || '').trim() === targetBillingMonthKey
+    );
+    if (!isCurrentCyclePayment) continue;
+
+    const remainingKnown = payment?.remainingTotal !== undefined && payment?.remainingTotal !== null && payment?.remainingTotal !== '';
+    const statusKey = String(payment?.status || '').trim().toLowerCase();
+    const completed = remainingKnown
+      ? Number(payment.remainingTotal || 0) <= 0
+      : (statusKey === 'paid' || statusKey === 'verified');
+    if (!completed) continue;
+
+    const paidAt = String(payment?.paidAt || payment?.createdAt || '').trim();
+    if (!paidAt || !paymentStarAfterCycleOpen(paidAt, cycleOpenedAt)) continue;
+    candidates.push({
+      paidAt,
+      paidAtText: String(payment?.paidAtText || payment?.createdAtText || paidAt || '').trim(),
+      source: 'paymentHistory',
+    });
+  }
+
+  candidates.sort((a, b) => paymentStarMs(a.paidAt) - paymentStarMs(b.paidAt));
+  return candidates[0] || null;
 }
 
-function getRoomPaymentRating(roomNum) {
-  const latest = getLatestRoomPayment(roomNum);
-  return latest ? paymentRatingFromDate(latest.paidAt || latest.createdAt || '') : null;
-}
-
-function renderPaymentRatingBadge(rating) {
-  if (!rating) return '';
-  return `<div class="payment-rating-badge" title="${rating.stars} ดาว">${rating.text}</div>`;
+function getRoomPaymentStars(roomNum, roomData = {}) {
+  if (!roomData || roomData.vacant || roomData.paid !== true) return null;
+  const meta = getBillingMetaFromPaymentMonth(getMonthKey());
+  const cycleOpenedAt = getPaymentCycleOpenedAtSafe();
+  const completion = getRoomPaymentCompletionForStars(roomNum, roomData);
+  return completion
+    ? buildPaymentStarStatus(completion.paidAt, completion.paidAtText, meta.paymentMonthKey, cycleOpenedAt)
+    : null;
 }
 
 // ===== RENDER =====
@@ -7979,7 +8380,11 @@ function makeCard(r) {
   const meterBtnStyle = meterBtnDisabled
     ? 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:not-allowed;font-size:11px;font-weight:800;background:#d6d9de;color:#6b7280;box-shadow:none;white-space:nowrap;opacity:0.75;'
     : 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:pointer;font-size:11px;font-weight:800;background:var(--accent);color:#1a2036;box-shadow:0 2px 6px rgba(232,160,32,0.28);white-space:nowrap;';
-  const paymentRatingHtml = renderPaymentRatingBadge(getRoomPaymentRating(r));
+
+  const paymentStars = getRoomPaymentStars(r, d);
+  const paymentStarsBadge = paymentStars
+    ? `<div class="payment-star-badge star-${paymentStars.stars}">${paymentStars.text}</div>`
+    : '';
 
   const card = document.createElement('div');
   card.id = `room-card-${r}`;
@@ -8022,7 +8427,7 @@ function makeCard(r) {
       <div style="text-align:right;">
         <div class="paid-dot ${isClear ? 'paid' : 'unpaid'}" style="margin-left:auto;"></div>
         <div style="font-size:10px;color:${statusColor};font-weight:700;margin-top:3px;">${statusText}</div>
-        ${paymentRatingHtml}
+        ${paymentStarsBadge}
       </div>
     </div>
     <div class="room-card-body" onclick="openEdit(${r})" style="cursor:pointer;">
@@ -8659,20 +9064,27 @@ function sendLine() {
     manualPaid ? `ยอดรอบนี้เต็ม: ${fullTotal.toLocaleString()}฿` : '',
   ].filter(Boolean).join('\n');
 
-  const msg = `🏠 ${shopName || 'ห้องเช่าป่านันท์'} — ห้อง ${room}
-📅 รอบบิล ${getTenantBillingText()}
-📆 วันที่จด ${formatDate()}
-━━━━━━━━━━━━━━
-⚡ ค่าไฟ: ${ep} → ${ec} (${ec-ep} หน่วย × ${ELEC_RATE}฿) = ${elecAmt.toLocaleString()}฿
-💧 ค่าน้ำ: ${wp} → ${wc} (${wc-wp} หน่วย × ${WATER_RATE}฿) = ${waterAmt.toLocaleString()}฿
-🏠 ${rentLabel}: ${rent.toLocaleString()}฿
-🗑️ ค่าขยะ: ${trash}฿${wifi ? `\n📶 WiFi: ${wifi}฿` : ''}${extraLines ? `\n${extraLines}` : ''}
-━━━━━━━━━━━━━━
-💰 ยอดคงเหลือที่ต้องชำระ: ${totalDue.toLocaleString()}฿
-━━━━━━━━━━━━━━
-📲 ${bank}
-
-กรุณาตรวจสอบความถูกต้อง หากมีข้อผิดพลาดประการใด กรุณาแจ้งให้เราทราบด้วยครับ`;
+  const detailLines = [
+    `⚡ ค่าไฟ: ${ep} → ${ec} (${ec-ep} หน่วย × ${ELEC_RATE}฿) = ${elecAmt.toLocaleString()}฿`,
+    `💧 ค่าน้ำ: ${wp} → ${wc} (${wc-wp} หน่วย × ${WATER_RATE}฿) = ${waterAmt.toLocaleString()}฿`,
+    `🏠 ${rentLabel}: ${rent.toLocaleString()}฿`,
+    `🗑️ ค่าขยะ: ${trash}฿`,
+    wifi ? `📶 WiFi: ${wifi}฿` : '',
+    extraLines,
+  ].filter(Boolean).join('\n');
+  const tenantName = String(tenants?.[room]?.name || tenants?.[String(room)]?.name || '').trim();
+  const msg = renderLineTemplateLocal('rentNotice', {
+    shopName: shopName || 'ห้องเช่าป่านันท์',
+    room,
+    tenantName,
+    tenantNameLine: tenantName ? `👤 ${tenantName}\n` : '',
+    billingMonth: getTenantBillingText(),
+    date: formatDate(),
+    detailLines,
+    totalDue: totalDue.toLocaleString('th-TH'),
+    bank,
+    portalUrl: 'https://liff.line.me/2010080282-Fe44Yy7Z',
+  });
 
   if (!confirm(`ยืนยันส่ง LINE ห้อง ${room} ใช่ไหมครับ?`)) return;
 
@@ -9335,20 +9747,27 @@ async function sendLineFromEdit() {
     manualPaid ? `ยอดรอบนี้เต็ม: ${fullTotal.toLocaleString()}฿` : '',
   ].filter(Boolean).join('\n');
 
-  const message = `🏠 ${shop.name || 'ห้องเช่าป่านันท์'} — ห้อง ${r}
-📅 รอบบิล ${getTenantBillingText()}
-📆 วันที่จด ${formatDate()}
-━━━━━━━━━━━━━━
-⚡ ค่าไฟ: ${ep} → ${ec} (${ec-ep} หน่วย × ${ELEC_RATE}฿) = ${elecAmt.toLocaleString()}฿
-💧 ค่าน้ำ: ${wp} → ${wc} (${wc-wp} หน่วย × ${WATER_RATE}฿) = ${waterAmt.toLocaleString()}฿
-🏠 ${rentLabel}: ${rent.toLocaleString()}฿
-🗑️ ค่าขยะ: ${trash}฿${wifi ? `\n📶 WiFi: ${wifi}฿` : ''}${extraLines ? `\n${extraLines}` : ''}
-━━━━━━━━━━━━━━
-💰 ยอดคงเหลือที่ต้องชำระ: ${totalDue.toLocaleString()}฿
-━━━━━━━━━━━━━━
-📲 ${bank}
-
-กรุณาตรวจสอบความถูกต้อง หากมีข้อผิดพลาดประการใด กรุณาแจ้งให้เราทราบด้วยครับ`;
+  const detailLines = [
+    `⚡ ค่าไฟ: ${ep} → ${ec} (${ec-ep} หน่วย × ${ELEC_RATE}฿) = ${elecAmt.toLocaleString()}฿`,
+    `💧 ค่าน้ำ: ${wp} → ${wc} (${wc-wp} หน่วย × ${WATER_RATE}฿) = ${waterAmt.toLocaleString()}฿`,
+    `🏠 ${rentLabel}: ${rent.toLocaleString()}฿`,
+    `🗑️ ค่าขยะ: ${trash}฿`,
+    wifi ? `📶 WiFi: ${wifi}฿` : '',
+    extraLines,
+  ].filter(Boolean).join('\n');
+  const tenantName = String(tenants?.[r]?.name || tenants?.[String(r)]?.name || '').trim();
+  const message = renderLineTemplateLocal('rentNotice', {
+    shopName: shop.name || 'ห้องเช่าป่านันท์',
+    room: r,
+    tenantName,
+    tenantNameLine: tenantName ? `👤 ${tenantName}\n` : '',
+    billingMonth: getTenantBillingText(),
+    date: formatDate(),
+    detailLines,
+    totalDue: totalDue.toLocaleString('th-TH'),
+    bank,
+    portalUrl: 'https://liff.line.me/2010080282-Fe44Yy7Z',
+  });
 
   if (!confirm(testRoom ? 'ยืนยันส่ง LINE ทดสอบห้อง 99 ไปหาเจ้าของใช่ไหมครับ?' : `ยืนยันส่ง LINE แจ้งค่าเช่าห้อง ${r} ใช่ไหมครับ?`)) return;
 
@@ -9545,16 +9964,19 @@ async function sendAlertSelected() {
       }
     }
 
-    const message =
-`🔔 แจ้งเตือนค่าเช่า — ห้อง ${r}
-📅 รอบบิล ${getTenantBillingText()}
-📆 วันที่จด ${formatDate()}
-━━━━━━━━━━━━━━
-${detailLines.join('\n')}
-━━━━━━━━━━━━━━
-💰 ยอดคงเหลือที่ต้องชำระ: ${totalDue.toLocaleString('th-TH')}฿
-━━━━━━━━━━━━━━
-📲 ${r <= 20 ? shop.bankTTB : shop.bankKSI}`;
+    const tenantName = String(tenants?.[r]?.name || tenants?.[String(r)]?.name || '').trim();
+    const message = renderLineTemplateLocal('overdueReminder', {
+      autoLabel: '',
+      room: r,
+      tenantName,
+      tenantNameLine: tenantName ? `👤 ${tenantName}\n` : '',
+      billingMonth: getTenantBillingText(),
+      date: formatDate(),
+      detailLines: detailLines.join('\n'),
+      totalDue: totalDue.toLocaleString('th-TH'),
+      bank: r <= 20 ? shop.bankTTB : shop.bankKSI,
+      portalUrl: 'https://liff.line.me/2010080282-Fe44Yy7Z',
+    });
 
     try {
       const res = await fetch(WORKER_URL, {
@@ -10359,13 +10781,20 @@ function setActiveBillingMonth(monthKey) {
   localStorage.setItem('pananth_active_month_key', monthKey);
 }
 
-async function saveActiveBillingMonthToWorker(monthKey) {
+async function saveActiveBillingMonthToWorker(monthKey, extra = {}) {
   const meta = getBillingMetaFromPaymentMonth(monthKey);
   const cfg = loadConfig();
   cfg.currentPaymentMonthKey = meta.paymentMonthKey;
   cfg.currentPaymentMonthText = meta.paymentMonthText;
   cfg.currentBillingMonthKey = meta.billingMonthKey;
   cfg.currentBillingMonthText = meta.billingMonthText;
+
+  const openedAt = String(extra.currentPaymentCycleOpenedAt || '').trim();
+  if (openedAt) {
+    cfg.currentPaymentCycleOpenedAt = openedAt;
+    cfg.currentPaymentCycleOpenedAtText = String(extra.currentPaymentCycleOpenedAtText || '').trim() || new Date().toLocaleString('th-TH');
+  }
+
   cfg.cycleUpdatedAt = new Date().toISOString();
   await saveConfigOnly(cfg, { throwOnError: true });
   return meta;
@@ -10483,7 +10912,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.62'
+        createdFrom: 'web-v15.4.2.63'
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -10653,9 +11082,16 @@ async function openNewBillingMonth(fromMonthKeyArg, toMonthKeyArg) {
   rooms = nextRooms;
   ensureTestRoom();
 
+  const cycleOpenedNow = new Date();
+  const currentPaymentCycleOpenedAt = cycleOpenedNow.toISOString();
+  const currentPaymentCycleOpenedAtText = cycleOpenedNow.toLocaleString('th-TH');
+
   setActiveBillingMonth(toMonthKey);
   document.getElementById('monthPicker').value = toMonthKey;
-  await saveActiveBillingMonthToWorker(toMonthKey);
+  await saveActiveBillingMonthToWorker(toMonthKey, {
+    currentPaymentCycleOpenedAt,
+    currentPaymentCycleOpenedAtText,
+  });
   await markMeterCycleOpenedForMonth(toMonthKey);
 
   localStorage.setItem('pananth_rooms', JSON.stringify(rooms));
@@ -10680,7 +11116,10 @@ async function openNewBillingMonth(fromMonthKeyArg, toMonthKeyArg) {
     });
     await saveMonthControlToWorker({ monthClosures, lockedMonths, lastCloseBackup, arrears });
     // บันทึกรอบบิลซ้ำอีกครั้งท้ายกระบวนการ เพื่อกันกรณี Worker/KV ยังไม่ทันได้ค่า currentPaymentMonth/currentBillingMonth
-    await saveActiveBillingMonthToWorker(toMonthKey);
+    await saveActiveBillingMonthToWorker(toMonthKey, {
+      currentPaymentCycleOpenedAt,
+      currentPaymentCycleOpenedAtText,
+    });
     window._bypassMonthLock = false;
     await recordSystemActivity(
       'openNewBillingMonth',
@@ -11569,15 +12008,19 @@ function buildTenantMessage(roomNum) {
     }
   }
 
-  return `🔔 แจ้งยอดค่าเช่า — ห้อง ${r}
-📅 รอบบิล ${getTenantBillingText()}
-📆 วันที่จด ${formatDate()}
-━━━━━━━━━━━━━━
-${detailLines.join('\n')}
-━━━━━━━━━━━━━━
-💰 ยอดคงเหลือที่ต้องชำระ: ${totalDue.toLocaleString('th-TH')}฿
-━━━━━━━━━━━━━━
-📲 ${r <= 20 ? shop.bankTTB : shop.bankKSI}`;
+  const tenantName = String(tenants?.[r]?.name || tenants?.[String(r)]?.name || '').trim();
+  return renderLineTemplateLocal('rentNotice', {
+    shopName: shop.name || 'ห้องเช่าป่านันท์',
+    room: r,
+    tenantName,
+    tenantNameLine: tenantName ? `👤 ${tenantName}\n` : '',
+    billingMonth: getTenantBillingText(),
+    date: formatDate(),
+    detailLines: detailLines.join('\n'),
+    totalDue: totalDue.toLocaleString('th-TH'),
+    bank: r <= 20 ? shop.bankTTB : shop.bankKSI,
+    portalUrl: 'https://liff.line.me/2010080282-Fe44Yy7Z',
+  });
 }
 
 async function sendBulkMonthlySelected() {
@@ -12169,7 +12612,7 @@ function openTenantBroadcastPage() {
         oninput="renderTenantBroadcastPreview()"
         style="resize:vertical;min-height:130px;line-height:1.55;"></textarea>
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px;">
-        <span>ส่งตามข้อความที่พิมพ์จริง ไม่มีข้อความระบบแทรกเพิ่ม</span>
+        <span>ข้อความที่พิมพ์จะถูกวางใน Template “ประกาศถึงผู้เช่า” และพรีวิวด้านล่างจะแสดงข้อความที่จะส่งจริง</span>
         <span id="tenantBroadcastCharCount">0 / 4,500 ตัวอักษร</span>
       </div>
     </div>
@@ -12287,9 +12730,16 @@ function renderTenantBroadcastPreview() {
   const preview = document.getElementById('tenantBroadcastPreview');
   const counter = document.getElementById('tenantBroadcastCharCount');
   const text = String(input?.value || '');
+  const rendered = renderLineTemplateLocal('announcement', {
+    announcement: text.trim() || 'ข้อความประกาศจะแสดงตัวอย่างตรงนี้ก่อนส่ง',
+    room: 'หลายห้อง',
+    tenantName: '',
+    tenantNameLine: '',
+    portalUrl: 'https://liff.line.me/2010080282-Fe44Yy7Z',
+  });
   if (counter) counter.textContent = `${text.length.toLocaleString('th-TH')} / 4,500 ตัวอักษร`;
   if (preview) {
-    preview.textContent = text.trim() || 'ข้อความประกาศจะแสดงตัวอย่างตรงนี้ก่อนส่ง';
+    preview.textContent = rendered || 'ข้อความประกาศจะแสดงตัวอย่างตรงนี้ก่อนส่ง';
     preview.style.color = text.trim() ? 'var(--text)' : 'var(--muted)';
   }
 }
@@ -13181,19 +13631,27 @@ async function sendLineAPI() {
     manualPaid ? `ยอดรอบนี้เต็ม: ${fullTotal.toLocaleString()}฿` : '',
   ].filter(Boolean).join('\n');
 
-  const message = `🏠 ${shopName || 'ห้องเช่าป่านันท์'} — ห้อง ${r}
-📅 รอบบิล ${getTenantBillingText()}
-━━━━━━━━━━━━━━
-⚡ ค่าไฟ: ${ep} → ${ec} (${ec-ep} หน่วย × ${ELEC_RATE}฿) = ${elecAmt.toLocaleString()}฿
-💧 ค่าน้ำ: ${wp} → ${wc} (${wc-wp} หน่วย × ${WATER_RATE}฿) = ${waterAmt.toLocaleString()}฿
-🏠 ค่าเช่า: ${rent.toLocaleString()}฿
-🗑️ ค่าขยะ: ${trash}฿${wifi ? `\n📶 WiFi: ${wifi}฿` : ''}${extraLines ? `\n${extraLines}` : ''}
-━━━━━━━━━━━━━━
-💰 ยอดคงเหลือที่ต้องชำระ: ${totalDue.toLocaleString()}฿
-━━━━━━━━━━━━━━
-📲 ${bank}
-
-กรุณาตรวจสอบความถูกต้อง หากมีข้อผิดพลาดประการใด กรุณาแจ้งให้เราทราบด้วยครับ`;
+  const detailLines = [
+    `⚡ ค่าไฟ: ${ep} → ${ec} (${ec-ep} หน่วย × ${ELEC_RATE}฿) = ${elecAmt.toLocaleString()}฿`,
+    `💧 ค่าน้ำ: ${wp} → ${wc} (${wc-wp} หน่วย × ${WATER_RATE}฿) = ${waterAmt.toLocaleString()}฿`,
+    `🏠 ค่าเช่า: ${rent.toLocaleString()}฿`,
+    `🗑️ ค่าขยะ: ${trash}฿`,
+    wifi ? `📶 WiFi: ${wifi}฿` : '',
+    extraLines,
+  ].filter(Boolean).join('\n');
+  const tenantName = String(tenants?.[r]?.name || tenants?.[String(r)]?.name || '').trim();
+  const message = renderLineTemplateLocal('rentNotice', {
+    shopName: shopName || 'ห้องเช่าป่านันท์',
+    room: r,
+    tenantName,
+    tenantNameLine: tenantName ? `👤 ${tenantName}\n` : '',
+    billingMonth: getTenantBillingText(),
+    date: formatDate(),
+    detailLines,
+    totalDue: totalDue.toLocaleString('th-TH'),
+    bank,
+    portalUrl: 'https://liff.line.me/2010080282-Fe44Yy7Z',
+  });
 
   // แสดง loading
   const btn = event.target;
@@ -13936,6 +14394,9 @@ async function refreshData() {
       tenantProfiles = kvData.tenantProfiles || {};
       saveTenantProfilesLocal();
     }
+    if (kvData.lineTemplates) {
+      saveLineTemplatesLocal(kvData.lineTemplates || {});
+    }
     if (kvData.history) {
       localStorage.setItem('pananth_history', JSON.stringify(kvData.history));
     }
@@ -14058,6 +14519,7 @@ function organizeMobileTools() {
         <div class="mobile-section-content">
           <div class="button-grid">
             <button class="ctrl-btn outline" onclick="openSettings()">⚙️ ตั้งค่า LINE</button>
+            <button class="ctrl-btn outline" onclick="openLineTemplateSettings()">💬 Template LINE</button>
             <button class="ctrl-btn outline" onclick="openRoomSettings()">🏘️ ตั้งค่าห้อง/ค่าเช่า</button>
             <button class="ctrl-btn outline" onclick="openTenantDocs()">🧾 ผู้เช่า/เอกสาร</button>
             <button class="ctrl-btn outline" onclick="openMutedRooms()">🔕 งดแจ้งเตือน</button>

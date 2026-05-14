@@ -30,7 +30,6 @@
     .bill-label{font-size:12px;opacity:.86;margin-bottom:3px}
     .bill-total{font-family:'Kanit',sans-serif;font-size:34px;font-weight:800;line-height:1}
     .bill-status{display:inline-flex;gap:6px;align-items:center;margin-top:11px;padding:7px 10px;border-radius:999px;background:rgba(255,224,178,.22);border:1px solid rgba(255,224,178,.30);font-size:12px;font-weight:800}
-    .payment-rating{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;border-radius:999px;background:linear-gradient(135deg,rgba(255,244,203,.28),rgba(255,255,255,.12));border:1px solid rgba(255,236,169,.42);box-shadow:0 8px 20px rgba(0,0,0,.10);font-size:15px;font-weight:900;letter-spacing:1px;color:#ffe680}
     .section{margin-top:14px;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:22px;padding:15px;box-shadow:var(--shadow)}
     .section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}
     .section-title{font-family:'Kanit',sans-serif;font-size:18px;font-weight:800;color:var(--primary)}
@@ -191,6 +190,24 @@
       .history-card>:last-child{grid-column:2;justify-self:start}
       .arrears-card,.progress-top{align-items:flex-start;flex-direction:column}
     }
+
+    /* ===== v15.4.2.65: สถานะดาวการชำระ ===== */
+    .overview-status-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+    .star-status{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:7px 11px;border-radius:999px;
+      border:1px solid rgba(245,158,11,.38);
+      background:linear-gradient(135deg,rgba(255,241,184,.98),rgba(255,255,255,.94));
+      color:#b77905;font-size:14px;font-weight:900;letter-spacing:1.4px;line-height:1;
+      box-shadow:0 8px 20px rgba(180,116,5,.12);white-space:nowrap;
+    }
+    .star-status.star-5{border-color:rgba(245,158,11,.58);background:linear-gradient(135deg,#ffe99a,#fffdf4)}
+    .star-status.star-4{border-color:rgba(234,179,8,.42);background:linear-gradient(135deg,#fff4c6,#fffdf7)}
+    .star-status.star-3{border-color:rgba(148,163,184,.34);background:linear-gradient(135deg,#fff8dd,#ffffff)}
+    @media (max-width:720px){
+      .overview-status-wrap{align-items:flex-start}
+    }
+
   </style>
 </head>
 <body>
@@ -208,7 +225,6 @@
           <div class="hello">สวัสดีครับ</div>
           <div class="tenant-name" id="heroTenantName">กำลังตรวจสอบ LINE...</div>
           <div class="room-pill" id="heroRoomLabel">🔐 เชื่อมต่อบัญชีผู้เช่า</div>
-          <div class="payment-rating" id="heroPaymentRating" style="display:none;"></div>
         </div>
         <div class="hero-panel">
           <div class="bill-label">ยอดคงเหลือรวม</div>
@@ -238,7 +254,10 @@
           <div class="section-title">📊 สรุปห้อง <span id="overviewRoomNum">-</span></div>
           <div class="section-sub" id="overviewBillingText">-</div>
         </div>
-        <div class="chip" id="overviewStatusChip">-</div>
+        <div class="overview-status-wrap">
+          <div class="chip" id="overviewStatusChip">-</div>
+          <div class="star-status" id="overviewPaymentStars" style="display:none;"></div>
+        </div>
       </div>
       <div class="summary-grid">
         <div class="summary-card">
@@ -507,29 +526,6 @@
       renderSelectedRoom();
     }
 
-    function paymentRatingFromDate(dateText = '') {
-      const paidDate = new Date(String(dateText || ''));
-      if (!Number.isFinite(paidDate.getTime())) return null;
-      const day = paidDate.getDate();
-      const stars = day < 5 ? 5 : (day <= 10 ? 4 : 3);
-      return { stars, text: '★'.repeat(stars) + '☆'.repeat(5 - stars) };
-    }
-
-    function renderPaymentRating(payments = []) {
-      const el = $('heroPaymentRating');
-      if (!el) return;
-      const latest = Array.isArray(payments) ? payments.find(item => item && (item.paidAt || item.createdAt)) : null;
-      const rating = latest ? paymentRatingFromDate(latest.paidAt || latest.createdAt || '') : null;
-      if (!rating) {
-        el.style.display = 'none';
-        el.textContent = '';
-        return;
-      }
-      el.textContent = rating.text;
-      el.title = `${rating.stars} ดาว`;
-      el.style.display = 'inline-flex';
-    }
-
     function renderSelectedRoom() {
       const room = (portalData.rooms || []).find(item => String(item.roomNum) === String(selectedRoomNum));
       if (!room) return;
@@ -541,7 +537,6 @@
       const roomTenantName = String(room.tenantName || '').trim();
       const lineDisplayName = String(portalData?.user?.displayName || '').trim();
       $('heroTenantName').textContent = roomTenantName || lineDisplayName || 'ผู้เช่า';
-      renderPaymentRating(room.history?.payments || []);
 
       ['overviewSection','currentBillSection','arrearsSection','archiveSection','paymentSection'].forEach(id => {
         const el = $(id);
@@ -551,6 +546,16 @@
       $('overviewRoomNum').textContent = room.roomNum || '-';
       $('overviewBillingText').textContent = `รอบบิล ${text(billing.billingMonthText)} • รับชำระใน ${text(billing.paymentMonthText)}`;
       $('overviewStatusChip').textContent = status.icon + ' ' + status.label;
+      const starsBox = $('overviewPaymentStars');
+      const paymentStars = room.paymentStars || null;
+      if (starsBox && paymentStars?.text) {
+        starsBox.className = 'star-status star-' + String(paymentStars.stars || '');
+        starsBox.textContent = paymentStars.text;
+        starsBox.style.display = 'inline-flex';
+      } else if (starsBox) {
+        starsBox.textContent = '';
+        starsBox.style.display = 'none';
+      }
       $('overviewWaterMeter').textContent = `${text(meters.wp, '0')} → ${text(meters.wc, '0')}`;
       $('overviewElectricMeter').textContent = `${text(meters.ep, '0')} → ${text(meters.ec, '0')}`;
       $('overviewArrears').textContent = money(amounts.arrearsTotal || 0);
