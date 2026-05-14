@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.70</title>
+<title>???????????????? v15.4.2.71</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -3535,6 +3535,391 @@ body.dark .health-item.info { background:rgba(59,130,246,.12); }
   .health-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .health-actions { grid-template-columns:1fr; }
 }
+
+/* ===== v15.4.2.71: Owner assistant center / checklist / contextual tips / quick flow ===== */
+.owner-assistant-layout {
+  padding: 0 16px 14px;
+  display:grid;
+  grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
+  gap:12px;
+}
+.owner-assistant-card,
+.monthly-checklist-card {
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 2px 10px rgba(10,30,61,.06);
+}
+.owner-assistant-head,
+.checklist-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
+}
+.owner-assistant-title,
+.checklist-title {
+  font-family:'Kanit',sans-serif;
+  color:var(--primary);
+  font-size:17px;
+  font-weight:900;
+  line-height:1.25;
+}
+.owner-assistant-sub,
+.checklist-sub {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.owner-assistant-refresh {
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--primary);
+  min-width:34px;
+  height:34px;
+  border-radius:10px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.owner-action-list,
+.owner-notice-list {
+  display:grid;
+  gap:8px;
+}
+.owner-action-item,
+.owner-notice-item {
+  width:100%;
+  border:1px solid var(--border);
+  background:var(--bg);
+  border-radius:14px;
+  padding:10px 11px;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  text-align:left;
+  font-family:'Sarabun',sans-serif;
+}
+.owner-action-item {
+  cursor:pointer;
+}
+.owner-action-item:hover,
+.owner-notice-item.can-open:hover {
+  border-color:#b8c7d6;
+  transform:translateY(-1px);
+}
+.owner-action-item.priority {
+  background:#fff8e6;
+  border-color:#f0d06e;
+}
+.owner-action-item.success {
+  background:#eafaf6;
+  border-color:#9ee6d0;
+}
+.owner-action-icon,
+.owner-notice-icon {
+  flex:0 0 30px;
+  width:30px;
+  height:30px;
+  border-radius:10px;
+  background:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+}
+.owner-action-body,
+.owner-notice-body {
+  min-width:0;
+  flex:1;
+}
+.owner-action-title,
+.owner-notice-title {
+  color:var(--primary);
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+}
+.owner-action-detail,
+.owner-notice-detail {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.owner-notice-item.can-open {
+  cursor:pointer;
+}
+.owner-notice-count {
+  flex:0 0 auto;
+  min-width:28px;
+  height:28px;
+  border-radius:999px;
+  padding:0 8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--primary);
+  color:white;
+  font-family:'Kanit',sans-serif;
+  font-size:13px;
+  font-weight:900;
+}
+.owner-notice-item.warn .owner-notice-count { background:#e67e22; }
+.owner-notice-item.danger .owner-notice-count { background:#c0392b; }
+.owner-notice-item.info .owner-notice-count { background:#175cd3; }
+.owner-notice-item.good .owner-notice-count { background:#2e7d52; }
+.monthly-checklist-wrap {
+  padding:0 16px 14px;
+}
+.checklist-progress {
+  height:10px;
+  background:var(--bg);
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  margin:10px 0 12px;
+}
+.checklist-progress-bar {
+  height:100%;
+  background:linear-gradient(90deg,#16a085,#2e7d52);
+  border-radius:999px;
+  transition:width .25s ease;
+}
+.checklist-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.checklist-item {
+  border:1px solid var(--border);
+  background:var(--bg);
+  border-radius:14px;
+  padding:10px;
+  min-height:84px;
+}
+.checklist-item.done {
+  background:#eafaf6;
+  border-color:#9ee6d0;
+}
+.checklist-item.wait {
+  background:#fff8e6;
+  border-color:#f0d06e;
+}
+.checklist-item.attn {
+  background:#fff0f0;
+  border-color:#f4c7c7;
+}
+.checklist-badge {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  padding:3px 8px;
+  font-size:11px;
+  font-weight:900;
+  margin-bottom:7px;
+  background:white;
+  color:var(--primary);
+}
+.checklist-name {
+  color:var(--primary);
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+}
+.checklist-detail {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:3px;
+}
+.context-help-btn {
+  margin-left:auto;
+  border:1px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.18);
+  color:white;
+  width:32px;
+  height:32px;
+  border-radius:999px;
+  font-family:'Kanit',sans-serif;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.page-header .context-help-btn {
+  flex:0 0 auto;
+}
+.context-help-card {
+  width:min(540px,calc(100vw - 30px));
+  max-height:min(78vh,720px);
+  overflow:auto;
+  background:var(--card);
+  border-radius:20px;
+  padding:18px;
+  box-shadow:0 16px 48px rgba(0,0,0,.28);
+  border:1.5px solid var(--border);
+}
+.context-help-title {
+  font-family:'Kanit',sans-serif;
+  font-size:20px;
+  font-weight:900;
+  color:var(--primary);
+  margin-bottom:6px;
+}
+.context-help-intro {
+  font-size:13px;
+  line-height:1.6;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+.context-help-steps {
+  display:grid;
+  gap:8px;
+  margin-bottom:14px;
+}
+.context-help-step {
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  color:var(--text);
+  font-size:13px;
+  line-height:1.6;
+}
+.context-help-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.context-help-action {
+  min-height:42px;
+  border:none;
+  border-radius:12px;
+  padding:10px 12px;
+  font-family:'Sarabun',sans-serif;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.context-help-action.primary { background:var(--primary); color:white; }
+.context-help-action.outline { background:var(--bg); color:var(--primary); border:1.5px solid var(--border); }
+.quick-flow-dock {
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  width:min(720px,calc(100vw - 24px));
+  z-index:1003;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  box-shadow:0 18px 50px rgba(0,0,0,.25);
+  padding:12px;
+}
+.quick-flow-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.quick-flow-title {
+  font-family:'Kanit',sans-serif;
+  color:var(--primary);
+  font-size:16px;
+  font-weight:900;
+  line-height:1.35;
+}
+.quick-flow-sub {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.quick-flow-close {
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--primary);
+  width:32px;
+  height:32px;
+  border-radius:999px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.quick-flow-actions {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.quick-flow-btn {
+  min-height:42px;
+  border:none;
+  border-radius:12px;
+  padding:10px 10px;
+  font-family:'Sarabun',sans-serif;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+.quick-flow-btn.primary { background:var(--primary); color:white; }
+.quick-flow-btn.accent { background:var(--accent); color:#1a2536; }
+.quick-flow-btn.outline { background:var(--bg); color:var(--primary); border:1.5px solid var(--border); }
+body.dark .owner-assistant-card,
+body.dark .monthly-checklist-card,
+body.dark .context-help-card,
+body.dark .quick-flow-dock {
+  background:rgba(15,23,42,.96);
+}
+body.dark .owner-action-icon,
+body.dark .owner-notice-icon,
+body.dark .checklist-badge {
+  background:rgba(255,255,255,.10);
+}
+body.dark .owner-action-item.priority,
+body.dark .checklist-item.wait {
+  background:rgba(245,158,11,.12);
+}
+body.dark .owner-action-item.success,
+body.dark .checklist-item.done {
+  background:rgba(16,185,129,.12);
+}
+body.dark .checklist-item.attn {
+  background:rgba(239,68,68,.12);
+}
+@media (max-width: 900px) {
+  .owner-assistant-layout {
+    grid-template-columns:1fr;
+  }
+  .checklist-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media (max-width: 640px) {
+  .owner-assistant-layout,
+  .monthly-checklist-wrap {
+    padding-left:12px;
+    padding-right:12px;
+  }
+  .checklist-grid {
+    grid-template-columns:1fr;
+  }
+  .context-help-actions {
+    grid-template-columns:1fr;
+  }
+  .quick-flow-actions {
+    grid-template-columns:1fr;
+  }
+}
+
 </style>
 
 <!-- PWA START: ติดตั้งเป็นแอปบนมือถือ -->
@@ -3751,6 +4136,391 @@ body.dark .health-item.info { background:rgba(59,130,246,.12); }
     .cycle-preview-head-title { font-size: 19px; }
     .cycle-preview-value { font-size: 17px; }
   }
+
+/* ===== v15.4.2.71: Owner assistant center / checklist / contextual tips / quick flow ===== */
+.owner-assistant-layout {
+  padding: 0 16px 14px;
+  display:grid;
+  grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
+  gap:12px;
+}
+.owner-assistant-card,
+.monthly-checklist-card {
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 2px 10px rgba(10,30,61,.06);
+}
+.owner-assistant-head,
+.checklist-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
+}
+.owner-assistant-title,
+.checklist-title {
+  font-family:'Kanit',sans-serif;
+  color:var(--primary);
+  font-size:17px;
+  font-weight:900;
+  line-height:1.25;
+}
+.owner-assistant-sub,
+.checklist-sub {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.owner-assistant-refresh {
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--primary);
+  min-width:34px;
+  height:34px;
+  border-radius:10px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.owner-action-list,
+.owner-notice-list {
+  display:grid;
+  gap:8px;
+}
+.owner-action-item,
+.owner-notice-item {
+  width:100%;
+  border:1px solid var(--border);
+  background:var(--bg);
+  border-radius:14px;
+  padding:10px 11px;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  text-align:left;
+  font-family:'Sarabun',sans-serif;
+}
+.owner-action-item {
+  cursor:pointer;
+}
+.owner-action-item:hover,
+.owner-notice-item.can-open:hover {
+  border-color:#b8c7d6;
+  transform:translateY(-1px);
+}
+.owner-action-item.priority {
+  background:#fff8e6;
+  border-color:#f0d06e;
+}
+.owner-action-item.success {
+  background:#eafaf6;
+  border-color:#9ee6d0;
+}
+.owner-action-icon,
+.owner-notice-icon {
+  flex:0 0 30px;
+  width:30px;
+  height:30px;
+  border-radius:10px;
+  background:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+}
+.owner-action-body,
+.owner-notice-body {
+  min-width:0;
+  flex:1;
+}
+.owner-action-title,
+.owner-notice-title {
+  color:var(--primary);
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+}
+.owner-action-detail,
+.owner-notice-detail {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.owner-notice-item.can-open {
+  cursor:pointer;
+}
+.owner-notice-count {
+  flex:0 0 auto;
+  min-width:28px;
+  height:28px;
+  border-radius:999px;
+  padding:0 8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--primary);
+  color:white;
+  font-family:'Kanit',sans-serif;
+  font-size:13px;
+  font-weight:900;
+}
+.owner-notice-item.warn .owner-notice-count { background:#e67e22; }
+.owner-notice-item.danger .owner-notice-count { background:#c0392b; }
+.owner-notice-item.info .owner-notice-count { background:#175cd3; }
+.owner-notice-item.good .owner-notice-count { background:#2e7d52; }
+.monthly-checklist-wrap {
+  padding:0 16px 14px;
+}
+.checklist-progress {
+  height:10px;
+  background:var(--bg);
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  margin:10px 0 12px;
+}
+.checklist-progress-bar {
+  height:100%;
+  background:linear-gradient(90deg,#16a085,#2e7d52);
+  border-radius:999px;
+  transition:width .25s ease;
+}
+.checklist-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.checklist-item {
+  border:1px solid var(--border);
+  background:var(--bg);
+  border-radius:14px;
+  padding:10px;
+  min-height:84px;
+}
+.checklist-item.done {
+  background:#eafaf6;
+  border-color:#9ee6d0;
+}
+.checklist-item.wait {
+  background:#fff8e6;
+  border-color:#f0d06e;
+}
+.checklist-item.attn {
+  background:#fff0f0;
+  border-color:#f4c7c7;
+}
+.checklist-badge {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  padding:3px 8px;
+  font-size:11px;
+  font-weight:900;
+  margin-bottom:7px;
+  background:white;
+  color:var(--primary);
+}
+.checklist-name {
+  color:var(--primary);
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+}
+.checklist-detail {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:3px;
+}
+.context-help-btn {
+  margin-left:auto;
+  border:1px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.18);
+  color:white;
+  width:32px;
+  height:32px;
+  border-radius:999px;
+  font-family:'Kanit',sans-serif;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.page-header .context-help-btn {
+  flex:0 0 auto;
+}
+.context-help-card {
+  width:min(540px,calc(100vw - 30px));
+  max-height:min(78vh,720px);
+  overflow:auto;
+  background:var(--card);
+  border-radius:20px;
+  padding:18px;
+  box-shadow:0 16px 48px rgba(0,0,0,.28);
+  border:1.5px solid var(--border);
+}
+.context-help-title {
+  font-family:'Kanit',sans-serif;
+  font-size:20px;
+  font-weight:900;
+  color:var(--primary);
+  margin-bottom:6px;
+}
+.context-help-intro {
+  font-size:13px;
+  line-height:1.6;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+.context-help-steps {
+  display:grid;
+  gap:8px;
+  margin-bottom:14px;
+}
+.context-help-step {
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  color:var(--text);
+  font-size:13px;
+  line-height:1.6;
+}
+.context-help-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.context-help-action {
+  min-height:42px;
+  border:none;
+  border-radius:12px;
+  padding:10px 12px;
+  font-family:'Sarabun',sans-serif;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.context-help-action.primary { background:var(--primary); color:white; }
+.context-help-action.outline { background:var(--bg); color:var(--primary); border:1.5px solid var(--border); }
+.quick-flow-dock {
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  width:min(720px,calc(100vw - 24px));
+  z-index:1003;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  box-shadow:0 18px 50px rgba(0,0,0,.25);
+  padding:12px;
+}
+.quick-flow-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.quick-flow-title {
+  font-family:'Kanit',sans-serif;
+  color:var(--primary);
+  font-size:16px;
+  font-weight:900;
+  line-height:1.35;
+}
+.quick-flow-sub {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.quick-flow-close {
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--primary);
+  width:32px;
+  height:32px;
+  border-radius:999px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.quick-flow-actions {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.quick-flow-btn {
+  min-height:42px;
+  border:none;
+  border-radius:12px;
+  padding:10px 10px;
+  font-family:'Sarabun',sans-serif;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+.quick-flow-btn.primary { background:var(--primary); color:white; }
+.quick-flow-btn.accent { background:var(--accent); color:#1a2536; }
+.quick-flow-btn.outline { background:var(--bg); color:var(--primary); border:1.5px solid var(--border); }
+body.dark .owner-assistant-card,
+body.dark .monthly-checklist-card,
+body.dark .context-help-card,
+body.dark .quick-flow-dock {
+  background:rgba(15,23,42,.96);
+}
+body.dark .owner-action-icon,
+body.dark .owner-notice-icon,
+body.dark .checklist-badge {
+  background:rgba(255,255,255,.10);
+}
+body.dark .owner-action-item.priority,
+body.dark .checklist-item.wait {
+  background:rgba(245,158,11,.12);
+}
+body.dark .owner-action-item.success,
+body.dark .checklist-item.done {
+  background:rgba(16,185,129,.12);
+}
+body.dark .checklist-item.attn {
+  background:rgba(239,68,68,.12);
+}
+@media (max-width: 900px) {
+  .owner-assistant-layout {
+    grid-template-columns:1fr;
+  }
+  .checklist-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media (max-width: 640px) {
+  .owner-assistant-layout,
+  .monthly-checklist-wrap {
+    padding-left:12px;
+    padding-right:12px;
+  }
+  .checklist-grid {
+    grid-template-columns:1fr;
+  }
+  .context-help-actions {
+    grid-template-columns:1fr;
+  }
+  .quick-flow-actions {
+    grid-template-columns:1fr;
+  }
+}
+
 </style>
 <script>
 function pananthCyclePreviewMoney(value) {
@@ -4078,6 +4848,391 @@ function showBillingCyclePreview(options = {}) {
     .system-activity-details-row { flex-direction: column; gap: 2px; }
     .system-activity-details-row b { text-align: left; }
   }
+
+/* ===== v15.4.2.71: Owner assistant center / checklist / contextual tips / quick flow ===== */
+.owner-assistant-layout {
+  padding: 0 16px 14px;
+  display:grid;
+  grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
+  gap:12px;
+}
+.owner-assistant-card,
+.monthly-checklist-card {
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 2px 10px rgba(10,30,61,.06);
+}
+.owner-assistant-head,
+.checklist-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
+}
+.owner-assistant-title,
+.checklist-title {
+  font-family:'Kanit',sans-serif;
+  color:var(--primary);
+  font-size:17px;
+  font-weight:900;
+  line-height:1.25;
+}
+.owner-assistant-sub,
+.checklist-sub {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.owner-assistant-refresh {
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--primary);
+  min-width:34px;
+  height:34px;
+  border-radius:10px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.owner-action-list,
+.owner-notice-list {
+  display:grid;
+  gap:8px;
+}
+.owner-action-item,
+.owner-notice-item {
+  width:100%;
+  border:1px solid var(--border);
+  background:var(--bg);
+  border-radius:14px;
+  padding:10px 11px;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  text-align:left;
+  font-family:'Sarabun',sans-serif;
+}
+.owner-action-item {
+  cursor:pointer;
+}
+.owner-action-item:hover,
+.owner-notice-item.can-open:hover {
+  border-color:#b8c7d6;
+  transform:translateY(-1px);
+}
+.owner-action-item.priority {
+  background:#fff8e6;
+  border-color:#f0d06e;
+}
+.owner-action-item.success {
+  background:#eafaf6;
+  border-color:#9ee6d0;
+}
+.owner-action-icon,
+.owner-notice-icon {
+  flex:0 0 30px;
+  width:30px;
+  height:30px;
+  border-radius:10px;
+  background:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+}
+.owner-action-body,
+.owner-notice-body {
+  min-width:0;
+  flex:1;
+}
+.owner-action-title,
+.owner-notice-title {
+  color:var(--primary);
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+}
+.owner-action-detail,
+.owner-notice-detail {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.owner-notice-item.can-open {
+  cursor:pointer;
+}
+.owner-notice-count {
+  flex:0 0 auto;
+  min-width:28px;
+  height:28px;
+  border-radius:999px;
+  padding:0 8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--primary);
+  color:white;
+  font-family:'Kanit',sans-serif;
+  font-size:13px;
+  font-weight:900;
+}
+.owner-notice-item.warn .owner-notice-count { background:#e67e22; }
+.owner-notice-item.danger .owner-notice-count { background:#c0392b; }
+.owner-notice-item.info .owner-notice-count { background:#175cd3; }
+.owner-notice-item.good .owner-notice-count { background:#2e7d52; }
+.monthly-checklist-wrap {
+  padding:0 16px 14px;
+}
+.checklist-progress {
+  height:10px;
+  background:var(--bg);
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  margin:10px 0 12px;
+}
+.checklist-progress-bar {
+  height:100%;
+  background:linear-gradient(90deg,#16a085,#2e7d52);
+  border-radius:999px;
+  transition:width .25s ease;
+}
+.checklist-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.checklist-item {
+  border:1px solid var(--border);
+  background:var(--bg);
+  border-radius:14px;
+  padding:10px;
+  min-height:84px;
+}
+.checklist-item.done {
+  background:#eafaf6;
+  border-color:#9ee6d0;
+}
+.checklist-item.wait {
+  background:#fff8e6;
+  border-color:#f0d06e;
+}
+.checklist-item.attn {
+  background:#fff0f0;
+  border-color:#f4c7c7;
+}
+.checklist-badge {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  padding:3px 8px;
+  font-size:11px;
+  font-weight:900;
+  margin-bottom:7px;
+  background:white;
+  color:var(--primary);
+}
+.checklist-name {
+  color:var(--primary);
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+}
+.checklist-detail {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:3px;
+}
+.context-help-btn {
+  margin-left:auto;
+  border:1px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.18);
+  color:white;
+  width:32px;
+  height:32px;
+  border-radius:999px;
+  font-family:'Kanit',sans-serif;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.page-header .context-help-btn {
+  flex:0 0 auto;
+}
+.context-help-card {
+  width:min(540px,calc(100vw - 30px));
+  max-height:min(78vh,720px);
+  overflow:auto;
+  background:var(--card);
+  border-radius:20px;
+  padding:18px;
+  box-shadow:0 16px 48px rgba(0,0,0,.28);
+  border:1.5px solid var(--border);
+}
+.context-help-title {
+  font-family:'Kanit',sans-serif;
+  font-size:20px;
+  font-weight:900;
+  color:var(--primary);
+  margin-bottom:6px;
+}
+.context-help-intro {
+  font-size:13px;
+  line-height:1.6;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+.context-help-steps {
+  display:grid;
+  gap:8px;
+  margin-bottom:14px;
+}
+.context-help-step {
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  color:var(--text);
+  font-size:13px;
+  line-height:1.6;
+}
+.context-help-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.context-help-action {
+  min-height:42px;
+  border:none;
+  border-radius:12px;
+  padding:10px 12px;
+  font-family:'Sarabun',sans-serif;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.context-help-action.primary { background:var(--primary); color:white; }
+.context-help-action.outline { background:var(--bg); color:var(--primary); border:1.5px solid var(--border); }
+.quick-flow-dock {
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  width:min(720px,calc(100vw - 24px));
+  z-index:1003;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  box-shadow:0 18px 50px rgba(0,0,0,.25);
+  padding:12px;
+}
+.quick-flow-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.quick-flow-title {
+  font-family:'Kanit',sans-serif;
+  color:var(--primary);
+  font-size:16px;
+  font-weight:900;
+  line-height:1.35;
+}
+.quick-flow-sub {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.quick-flow-close {
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--primary);
+  width:32px;
+  height:32px;
+  border-radius:999px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.quick-flow-actions {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.quick-flow-btn {
+  min-height:42px;
+  border:none;
+  border-radius:12px;
+  padding:10px 10px;
+  font-family:'Sarabun',sans-serif;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+.quick-flow-btn.primary { background:var(--primary); color:white; }
+.quick-flow-btn.accent { background:var(--accent); color:#1a2536; }
+.quick-flow-btn.outline { background:var(--bg); color:var(--primary); border:1.5px solid var(--border); }
+body.dark .owner-assistant-card,
+body.dark .monthly-checklist-card,
+body.dark .context-help-card,
+body.dark .quick-flow-dock {
+  background:rgba(15,23,42,.96);
+}
+body.dark .owner-action-icon,
+body.dark .owner-notice-icon,
+body.dark .checklist-badge {
+  background:rgba(255,255,255,.10);
+}
+body.dark .owner-action-item.priority,
+body.dark .checklist-item.wait {
+  background:rgba(245,158,11,.12);
+}
+body.dark .owner-action-item.success,
+body.dark .checklist-item.done {
+  background:rgba(16,185,129,.12);
+}
+body.dark .checklist-item.attn {
+  background:rgba(239,68,68,.12);
+}
+@media (max-width: 900px) {
+  .owner-assistant-layout {
+    grid-template-columns:1fr;
+  }
+  .checklist-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media (max-width: 640px) {
+  .owner-assistant-layout,
+  .monthly-checklist-wrap {
+    padding-left:12px;
+    padding-right:12px;
+  }
+  .checklist-grid {
+    grid-template-columns:1fr;
+  }
+  .context-help-actions {
+    grid-template-columns:1fr;
+  }
+  .quick-flow-actions {
+    grid-template-columns:1fr;
+  }
+}
+
 </style>
 
 
@@ -4462,6 +5617,391 @@ body.dark #alertPageContent textarea::placeholder {
   opacity: 1;
 }
 
+
+/* ===== v15.4.2.71: Owner assistant center / checklist / contextual tips / quick flow ===== */
+.owner-assistant-layout {
+  padding: 0 16px 14px;
+  display:grid;
+  grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
+  gap:12px;
+}
+.owner-assistant-card,
+.monthly-checklist-card {
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 2px 10px rgba(10,30,61,.06);
+}
+.owner-assistant-head,
+.checklist-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
+}
+.owner-assistant-title,
+.checklist-title {
+  font-family:'Kanit',sans-serif;
+  color:var(--primary);
+  font-size:17px;
+  font-weight:900;
+  line-height:1.25;
+}
+.owner-assistant-sub,
+.checklist-sub {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.owner-assistant-refresh {
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--primary);
+  min-width:34px;
+  height:34px;
+  border-radius:10px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.owner-action-list,
+.owner-notice-list {
+  display:grid;
+  gap:8px;
+}
+.owner-action-item,
+.owner-notice-item {
+  width:100%;
+  border:1px solid var(--border);
+  background:var(--bg);
+  border-radius:14px;
+  padding:10px 11px;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  text-align:left;
+  font-family:'Sarabun',sans-serif;
+}
+.owner-action-item {
+  cursor:pointer;
+}
+.owner-action-item:hover,
+.owner-notice-item.can-open:hover {
+  border-color:#b8c7d6;
+  transform:translateY(-1px);
+}
+.owner-action-item.priority {
+  background:#fff8e6;
+  border-color:#f0d06e;
+}
+.owner-action-item.success {
+  background:#eafaf6;
+  border-color:#9ee6d0;
+}
+.owner-action-icon,
+.owner-notice-icon {
+  flex:0 0 30px;
+  width:30px;
+  height:30px;
+  border-radius:10px;
+  background:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+}
+.owner-action-body,
+.owner-notice-body {
+  min-width:0;
+  flex:1;
+}
+.owner-action-title,
+.owner-notice-title {
+  color:var(--primary);
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+}
+.owner-action-detail,
+.owner-notice-detail {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.owner-notice-item.can-open {
+  cursor:pointer;
+}
+.owner-notice-count {
+  flex:0 0 auto;
+  min-width:28px;
+  height:28px;
+  border-radius:999px;
+  padding:0 8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--primary);
+  color:white;
+  font-family:'Kanit',sans-serif;
+  font-size:13px;
+  font-weight:900;
+}
+.owner-notice-item.warn .owner-notice-count { background:#e67e22; }
+.owner-notice-item.danger .owner-notice-count { background:#c0392b; }
+.owner-notice-item.info .owner-notice-count { background:#175cd3; }
+.owner-notice-item.good .owner-notice-count { background:#2e7d52; }
+.monthly-checklist-wrap {
+  padding:0 16px 14px;
+}
+.checklist-progress {
+  height:10px;
+  background:var(--bg);
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  margin:10px 0 12px;
+}
+.checklist-progress-bar {
+  height:100%;
+  background:linear-gradient(90deg,#16a085,#2e7d52);
+  border-radius:999px;
+  transition:width .25s ease;
+}
+.checklist-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.checklist-item {
+  border:1px solid var(--border);
+  background:var(--bg);
+  border-radius:14px;
+  padding:10px;
+  min-height:84px;
+}
+.checklist-item.done {
+  background:#eafaf6;
+  border-color:#9ee6d0;
+}
+.checklist-item.wait {
+  background:#fff8e6;
+  border-color:#f0d06e;
+}
+.checklist-item.attn {
+  background:#fff0f0;
+  border-color:#f4c7c7;
+}
+.checklist-badge {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  padding:3px 8px;
+  font-size:11px;
+  font-weight:900;
+  margin-bottom:7px;
+  background:white;
+  color:var(--primary);
+}
+.checklist-name {
+  color:var(--primary);
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+}
+.checklist-detail {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:3px;
+}
+.context-help-btn {
+  margin-left:auto;
+  border:1px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.18);
+  color:white;
+  width:32px;
+  height:32px;
+  border-radius:999px;
+  font-family:'Kanit',sans-serif;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.page-header .context-help-btn {
+  flex:0 0 auto;
+}
+.context-help-card {
+  width:min(540px,calc(100vw - 30px));
+  max-height:min(78vh,720px);
+  overflow:auto;
+  background:var(--card);
+  border-radius:20px;
+  padding:18px;
+  box-shadow:0 16px 48px rgba(0,0,0,.28);
+  border:1.5px solid var(--border);
+}
+.context-help-title {
+  font-family:'Kanit',sans-serif;
+  font-size:20px;
+  font-weight:900;
+  color:var(--primary);
+  margin-bottom:6px;
+}
+.context-help-intro {
+  font-size:13px;
+  line-height:1.6;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+.context-help-steps {
+  display:grid;
+  gap:8px;
+  margin-bottom:14px;
+}
+.context-help-step {
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  color:var(--text);
+  font-size:13px;
+  line-height:1.6;
+}
+.context-help-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.context-help-action {
+  min-height:42px;
+  border:none;
+  border-radius:12px;
+  padding:10px 12px;
+  font-family:'Sarabun',sans-serif;
+  font-size:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+.context-help-action.primary { background:var(--primary); color:white; }
+.context-help-action.outline { background:var(--bg); color:var(--primary); border:1.5px solid var(--border); }
+.quick-flow-dock {
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  width:min(720px,calc(100vw - 24px));
+  z-index:1003;
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  box-shadow:0 18px 50px rgba(0,0,0,.25);
+  padding:12px;
+}
+.quick-flow-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.quick-flow-title {
+  font-family:'Kanit',sans-serif;
+  color:var(--primary);
+  font-size:16px;
+  font-weight:900;
+  line-height:1.35;
+}
+.quick-flow-sub {
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  margin-top:2px;
+}
+.quick-flow-close {
+  border:1px solid var(--border);
+  background:var(--bg);
+  color:var(--primary);
+  width:32px;
+  height:32px;
+  border-radius:999px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.quick-flow-actions {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.quick-flow-btn {
+  min-height:42px;
+  border:none;
+  border-radius:12px;
+  padding:10px 10px;
+  font-family:'Sarabun',sans-serif;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+.quick-flow-btn.primary { background:var(--primary); color:white; }
+.quick-flow-btn.accent { background:var(--accent); color:#1a2536; }
+.quick-flow-btn.outline { background:var(--bg); color:var(--primary); border:1.5px solid var(--border); }
+body.dark .owner-assistant-card,
+body.dark .monthly-checklist-card,
+body.dark .context-help-card,
+body.dark .quick-flow-dock {
+  background:rgba(15,23,42,.96);
+}
+body.dark .owner-action-icon,
+body.dark .owner-notice-icon,
+body.dark .checklist-badge {
+  background:rgba(255,255,255,.10);
+}
+body.dark .owner-action-item.priority,
+body.dark .checklist-item.wait {
+  background:rgba(245,158,11,.12);
+}
+body.dark .owner-action-item.success,
+body.dark .checklist-item.done {
+  background:rgba(16,185,129,.12);
+}
+body.dark .checklist-item.attn {
+  background:rgba(239,68,68,.12);
+}
+@media (max-width: 900px) {
+  .owner-assistant-layout {
+    grid-template-columns:1fr;
+  }
+  .checklist-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media (max-width: 640px) {
+  .owner-assistant-layout,
+  .monthly-checklist-wrap {
+    padding-left:12px;
+    padding-right:12px;
+  }
+  .checklist-grid {
+    grid-template-columns:1fr;
+  }
+  .context-help-actions {
+    grid-template-columns:1fr;
+  }
+  .quick-flow-actions {
+    grid-template-columns:1fr;
+  }
+}
+
 </style>
 
 </head>
@@ -4572,6 +6112,49 @@ body.dark #alertPageContent textarea::placeholder {
     <span class="bd-total-lbl">💰 ยอดเต็มของเดือน</span>
     <span class="bd-total-val" id="bdGrand">0 ฿</span>
   </div>
+</div>
+
+
+<div class="owner-assistant-layout">
+  <section class="owner-assistant-card">
+    <div class="owner-assistant-head">
+      <div>
+        <div class="owner-assistant-title">📌 สิ่งที่ควรทำตอนนี้</div>
+        <div class="owner-assistant-sub">ระบบสรุปลำดับงานสำคัญของรอบปัจจุบันให้ทันที</div>
+      </div>
+      <button class="owner-assistant-refresh" onclick="renderOwnerAssistantCenter()" title="คำนวณใหม่">↻</button>
+    </div>
+    <div class="owner-action-list" id="ownerNextActionList">
+      <div class="owner-action-item"><div class="owner-action-body"><div class="owner-action-title">กำลังเตรียมสรุป...</div></div></div>
+    </div>
+  </section>
+
+  <section class="owner-assistant-card">
+    <div class="owner-assistant-head">
+      <div>
+        <div class="owner-assistant-title">🔔 ศูนย์แจ้งเตือนเจ้าของ</div>
+        <div class="owner-assistant-sub">รายการที่ควรตรวจหรือจัดการต่อจากข้อมูลล่าสุด</div>
+      </div>
+      <button class="owner-assistant-refresh" onclick="refreshData()" title="โหลดข้อมูลล่าสุด">⟳</button>
+    </div>
+    <div class="owner-notice-list" id="ownerNoticeList">
+      <div class="owner-notice-item"><div class="owner-notice-body"><div class="owner-notice-title">กำลังเตรียมแจ้งเตือน...</div></div></div>
+    </div>
+  </section>
+</div>
+
+<div class="monthly-checklist-wrap">
+  <section class="monthly-checklist-card">
+    <div class="checklist-head">
+      <div>
+        <div class="checklist-title">✅ เช็กลิสต์งานประจำเดือน</div>
+        <div class="checklist-sub" id="monthlyChecklistSub">สรุปสถานะของรอบบิลปัจจุบัน</div>
+      </div>
+      <button class="owner-assistant-refresh" onclick="renderOwnerAssistantCenter()" title="คำนวณใหม่">↻</button>
+    </div>
+    <div class="checklist-progress"><div class="checklist-progress-bar" id="monthlyChecklistProgressBar" style="width:0%;"></div></div>
+    <div class="checklist-grid" id="monthlyChecklistGrid"></div>
+  </section>
 </div>
 
 <div class="month-action-row">
@@ -4886,6 +6469,25 @@ body.dark #alertPageContent textarea::placeholder {
     </div>
     <div style="padding:8px 16px 0;display:grid;grid-template-columns:1fr;gap:10px;">
       <button class="action-btn line" onclick="sendLine()" style="background:#06c755;font-size:12px;">📱 ส่ง LINE แบบ Share</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- CONTEXT HELP MODAL -->
+<div class="modal-overlay" id="contextHelpOverlay" onclick="ignoreBackdropClick(event)">
+  <div class="context-help-card">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">
+      <div style="flex:1;">
+        <div class="context-help-title" id="contextHelpTitle">💡 Tips</div>
+        <div class="context-help-intro" id="contextHelpIntro"></div>
+      </div>
+      <button class="quick-flow-close" onclick="closeModal('contextHelpOverlay')" title="ปิด">×</button>
+    </div>
+    <div class="context-help-steps" id="contextHelpSteps"></div>
+    <div class="context-help-actions">
+      <button class="context-help-action primary" onclick="closeModal('contextHelpOverlay');openTips();">📚 เปิด Tips รวม</button>
+      <button class="context-help-action outline" onclick="closeModal('contextHelpOverlay')">ปิด</button>
     </div>
   </div>
 </div>
@@ -8304,6 +9906,405 @@ function getRoomPaymentLabel(r) {
   return 'รอชำระ';
 }
 
+// ===== v15.4.2.71: Owner assistant center / monthly checklist =====
+function getOccupiedManagedRoomsForAssistant() {
+  return getManagedRoomNumbers().filter(roomNum => {
+    const d = rooms?.[roomNum];
+    return !!d && d.vacant !== true;
+  });
+}
+
+function getAssistantPendingMeterRooms() {
+  return getOccupiedManagedRoomsForAssistant().filter(roomNum => !hasRoomMeterForCurrentCycle(roomNum));
+}
+
+function getAssistantPendingSlipRooms() {
+  return getOccupiedManagedRoomsForAssistant().filter(roomNum => !!getPendingSlipReview(roomNum));
+}
+
+function getAssistantOpenRepairRows() {
+  return (Array.isArray(repairRequests) ? repairRequests : []).filter(row => !['done','closed'].includes(String(row?.status || 'open')));
+}
+
+function getAssistantPaymentPromiseRooms() {
+  return getOccupiedManagedRoomsForAssistant().filter(roomNum => !!getPaymentPromiseInfo(roomNum));
+}
+
+function getAssistantContractAlertRooms() {
+  return getOccupiedManagedRoomsForAssistant().filter(roomNum => !!getTenantContractAlert(roomNum));
+}
+
+function getAssistantUnpaidRooms() {
+  return getOccupiedManagedRoomsForAssistant().filter(roomNum => calcRoomTotalDue(roomNum) > 0);
+}
+
+function getAssistantDirectRentNoticeRows(roomNum) {
+  const rows = lineRoomMessages?.[roomNum] || lineRoomMessages?.[String(roomNum)] || [];
+  return Array.isArray(rows) ? rows.filter(row => String(row?.kind || '') === 'rentNotice') : [];
+}
+
+function hasAssistantDirectRentNoticeAfterMeter(roomNum) {
+  const d = rooms?.[roomNum] || {};
+  const meterTime = Date.parse(d.meterUpdatedAt || '') || 0;
+  if (!meterTime) return false;
+  return getAssistantDirectRentNoticeRows(roomNum).some(row => {
+    const sentTime = Date.parse(row?.sentAt || '') || 0;
+    return !!sentTime && sentTime + 60000 >= meterTime;
+  });
+}
+
+function getAssistantBillExpectedRooms() {
+  return getOccupiedManagedRoomsForAssistant().filter(roomNum => {
+    return hasRoomMeterForCurrentCycle(roomNum) && calcRoomTotalDue(roomNum) > 0;
+  });
+}
+
+function getAssistantPendingDirectBillRooms() {
+  return getAssistantBillExpectedRooms().filter(roomNum => !hasAssistantDirectRentNoticeAfterMeter(roomNum));
+}
+
+function getAssistantDirectBillSentRooms() {
+  return getAssistantBillExpectedRooms().filter(roomNum => hasAssistantDirectRentNoticeAfterMeter(roomNum));
+}
+
+function getAssistantAutoBackupSummary() {
+  const status = getSavedR2BackupStatus();
+  const last = status.lastAutoBackup || {};
+  const fail = status.lastAutoBackupError || {};
+  return {
+    hasSuccess: !!(last.createdAt || status.lastAutoBackupAt || last.objectKey || status.lastAutoBackupKey),
+    hasFail: !!(fail.createdAt || status.lastAutoBackupFailedAt || fail.error),
+    successText: last.createdAtText || status.lastAutoBackupAtText || last.createdAt || status.lastAutoBackupAt || '',
+    failText: fail.createdAtText || status.lastAutoBackupFailedAtText || fail.createdAt || status.lastAutoBackupFailedAt || '',
+  };
+}
+
+function assistantRoomText(roomNums = [], max = 6) {
+  const arr = (Array.isArray(roomNums) ? roomNums : []).map(x => String(x));
+  if (!arr.length) return '';
+  const first = arr.slice(0, max).map(x => 'ห้อง ' + x).join(', ');
+  return arr.length > max ? `${first} และอีก ${arr.length - max} ห้อง` : first;
+}
+
+function getOwnerNextActions() {
+  const cycleOpened = hasOpenedBillingCycleForMeter(getMeterCycleMonthKey());
+  const pendingMeters = getAssistantPendingMeterRooms();
+  const pendingDirectBills = getAssistantPendingDirectBillRooms();
+  const pendingSlips = getAssistantPendingSlipRooms();
+  const openRepairs = getAssistantOpenRepairRows();
+  const unpaidRooms = getAssistantUnpaidRooms();
+  const promiseRooms = getAssistantPaymentPromiseRooms();
+  const actions = [];
+
+  if (!cycleOpened) {
+    actions.push({
+      icon:'🆕',
+      title:'เริ่มรอบใหม่ก่อน',
+      detail:'ยังไม่ได้เปิดรอบรับชำระใหม่ ระบบจึงยังล็อกการจดมิเตอร์อยู่',
+      tone:'priority',
+      onclick:'openNewBillingMonth()'
+    });
+  } else if (pendingMeters.length) {
+    actions.push({
+      icon:'📝',
+      title:`จดมิเตอร์ต่ออีก ${pendingMeters.length.toLocaleString('th-TH')} ห้อง`,
+      detail:assistantRoomText(pendingMeters) || 'ยังมีห้องที่ไม่ได้บันทึกมิเตอร์รอบนี้',
+      tone:'priority',
+      onclick:'openMeterPage()'
+    });
+  } else {
+    actions.push({
+      icon:'✅',
+      title:'มิเตอร์รอบนี้ครบแล้ว',
+      detail:'เข้าสู่ขั้นตรวจยอดและส่งบิลได้เลย',
+      tone:'success',
+      onclick:'openBulkMonthlySend()'
+    });
+  }
+
+  if (cycleOpened && !pendingMeters.length && pendingDirectBills.length) {
+    actions.push({
+      icon:'📣',
+      title:`ตรวจ/ส่งยอดอีก ${pendingDirectBills.length.toLocaleString('th-TH')} ห้อง`,
+      detail:'ยังไม่พบประวัติ “ส่ง LINE โดยตรง” หลังจดมิเตอร์: ' + assistantRoomText(pendingDirectBills),
+      tone:'priority',
+      onclick:'openBulkMonthlySend()'
+    });
+  }
+
+  if (pendingSlips.length) {
+    actions.push({
+      icon:'🧾',
+      title:`ตรวจสลิปค้าง ${pendingSlips.length.toLocaleString('th-TH')} ห้อง`,
+      detail:assistantRoomText(pendingSlips),
+      tone:'priority',
+      onclick:'openOwnerPendingSlipCenter()'
+    });
+  }
+
+  if (openRepairs.length) {
+    actions.push({
+      icon:'🛠️',
+      title:`งานแจ้งซ่อมยังเปิดอยู่ ${openRepairs.length.toLocaleString('th-TH')} งาน`,
+      detail:'เปิดศูนย์งานแจ้งซ่อมเพื่อติดตามสถานะ',
+      tone:'',
+      onclick:'openRepairCenter()'
+    });
+  }
+
+  if (unpaidRooms.length) {
+    actions.push({
+      icon:'🔔',
+      title:`ติดตามค้างชำระ ${unpaidRooms.length.toLocaleString('th-TH')} ห้อง`,
+      detail:promiseRooms.length ? `มี ${promiseRooms.length.toLocaleString('th-TH')} ห้องแจ้งนัดวันชำระไว้แล้ว` : 'เปิดหน้าส่งแจ้งเตือนค้างชำระได้ทันที',
+      tone:'',
+      onclick:'openAlertPage()'
+    });
+  }
+
+  if (!actions.length) {
+    actions.push({
+      icon:'🎉',
+      title:'ไม่มีงานเร่งด่วน',
+      detail:'รอบนี้ดูเรียบร้อยแล้ว สามารถตรวจ Backup หรือประวัติรอบบิลได้',
+      tone:'success',
+      onclick:'openBackupRestore()'
+    });
+  }
+
+  return actions.slice(0, 5);
+}
+
+function renderOwnerNextActionList() {
+  const box = document.getElementById('ownerNextActionList');
+  if (!box) return;
+  const actions = getOwnerNextActions();
+  box.innerHTML = actions.map(item => `
+    <button class="owner-action-item ${escapeHtml(item.tone || '')}" onclick="${escapeHtml(item.onclick || '')}">
+      <span class="owner-action-icon">${escapeHtml(item.icon || '•')}</span>
+      <span class="owner-action-body">
+        <span class="owner-action-title">${escapeHtml(item.title || '')}</span>
+        <span class="owner-action-detail">${escapeHtml(item.detail || '')}</span>
+      </span>
+    </button>
+  `).join('');
+}
+
+function renderOwnerNoticeCenter() {
+  const box = document.getElementById('ownerNoticeList');
+  if (!box) return;
+
+  const pendingSlips = getAssistantPendingSlipRooms();
+  const openRepairs = getAssistantOpenRepairRows();
+  const promiseRooms = getAssistantPaymentPromiseRooms();
+  const unreadPortalRooms = getUnreadPortalRooms();
+  const contractRooms = getAssistantContractAlertRooms();
+  const unpaidRooms = getAssistantUnpaidRooms();
+  const notices = [
+    {
+      icon:'🧾', title:'สลิปรอตรวจสอบ', detail:pendingSlips.length ? assistantRoomText(pendingSlips) : 'ไม่มีรายการค้าง',
+      count:pendingSlips.length, tone:pendingSlips.length ? 'danger' : 'good',
+      onclick:pendingSlips.length ? 'openOwnerPendingSlipCenter()' : ''
+    },
+    {
+      icon:'🛠️', title:'งานแจ้งซ่อมที่ยังไม่ปิด', detail:openRepairs.length ? 'กดเพื่อตรวจงานล่าสุดจาก Tenant Portal' : 'ไม่มีงานเปิดอยู่',
+      count:openRepairs.length, tone:openRepairs.length ? 'warn' : 'good',
+      onclick:openRepairs.length ? 'openRepairCenter()' : ''
+    },
+    {
+      icon:'📅', title:'ผู้เช่านัดวันชำระ', detail:promiseRooms.length ? assistantRoomText(promiseRooms) : 'ยังไม่มีรายการนัด',
+      count:promiseRooms.length, tone:promiseRooms.length ? 'info' : 'good',
+      onclick:promiseRooms.length ? 'openPaymentPromiseSummary()' : ''
+    },
+    {
+      icon:'👀', title:'ส่ง Portal แล้วแต่ยังไม่เปิด', detail:unreadPortalRooms.length ? assistantRoomText(unreadPortalRooms) : 'ไม่มีรายการค้าง',
+      count:unreadPortalRooms.length, tone:unreadPortalRooms.length ? 'warn' : 'good',
+      onclick:unreadPortalRooms.length ? 'openPortalUnreadSummary()' : ''
+    },
+    {
+      icon:'📌', title:'สัญญาใกล้หมด/หมดแล้ว', detail:contractRooms.length ? assistantRoomText(contractRooms) : 'ไม่มีรายการเตือน',
+      count:contractRooms.length, tone:contractRooms.length ? 'warn' : 'good',
+      onclick:contractRooms.length ? 'openContractExpiryCenter()' : ''
+    },
+    {
+      icon:'💸', title:'ห้องที่ยังค้างชำระ', detail:unpaidRooms.length ? assistantRoomText(unpaidRooms) : 'ชำระครบแล้ว',
+      count:unpaidRooms.length, tone:unpaidRooms.length ? 'danger' : 'good',
+      onclick:unpaidRooms.length ? 'openAlertPage()' : ''
+    },
+  ];
+
+  box.innerHTML = notices.map(item => `
+    <button class="owner-notice-item ${escapeHtml(item.tone || '')} ${item.onclick ? 'can-open' : ''}" ${item.onclick ? `onclick="${escapeHtml(item.onclick)}"` : 'disabled'}>
+      <span class="owner-notice-icon">${escapeHtml(item.icon || '•')}</span>
+      <span class="owner-notice-body">
+        <span class="owner-notice-title">${escapeHtml(item.title || '')}</span>
+        <span class="owner-notice-detail">${escapeHtml(item.detail || '')}</span>
+      </span>
+      <span class="owner-notice-count">${Number(item.count || 0).toLocaleString('th-TH')}</span>
+    </button>
+  `).join('');
+}
+
+function getMonthlyChecklistItems() {
+  const occupied = getOccupiedManagedRoomsForAssistant();
+  const cycleOpened = hasOpenedBillingCycleForMeter(getMeterCycleMonthKey());
+  const meterDone = occupied.length - getAssistantPendingMeterRooms().length;
+  const billExpected = getAssistantBillExpectedRooms();
+  const billSent = getAssistantDirectBillSentRooms();
+  const paidCount = occupied.filter(roomNum => calcRoomTotalDue(roomNum) <= 0).length;
+  const unpaidCount = getAssistantUnpaidRooms().length;
+  const pendingSlips = getAssistantPendingSlipRooms().length;
+  const backup = getAssistantAutoBackupSummary();
+
+  return [
+    {
+      name:'เปิดรอบรับชำระใหม่',
+      detail:cycleOpened ? 'พร้อมจดมิเตอร์แล้ว' : 'ยังไม่ได้เปิดรอบ',
+      state:cycleOpened ? 'done' : 'attn',
+      badge:cycleOpened ? '✅ เรียบร้อย' : '⏳ รอทำ'
+    },
+    {
+      name:'จดมิเตอร์',
+      detail:`ครบ ${meterDone.toLocaleString('th-TH')}/${occupied.length.toLocaleString('th-TH')} ห้อง`,
+      state:occupied.length && meterDone >= occupied.length ? 'done' : 'wait',
+      badge:occupied.length && meterDone >= occupied.length ? '✅ ครบ' : '📝 กำลังทำ'
+    },
+    {
+      name:'ส่งบิล LINE โดยตรง',
+      detail:billExpected.length ? `พบประวัติส่งตรง ${billSent.length.toLocaleString('th-TH')}/${billExpected.length.toLocaleString('th-TH')} ห้อง` : 'ยังไม่มีห้องที่พร้อมส่งบิล',
+      state:billExpected.length && billSent.length >= billExpected.length ? 'done' : 'wait',
+      badge:billExpected.length && billSent.length >= billExpected.length ? '✅ ครบ' : '📣 ตรวจต่อ'
+    },
+    {
+      name:'รับชำระ',
+      detail:`ชำระครบ ${paidCount.toLocaleString('th-TH')}/${occupied.length.toLocaleString('th-TH')} ห้อง`,
+      state:occupied.length && paidCount >= occupied.length ? 'done' : 'wait',
+      badge:occupied.length && paidCount >= occupied.length ? '✅ ครบ' : '💳 ติดตาม'
+    },
+    {
+      name:'ตรวจงานค้าง',
+      detail:pendingSlips ? `สลิปรอตรวจ ${pendingSlips.toLocaleString('th-TH')} ห้อง • ค้างชำระ ${unpaidCount.toLocaleString('th-TH')} ห้อง` : `ค้างชำระ ${unpaidCount.toLocaleString('th-TH')} ห้อง`,
+      state:pendingSlips ? 'attn' : (unpaidCount ? 'wait' : 'done'),
+      badge:pendingSlips ? '⚠️ ต้องดู' : (unpaidCount ? '🔔 ยังมีค้าง' : '✅ ปกติ')
+    },
+    {
+      name:'Auto Backup ล่าสุด',
+      detail:backup.hasSuccess ? (backup.successText || 'พบประวัติสำรองล่าสุด') : (backup.hasFail ? 'พบการสำรองล้มเหลวล่าสุด' : 'ยังไม่พบประวัติ'),
+      state:backup.hasSuccess ? 'done' : (backup.hasFail ? 'attn' : 'wait'),
+      badge:backup.hasSuccess ? '✅ มี Backup' : (backup.hasFail ? '⚠️ ล้มเหลว' : '🛡️ รอข้อมูล')
+    },
+  ];
+}
+
+function renderMonthlyChecklist() {
+  const grid = document.getElementById('monthlyChecklistGrid');
+  const bar = document.getElementById('monthlyChecklistProgressBar');
+  const sub = document.getElementById('monthlyChecklistSub');
+  if (!grid) return;
+
+  const items = getMonthlyChecklistItems();
+  const doneCount = items.filter(item => item.state === 'done').length;
+  const progress = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+  if (bar) bar.style.width = progress + '%';
+  if (sub) sub.textContent = `ทำสำเร็จ ${doneCount.toLocaleString('th-TH')}/${items.length.toLocaleString('th-TH')} หมวด • ความคืบหน้า ${progress.toLocaleString('th-TH')}%`;
+
+  grid.innerHTML = items.map(item => `
+    <div class="checklist-item ${escapeHtml(item.state || 'wait')}">
+      <div class="checklist-badge">${escapeHtml(item.badge || '')}</div>
+      <div class="checklist-name">${escapeHtml(item.name || '')}</div>
+      <div class="checklist-detail">${escapeHtml(item.detail || '')}</div>
+    </div>
+  `).join('');
+}
+
+function renderOwnerAssistantCenter() {
+  try { renderOwnerNextActionList(); } catch(e) { console.log('renderOwnerNextActionList skipped:', e); }
+  try { renderOwnerNoticeCenter(); } catch(e) { console.log('renderOwnerNoticeCenter skipped:', e); }
+  try { renderMonthlyChecklist(); } catch(e) { console.log('renderMonthlyChecklist skipped:', e); }
+}
+
+function openOwnerPendingSlipCenter() {
+  const roomsList = getAssistantPendingSlipRooms();
+  if (!roomsList.length) {
+    openAlertUtilityPage('🧾 สลิปรอตรวจสอบ', '<div style="padding:18px;background:#eafaf6;border:1px solid #9ee6d0;border-radius:12px;color:#087443;font-weight:900;">ไม่มีสลิปรอตรวจสอบค้างอยู่ครับ</div>');
+    return;
+  }
+  const cards = roomsList.map(roomNum => {
+    const row = getPendingSlipReview(roomNum) || {};
+    return `
+      <div style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+          <div>
+            <div style="font-family:Kanit,sans-serif;font-size:16px;font-weight:900;color:var(--primary);">ห้อง ${escapeHtml(roomNum)}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px;">${escapeHtml(row.updatedAtText || row.createdAtText || row.updatedAt || row.createdAt || '-')}</div>
+          </div>
+          <span style="background:#fff0f0;color:#b42318;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;">⏳ รอตรวจสอบ</span>
+        </div>
+        <div style="margin-top:8px;font-size:13px;line-height:1.65;color:var(--text);">
+          ${row.amount ? `<div><b>ยอดที่พบ:</b> ${Number(row.amount || 0).toLocaleString('th-TH')} ฿</div>` : ''}
+          ${row.reason ? `<div><b>สาเหตุ:</b> ${escapeHtml(row.reason)}</div>` : ''}
+          ${row.note ? `<div><b>หมายเหตุ:</b> ${escapeHtml(row.note)}</div>` : ''}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+          <button onclick="openArrearsPage()" style="border:none;border-radius:10px;padding:10px;background:var(--primary);color:white;font-weight:900;cursor:pointer;">💳 ไปหน้ารับชำระ</button>
+          <button onclick="clearPendingSlipReviewFromCard(${Number(roomNum) || 0})" style="border:1.5px solid var(--border);border-radius:10px;padding:10px;background:var(--bg);color:var(--primary);font-weight:900;cursor:pointer;">ล้างสถานะ</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  openAlertUtilityPage('🧾 สลิปรอตรวจสอบ', cards);
+}
+
+function openPaymentPromiseSummary() {
+  const roomsList = getAssistantPaymentPromiseRooms();
+  if (!roomsList.length) {
+    openAlertUtilityPage('📅 ผู้เช่านัดวันชำระ', '<div style="padding:18px;background:#eafaf6;border:1px solid #9ee6d0;border-radius:12px;color:#087443;font-weight:900;">ยังไม่มีรายการนัดวันชำระครับ</div>');
+    return;
+  }
+  const cards = roomsList.map(roomNum => {
+    const info = getPaymentPromiseInfo(roomNum) || {};
+    return `
+      <div style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+          <div>
+            <div style="font-family:Kanit,sans-serif;font-size:16px;font-weight:900;color:var(--primary);">ห้อง ${escapeHtml(roomNum)}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px;">${escapeHtml(tenants?.[roomNum]?.name || tenants?.[String(roomNum)]?.name || 'ไม่ระบุชื่อ')}</div>
+          </div>
+          <span style="background:#eef6ff;color:#175cd3;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;">📅 วันที่ ${Number(info.promiseDay || info.untilDay || 0) || '-'}</span>
+        </div>
+        ${info.note ? `<div style="margin-top:8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:9px;font-size:13px;line-height:1.55;">${escapeHtml(info.note)}</div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+          <button onclick="setPaymentPromiseDay(${Number(roomNum) || 0})" style="border:none;border-radius:10px;padding:10px;background:var(--primary);color:white;font-weight:900;cursor:pointer;">แก้วันนัด</button>
+          <button onclick="clearPaymentPromiseDay(${Number(roomNum) || 0})" style="border:1.5px solid var(--border);border-radius:10px;padding:10px;background:var(--bg);color:var(--primary);font-weight:900;cursor:pointer;">ล้างนัด</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  openAlertUtilityPage('📅 ผู้เช่านัดวันชำระ', cards);
+}
+
+function openPortalUnreadSummary() {
+  const roomsList = getUnreadPortalRooms();
+  if (!roomsList.length) {
+    openAlertUtilityPage('👀 Portal ยังไม่ถูกเปิด', '<div style="padding:18px;background:#eafaf6;border:1px solid #9ee6d0;border-radius:12px;color:#087443;font-weight:900;">ไม่มีห้องที่ค้างเปิด Portal ครับ</div>');
+    return;
+  }
+  const cards = roomsList.map(roomNum => {
+    const state = portalOpenInfo(roomNum);
+    return `
+      <div style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;">
+        <div style="font-family:Kanit,sans-serif;font-size:16px;font-weight:900;color:var(--primary);">ห้อง ${escapeHtml(roomNum)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px;">ส่งล่าสุด: ${escapeHtml(state.promptText || '-')}</div>
+      </div>
+    `;
+  }).join('') + `
+    <button onclick="sendPortalUnreadReminders()" style="width:100%;border:none;border-radius:12px;padding:12px;background:#e67e22;color:white;font-size:14px;font-weight:900;cursor:pointer;">🔔 ส่งเตือนห้องที่ยังไม่เปิด Portal</button>
+  `;
+  openAlertUtilityPage('👀 Portal ยังไม่ถูกเปิด', cards);
+}
+
+
+
 // ===== RENDER =====
 function getMonthText() {
   const v = document.getElementById('monthPicker').value;
@@ -8392,6 +10393,7 @@ function renderAll() {
     if (td && showTest) grid.appendChild(makeCard(TEST_ROOM));
   }
   renderMeterCycleLockStatus();
+  renderOwnerAssistantCenter();
 }
 
 
@@ -8837,6 +10839,185 @@ function openTips() {
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); refreshModalLockSafe(); }
+
+
+// ===== v15.4.2.71: Tips เฉพาะหน้า =====
+const PANANTH_CONTEXT_TIPS = {
+  meter: {
+    title:'📝 Tips: จดมิเตอร์',
+    intro:'ใช้หน้านี้สำหรับจดมิเตอร์รอบใหม่หรือแก้ไขรอบปัจจุบัน โดยระบบจะกันการแก้หลังมีการรับชำระแล้ว',
+    steps:[
+      '1) ต้องกด “เปิดรอบรับชำระใหม่” ก่อน ระบบจึงจะปลดล็อกการจดมิเตอร์',
+      '2) กรอกไฟและน้ำ “ครั้งหลัง” แล้วตรวจ Preview ก่อนบันทึก',
+      '3) ถ้าจดผิดแต่ยังไม่รับชำระ สามารถแก้ไขมิเตอร์รอบนี้ได้',
+      '4) หลังบันทึก ระบบรีเซ็ตห้องเป็น “รอชำระ” และสามารถเปิดใบแจ้งเพื่อส่ง LINE ต่อได้'
+    ]
+  },
+  alert: {
+    title:'🔔 Tips: แจ้งเตือน / รายการติดตาม',
+    intro:'หน้านี้ใช้แสดงรายการที่ต้องส่ง เตือน หรือตรวจสอบตามเมนูที่เปิดจากหน้าแรก',
+    steps:[
+      '1) ตรวจชื่อห้องและยอดก่อนส่งทุกครั้ง',
+      '2) ห้องที่ตั้ง “งดแจ้งเตือน” หรือมีนัดวันชำระ อาจถูกข้ามในการแจ้งเตือนอัตโนมัติ',
+      '3) รายการสลิปรอตรวจสอบควรตรวจยอดให้ชัดก่อนบันทึกรับชำระ'
+    ]
+  },
+  tenantDocs: {
+    title:'🧾 Tips: แฟ้มผู้เช่า',
+    intro:'ใช้เก็บข้อมูลผู้เช่า สัญญา และเอกสารประกอบ เพื่อย้อนดูได้เมื่อมีการย้ายออกหรือเปลี่ยนผู้เช่า',
+    steps:[
+      '1) ตรวจชื่อ เบอร์โทร วันเริ่มเช่า และวันสิ้นสุดสัญญา',
+      '2) อัปโหลดเอกสารสำคัญให้ครบ เพื่อให้ศูนย์แจ้งเตือนสัญญาทำงานได้แม่นขึ้น',
+      '3) เมื่อลูกค้าแจ้งออก ให้ใช้ Flow แจ้งออก เพื่อเก็บประวัติเดิมก่อนตั้งห้องว่าง'
+    ]
+  },
+  onboarding: {
+    title:'🧍 Tips: รับผู้เช่าใหม่',
+    intro:'ตัวช่วยรับผู้เช่าใหม่จะพาไล่ข้อมูลสำคัญทีละขั้น ลดการลืมกรอกข้อมูล',
+    steps:[
+      '1) เลือกห้องว่างและกรอกข้อมูลผู้เช่า',
+      '2) ใส่มิเตอร์แรกเข้าให้ถูกต้อง',
+      '3) ตรวจเอกสารและข้อมูลสัญญา ก่อนบันทึกผู้เช่าเข้าระบบ'
+    ]
+  },
+  roomSettings: {
+    title:'🏘️ Tips: ห้อง / ค่าเช่า',
+    intro:'หน้านี้ใช้ตั้งค่าห้อง ค่าเช่า ค่าขยะ และการเปิดใช้งานห้องในระบบ',
+    steps:[
+      '1) แก้ค่าห้องเป็นรายห้องได้ โดยไม่กระทบห้องอื่น',
+      '2) หากเพิ่มห้องใหม่ ควรตรวจการตั้งค่า LINE และค่าเช่าตามจริงต่อทันที',
+      '3) ห้องที่ปิดใช้งานจะไม่ถูกนับในยอดรวมและการแจ้งเตือนหลัก'
+    ]
+  },
+  backup: {
+    title:'🛡️ Tips: Backup / Restore',
+    intro:'ใช้ดูสถานะ Auto Backup ดาวน์โหลดไฟล์สำรอง และกู้ข้อมูลกลับเมื่อจำเป็น',
+    steps:[
+      '1) ตรวจเวลาของ Auto Backup ล่าสุดหลังทำรายการสำคัญ',
+      '2) ก่อน Restore ควรแน่ใจว่าเลือกไฟล์รอบที่ต้องการจริง',
+      '3) Restore จะไม่เขียนทับ PIN เพื่อป้องกันการล็อกตัวเอง'
+    ]
+  },
+  paymentHistory: {
+    title:'🧾 Tips: ประวัติการชำระ',
+    intro:'ใช้ตรวจสอบรายการรับเงินย้อนหลัง รวมทั้งดูเหตุการณ์ที่เกิดจากการตรวจสลิปหรือรับชำระเอง',
+    steps:[
+      '1) ใช้เพื่อย้อนดูว่าห้องใดรับชำระแล้ว เวลาไหน',
+      '2) ถ้าพบรายการผิด ให้ตรวจห้องและประวัติก่อนใช้ฟังก์ชันยกเลิกหรือปรับปรุงรายการ',
+      '3) เมื่อรับชำระนอกระบบ ควรตรวจยอดค้างหลังบันทึกเสมอ'
+    ]
+  },
+  dashboard: {
+    title:'📊 Tips: แดชบอร์ด',
+    intro:'หน้านี้ใช้ดูภาพรวมของยอด รายการค้าง และข้อมูลสรุปที่ช่วยวางแผนติดตามงาน',
+    steps:[
+      '1) ดูยอดค้างรวมและจำนวนห้องค้างชำระ',
+      '2) ตรวจงานแจ้งซ่อม สลิปรอตรวจ และผู้เช่านัดจ่ายจากศูนย์แจ้งเตือน',
+      '3) ใช้เช็กลิสต์ประจำเดือนเพื่อตรวจว่าขั้นตอนหลักครบหรือยัง'
+    ]
+  }
+};
+
+function openContextTip(topic = 'alert') {
+  const data = PANANTH_CONTEXT_TIPS[topic] || PANANTH_CONTEXT_TIPS.alert;
+  const title = document.getElementById('contextHelpTitle');
+  const intro = document.getElementById('contextHelpIntro');
+  const steps = document.getElementById('contextHelpSteps');
+  if (title) title.textContent = data.title || '💡 Tips';
+  if (intro) intro.textContent = data.intro || '';
+  if (steps) steps.innerHTML = (data.steps || []).map(step => `<div class="context-help-step">${escapeHtml(step)}</div>`).join('');
+  const overlay = document.getElementById('contextHelpOverlay');
+  if (overlay) overlay.classList.add('open');
+  refreshModalLockSafe();
+}
+
+function installContextHelpButtons() {
+  const map = {
+    dashboardPage:'dashboard',
+    paymentHistoryPage:'paymentHistory',
+    backupPage:'backup',
+    meterPage:'meter',
+    tenantDocsPage:'tenantDocs',
+    tenantOnboardingPage:'onboarding',
+    roomSettingsPage:'roomSettings',
+    alertPage:'alert',
+  };
+  Object.entries(map).forEach(([pageId, topic]) => {
+    const page = document.getElementById(pageId);
+    const header = page?.querySelector('.page-header');
+    if (!header || header.querySelector('.context-help-btn')) return;
+    const btn = document.createElement('button');
+    btn.className = 'context-help-btn';
+    btn.type = 'button';
+    btn.title = 'Tips หน้านี้';
+    btn.textContent = '?';
+    btn.onclick = () => openContextTip(topic);
+    header.appendChild(btn);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', installContextHelpButtons);
+
+
+
+
+// ===== v15.4.2.71: ทำรายการต่อเนื่องหลังจดมิเตอร์ =====
+let quickFlowHideTimer = null;
+
+function closeQuickFlowDock() {
+  clearTimeout(quickFlowHideTimer);
+  const dock = document.getElementById('quickFlowDock');
+  if (dock) dock.remove();
+}
+
+function getNextPendingMeterRoom(afterRoom = 0) {
+  const roomsList = getAssistantPendingMeterRooms().map(Number).filter(Boolean).sort((a,b) => a - b);
+  if (!roomsList.length) return null;
+  const directNext = roomsList.find(roomNum => roomNum > Number(afterRoom || 0));
+  return directNext || roomsList[0] || null;
+}
+
+function openNextPendingMeterRoom(afterRoom = 0) {
+  const nextRoom = getNextPendingMeterRoom(afterRoom);
+  closeQuickFlowDock();
+  if (!nextRoom) {
+    alert('✅ จดมิเตอร์ครบทุกห้องแล้วครับ\nขั้นถัดไปแนะนำให้ตรวจยอดและส่งบิล');
+    return;
+  }
+  openRoomMeter(nextRoom);
+}
+
+function openReceiptForRoomQuick(roomNum) {
+  closeQuickFlowDock();
+  openEdit(roomNum);
+  closeModal('editOverlay');
+  openReceipt();
+}
+
+function showQuickMeterFlow(roomNum, isCorrection = false) {
+  closeQuickFlowDock();
+  const nextRoom = getNextPendingMeterRoom(roomNum);
+  const dock = document.createElement('div');
+  dock.id = 'quickFlowDock';
+  dock.className = 'quick-flow-dock';
+  dock.innerHTML = `
+    <div class="quick-flow-head">
+      <div>
+        <div class="quick-flow-title">${isCorrection ? '✏️ แก้ไขมิเตอร์' : '✅ บันทึกมิเตอร์'}ห้อง ${Number(roomNum) || roomNum} แล้ว</div>
+        <div class="quick-flow-sub">${nextRoom ? `ทำต่อได้เลย: ห้องถัดไปที่ยังไม่จดคือ ห้อง ${nextRoom}` : 'จดมิเตอร์ครบแล้ว สามารถเปิดใบแจ้งหรือไปส่งยอดรวมได้'}</div>
+      </div>
+      <button class="quick-flow-close" onclick="closeQuickFlowDock()" title="ปิด">×</button>
+    </div>
+    <div class="quick-flow-actions">
+      <button class="quick-flow-btn accent" onclick="openNextPendingMeterRoom(${Number(roomNum) || 0})">${nextRoom ? '📝 จดห้องถัดไป' : '✅ มิเตอร์ครบแล้ว'}</button>
+      <button class="quick-flow-btn primary" onclick="openReceiptForRoomQuick(${Number(roomNum) || 0})">🧾 ใบแจ้ง / ส่ง LINE</button>
+      <button class="quick-flow-btn outline" onclick="openBulkMonthlySend()">📣 ส่งยอดทั้งหมด</button>
+    </div>
+  `;
+  document.body.appendChild(dock);
+  quickFlowHideTimer = setTimeout(closeQuickFlowDock, 18000);
+}
+
 
 function calcPreview() {
   const ep = parseInt(document.getElementById('elecPrev').value)||0;
@@ -9889,6 +12070,7 @@ async function saveSingleMeter(r) {
   toast.textContent = hasRoomMeterForCurrentCycle(r) ? `✅ บันทึก/แก้ไขมิเตอร์ห้อง ${r} แล้ว` : `✅ บันทึกห้อง ${r} แล้ว`;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 1800);
+  showQuickMeterFlow(r, isCorrection);
 }
 
 async function saveAllMeters() {
@@ -10076,6 +12258,7 @@ async function saveRoomMeter() {
   toast.textContent = `✅ ${isCorrection ? 'แก้ไข' : 'บันทึก'}มิเตอร์ห้อง ${r} แล้ว — รีเซ็ตเป็นรอชำระ`;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 2500);
+  showQuickMeterFlow(r, isCorrection);
 }
 
 // ===== SEND LINE จาก Edit Modal โดยตรง =====
