@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.60</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.62</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -511,7 +511,7 @@ async function backupToR2() {
       body: JSON.stringify({
         action: 'backupToR2',
         billingMeta,
-        createdFrom: 'web-v15.4.2.60'
+        createdFrom: 'web-v15.4.2.62'
       })
     });
 
@@ -4378,6 +4378,69 @@ body.dark .tenant-onboarding-actions{
     flex-direction:column;
   }
 }
+
+
+/* ===== Pananth v15.4.2.62: อ่านชัดขึ้นในหน้ากลุ่ม Alert Utility เมื่อเปิด Dark Mode =====
+   หน้ากลุ่มนี้ใช้การ์ดพื้นสว่างอยู่ภายในหน้าหลักโทนมืด จึงต้องใช้ชุดสีข้อความอ่านง่ายเฉพาะบริเวณนี้ */
+body.dark #alertPageContent {
+  --primary: #145e96;
+  --accent: #b97400;
+  --text: #132a3e;
+  --muted: #44576c;
+  --border: #cbd5e1;
+  --green: #087f5b;
+  --red: #b42318;
+  color: var(--text);
+}
+
+body.dark #alertPageContent [style*="background:white"],
+body.dark #alertPageContent [style*="background: white"],
+body.dark #alertPageContent [style*="background:#e8f5ee"],
+body.dark #alertPageContent [style*="background:#fff8e6"],
+body.dark #alertPageContent [style*="background:#f5f7f9"],
+body.dark #alertPageContent [style*="background:#eef6ff"] {
+  color: var(--text);
+}
+
+/* กล่องย่อยที่ตั้งใจให้พื้นเข้มยังคงอ่านสว่างชัดเจน */
+body.dark #alertPageContent [style*="background:var(--bg)"] {
+  --primary: #7dd3fc;
+  --muted: #d0d9e5;
+  color: #f1f5f9;
+}
+
+/* การ์ดเลือกห้องที่กำลังเลือกไว้ในหน้าประกาศผู้เช่า */
+body.dark #alertPageContent button[style*="background:rgba(44,123,229,.12)"] {
+  --primary: #7dd3fc;
+  --muted: #d0d9e5;
+  color: #f8fafc;
+}
+
+/* ปุ่ม outline บนการ์ดสีขาวต้องเห็นข้อความชัดขึ้น */
+body.dark #alertPageContent .ctrl-btn.outline:not(:disabled) {
+  color: #193b63 !important;
+  border-color: #cbd5e1 !important;
+  background: #ffffff !important;
+}
+
+body.dark #alertPageContent .ctrl-btn.primary {
+  color: #ffffff !important;
+}
+
+body.dark #alertPageContent .ctrl-btn:disabled {
+  opacity: .62;
+}
+
+/* placeholder ในช่องค้นหา / กล่องข้อความยังคงอ่านง่าย */
+body.dark #alertPageContent .form-input {
+  color: #f1f5f9 !important;
+}
+body.dark #alertPageContent .form-input::placeholder,
+body.dark #alertPageContent textarea::placeholder {
+  color: #b8c6d8 !important;
+  opacity: 1;
+}
+
 </style>
 
 </head>
@@ -10383,7 +10446,7 @@ async function createSafetyBackup(reason = 'manual') {
         action: 'createSafetyBackup',
         reason,
         billingMeta,
-        createdFrom: 'web-v15.4.2.60'
+        createdFrom: 'web-v15.4.2.62'
       })
     });
     if (!res.ok) throw new Error(await res.text());
