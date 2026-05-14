@@ -1799,6 +1799,7 @@ function renderSystemActivityHistory() {
   }
   .room-num { font-family: 'Kanit',sans-serif; font-size: 20px; font-weight: 700; color: var(--primary); }
   .room-tier { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .payment-rating-badge{display:inline-flex;align-items:center;justify-content:center;margin-top:5px;padding:4px 7px;border-radius:999px;background:linear-gradient(135deg,#fff7cc,#ffe08a);color:#8a5a00;border:1px solid rgba(194,135,0,.26);box-shadow:0 6px 14px rgba(176,112,0,.12);font-size:10px;font-weight:900;letter-spacing:.7px;white-space:nowrap}
   .paid-dot { width: 10px; height: 10px; border-radius: 50%; }
   .paid-dot.paid { background: var(--green); }
   .paid-dot.unpaid { background: var(--accent); }
@@ -7822,6 +7823,40 @@ function getRoomPaymentLabel(r) {
   return 'รอชำระ';
 }
 
+function paymentRatingFromDate(dateText = '') {
+  const paidDate = new Date(String(dateText || ''));
+  if (!Number.isFinite(paidDate.getTime())) return null;
+  const day = paidDate.getDate();
+  const stars = day < 5 ? 5 : (day <= 10 ? 4 : 3);
+  return { stars, text: '★'.repeat(stars) + '☆'.repeat(5 - stars) };
+}
+
+function getLatestRoomPayment(roomNum) {
+  let list = [];
+  try {
+    list = typeof getPaymentHistoryLocal === 'function'
+      ? getPaymentHistoryLocal()
+      : JSON.parse(localStorage.getItem('pananth_payment_history') || '[]');
+  } catch (e) {
+    list = [];
+  }
+
+  return (Array.isArray(list) ? list : [])
+    .filter(item => String(item?.roomNum || item?.room || '') === String(roomNum))
+    .filter(item => item?.paidAt || item?.createdAt)
+    .sort((a, b) => Date.parse(b.paidAt || b.createdAt || '') - Date.parse(a.paidAt || a.createdAt || ''))[0] || null;
+}
+
+function getRoomPaymentRating(roomNum) {
+  const latest = getLatestRoomPayment(roomNum);
+  return latest ? paymentRatingFromDate(latest.paidAt || latest.createdAt || '') : null;
+}
+
+function renderPaymentRatingBadge(rating) {
+  if (!rating) return '';
+  return `<div class="payment-rating-badge" title="${rating.stars} ดาว">${rating.text}</div>`;
+}
+
 // ===== RENDER =====
 function getMonthText() {
   const v = document.getElementById('monthPicker').value;
@@ -7944,6 +7979,7 @@ function makeCard(r) {
   const meterBtnStyle = meterBtnDisabled
     ? 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:not-allowed;font-size:11px;font-weight:800;background:#d6d9de;color:#6b7280;box-shadow:none;white-space:nowrap;opacity:0.75;'
     : 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:pointer;font-size:11px;font-weight:800;background:var(--accent);color:#1a2036;box-shadow:0 2px 6px rgba(232,160,32,0.28);white-space:nowrap;';
+  const paymentRatingHtml = renderPaymentRatingBadge(getRoomPaymentRating(r));
 
   const card = document.createElement('div');
   card.id = `room-card-${r}`;
@@ -7986,6 +8022,7 @@ function makeCard(r) {
       <div style="text-align:right;">
         <div class="paid-dot ${isClear ? 'paid' : 'unpaid'}" style="margin-left:auto;"></div>
         <div style="font-size:10px;color:${statusColor};font-weight:700;margin-top:3px;">${statusText}</div>
+        ${paymentRatingHtml}
       </div>
     </div>
     <div class="room-card-body" onclick="openEdit(${r})" style="cursor:pointer;">

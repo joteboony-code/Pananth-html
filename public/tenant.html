@@ -30,6 +30,7 @@
     .bill-label{font-size:12px;opacity:.86;margin-bottom:3px}
     .bill-total{font-family:'Kanit',sans-serif;font-size:34px;font-weight:800;line-height:1}
     .bill-status{display:inline-flex;gap:6px;align-items:center;margin-top:11px;padding:7px 10px;border-radius:999px;background:rgba(255,224,178,.22);border:1px solid rgba(255,224,178,.30);font-size:12px;font-weight:800}
+    .payment-rating{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;border-radius:999px;background:linear-gradient(135deg,rgba(255,244,203,.28),rgba(255,255,255,.12));border:1px solid rgba(255,236,169,.42);box-shadow:0 8px 20px rgba(0,0,0,.10);font-size:15px;font-weight:900;letter-spacing:1px;color:#ffe680}
     .section{margin-top:14px;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:22px;padding:15px;box-shadow:var(--shadow)}
     .section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}
     .section-title{font-family:'Kanit',sans-serif;font-size:18px;font-weight:800;color:var(--primary)}
@@ -207,6 +208,7 @@
           <div class="hello">สวัสดีครับ</div>
           <div class="tenant-name" id="heroTenantName">กำลังตรวจสอบ LINE...</div>
           <div class="room-pill" id="heroRoomLabel">🔐 เชื่อมต่อบัญชีผู้เช่า</div>
+          <div class="payment-rating" id="heroPaymentRating" style="display:none;"></div>
         </div>
         <div class="hero-panel">
           <div class="bill-label">ยอดคงเหลือรวม</div>
@@ -505,6 +507,29 @@
       renderSelectedRoom();
     }
 
+    function paymentRatingFromDate(dateText = '') {
+      const paidDate = new Date(String(dateText || ''));
+      if (!Number.isFinite(paidDate.getTime())) return null;
+      const day = paidDate.getDate();
+      const stars = day < 5 ? 5 : (day <= 10 ? 4 : 3);
+      return { stars, text: '★'.repeat(stars) + '☆'.repeat(5 - stars) };
+    }
+
+    function renderPaymentRating(payments = []) {
+      const el = $('heroPaymentRating');
+      if (!el) return;
+      const latest = Array.isArray(payments) ? payments.find(item => item && (item.paidAt || item.createdAt)) : null;
+      const rating = latest ? paymentRatingFromDate(latest.paidAt || latest.createdAt || '') : null;
+      if (!rating) {
+        el.style.display = 'none';
+        el.textContent = '';
+        return;
+      }
+      el.textContent = rating.text;
+      el.title = `${rating.stars} ดาว`;
+      el.style.display = 'inline-flex';
+    }
+
     function renderSelectedRoom() {
       const room = (portalData.rooms || []).find(item => String(item.roomNum) === String(selectedRoomNum));
       if (!room) return;
@@ -516,6 +541,7 @@
       const roomTenantName = String(room.tenantName || '').trim();
       const lineDisplayName = String(portalData?.user?.displayName || '').trim();
       $('heroTenantName').textContent = roomTenantName || lineDisplayName || 'ผู้เช่า';
+      renderPaymentRating(room.history?.payments || []);
 
       ['overviewSection','currentBillSection','arrearsSection','archiveSection','paymentSection'].forEach(id => {
         const el = $(id);
