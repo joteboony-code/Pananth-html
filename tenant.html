@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ป้านันท์ • ข้อมูลค่าเช่าของฉัน v15.4.2.67</title>
+  <title>ป้านันท์ • ข้อมูลค่าเช่าของฉัน v15.4.2.68</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=Kanit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
@@ -574,7 +574,8 @@
       const lineDisplayName = String(portalData?.user?.displayName || '').trim();
       $('heroTenantName').textContent = roomTenantName || lineDisplayName || 'ผู้เช่า';
 
-      ['overviewSection','currentBillSection','meterPhotoSection','arrearsSection','archiveSection','paymentSection','repairRequestSection'].forEach(id => {
+      // v15.4.2.68: ซ่อนฟอร์มแจ้งซ่อมใน Tenant Portal ไว้ก่อน แต่คงระบบ/โค้ดเดิมไว้ครบ
+      ['overviewSection','currentBillSection','meterPhotoSection','arrearsSection','archiveSection','paymentSection'].forEach(id => {
         const el = $(id);
         if (el) el.style.display = 'block';
       });
