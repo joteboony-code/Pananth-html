@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>???????????????? v15.4.2.71</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.71</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -6314,7 +6314,7 @@ body.dark .checklist-item.attn {
     </div>
     <div class="form-row">
       <label class="form-label">ค่า WiFi (บาท) — ว่างไว้ถ้าไม่มี</label>
-      <input type="number" class="form-input" id="wifiAmt" placeholder="เช่น 100 หรือว่างไว้" oninput="calcPreview()">
+      <input type="number" class="form-input" id="wifiAmt" min="0" placeholder="เช่น 100 หรือว่างไว้" oninput="calcPreview()">
     </div>
 
     <div id="testRoomCostBox" style="display:none;background:#f7edff;border:1.5px solid #d7b7f0;border-radius:10px;padding:12px;margin-bottom:14px;">
@@ -6448,7 +6448,7 @@ body.dark .checklist-item.attn {
         <div><label style="font-size:11px;color:var(--muted);font-weight:700;">น้ำ (หลัง)</label>
           <input id="re_wc" type="number" style="width:100%;padding:7px;border:1.5px solid var(--border);border-radius:7px;font-size:14px;" oninput="refreshReceiptPreview()"></div>
         <div><label style="font-size:11px;color:var(--muted);font-weight:700;">WiFi</label>
-          <input id="re_wifi" type="number" style="width:100%;padding:7px;border:1.5px solid var(--border);border-radius:7px;font-size:14px;" oninput="refreshReceiptPreview()"></div>
+          <input id="re_wifi" type="number" min="0" style="width:100%;padding:7px;border:1.5px solid var(--border);border-radius:7px;font-size:14px;" oninput="refreshReceiptPreview()"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
         <div><label style="font-size:11px;color:var(--muted);font-weight:700;">ค่าขยะ</label>
