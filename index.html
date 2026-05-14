@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.68</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.70</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -4897,67 +4897,186 @@ body.dark #alertPageContent textarea::placeholder {
     <button class="back-btn" onclick="closeModal('tipsPage')">←</button>
     <h2>💡 วิธีใช้ / Tips</h2>
   </div>
-  <div style="padding:16px;padding-bottom:90px;max-width:720px;margin:0 auto;">
+  <div style="padding:16px;padding-bottom:90px;max-width:760px;margin:0 auto;">
     <div style="background:var(--primary);color:white;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
-      <div style="font-family:Kanit,sans-serif;font-size:20px;font-weight:800;color:var(--accent);margin-bottom:4px;">คู่มือใช้งานเร็ว</div>
-      <div style="font-size:13px;line-height:1.6;opacity:.9;">รวมขั้นตอนสำคัญของโปรแกรมห้องเช่า ใช้ดูเวลาลืมขั้นตอน หรือก่อนปิดรอบเดือน</div>
+      <div style="font-family:Kanit,sans-serif;font-size:20px;font-weight:800;color:var(--accent);margin-bottom:4px;">คู่มือ Flow การใช้งาน</div>
+      <div style="font-size:13px;line-height:1.7;opacity:.95;">สรุปขั้นตอนงานที่ใช้บ่อยของระบบห้องเช่า เปิดดูเมื่อลืมว่าต้องกดอะไรก่อน–หลัง</div>
+      <div style="margin-top:10px;background:rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:800;line-height:1.7;">
+        จำสั้น ๆ: <span style="color:var(--accent);">เปิดรอบใหม่ → จดมิเตอร์ → ตรวจยอด → ส่งบิล → รับชำระ/ติดตาม → ปิดรอบ</span>
+      </div>
     </div>
 
     <details open style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
-      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">✅ เริ่มต้นใช้งานประจำเดือน</summary>
-      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.8;">
-        <div>1) เลือกเดือนที่ต้องการจากช่องเดือนด้านบน</div>
-        <div>2) กด <b>📝 จดมิเตอร์รอบบิลใหม่</b></div>
-        <div>3) ใส่เลขมิเตอร์ไฟ/น้ำของแต่ละห้อง</div>
-        <div>4) ตรวจยอดรวมหน้าแรกก่อนส่งให้ผู้เช่า</div>
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">🧭 Flow ประจำเดือนแบบย่อ</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div>1) กด <b>🆕 เปิดรอบรับชำระใหม่</b> เพื่อเริ่มรอบใหม่ และปลดล็อกการจดมิเตอร์</div>
+        <div>2) กด <b>📝 จดมิเตอร์รอบบิลใหม่</b> หรือจดทีละห้องจากการ์ดห้อง</div>
+        <div>3) ตรวจยอดรวม/ยอดผิดปกติให้เรียบร้อย</div>
+        <div>4) ส่งบิลด้วย <b>🚀 ส่ง LINE โดยตรง</b> รายห้อง หรือ <b>📣 ส่งยอดทั้งหมด</b></div>
+        <div>5) ผู้เช่าส่งสลิปทาง LINE หรือเจ้าของรับเงินผ่าน <b>💳 ยอดค้าง / รับชำระ</b></div>
+        <div>6) ใช้แจ้งเตือนค้างชำระ / นัดวันชำระตามจำเป็น</div>
+        <div>7) จบเดือนค่อยเข้า <b>🔐 ล็อก/ปิดรอบบิล</b> และดูย้อนหลังใน <b>📚 ประวัติรอบบิล</b></div>
       </div>
     </details>
 
     <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
-      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">🏠 แก้ไขข้อมูลรายห้อง</summary>
-      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.8;">
-        <div>1) แตะการ์ดห้องที่ต้องการ</div>
-        <div>2) แก้ชื่อผู้เช่า เบอร์โทร หมายเหตุ หรือค่า WiFi</div>
-        <div>3) ตรวจช่องคำนวณยอดด้านล่าง</div>
-        <div>4) กด <b>✓ บันทึก</b> เท่านั้น ข้อมูลจึงจะถูกเก็บ</div>
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">📝 เมื่อจะจดมิเตอร์ ต้องทำยังไง</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div>1) ถ้าปุ่มจดมิเตอร์ยังล็อกอยู่ ให้กด <b>🆕 เปิดรอบรับชำระใหม่</b> ก่อน</div>
+        <div>2) เลือกวิธีจด:</div>
+        <div style="padding-left:16px;">• จดหลายห้อง: กด <b>📝 จดมิเตอร์รอบบิลใหม่</b></div>
+        <div style="padding-left:16px;">• จดรายห้อง: กดปุ่ม <b>📝 จดมิเตอร์</b> ที่การ์ดห้องนั้น</div>
+        <div>3) กรอกเลขมิเตอร์ <b>ครั้งหลัง</b> ของไฟและน้ำ</div>
+        <div>4) แนบรูปมิเตอร์ไฟ/น้ำได้ ถ้าต้องการเก็บหลักฐาน</div>
+        <div>5) ดู Preview ยอด แล้วกด <b>✓ บันทึก</b></div>
+        <div style="margin-top:8px;padding:10px;border-radius:10px;background:var(--bg);border:1px dashed var(--border);font-size:13px;">
+          หลังบันทึก ระบบจะคำนวณค่าเช่าใหม่ และห้องนั้นจะกลับเป็นสถานะ <b>รอชำระ</b>
+        </div>
       </div>
     </details>
 
     <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
-      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">💳 รับชำระ / ยอดค้าง</summary>
-      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.8;">
-        <div>ใช้เมนู <b>💳 ยอดค้าง/รับชำระ</b> สำหรับรับเงินสดหรือโอนนอกระบบ</div>
-        <div>ระบบควรตัดยอดค้างเก่าก่อนเสมอ เช่น ค้างเดือนเก่า → ตัดเดือนเก่าก่อนเดือนใหม่</div>
-        <div>ถ้าเป็นสลิปจาก LINE ระบบจะตรวจผ่าน EasySlip แล้วบันทึกประวัติให้อัตโนมัติ</div>
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">✏️ จดมิเตอร์ผิด แก้ยังไง</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div>1) แก้ได้เฉพาะ <b>มิเตอร์ของรอบปัจจุบัน</b></div>
+        <div>2) เปิดการ์ดห้อง แล้วกด <b>✏️ แก้ไขมิเตอร์</b> หรือแก้จากหน้าจดมิเตอร์รวม</div>
+        <div>3) ระบบจะคงเลข “ครั้งก่อน” เดิมไว้ แล้วให้แก้เฉพาะเลข “ครั้งหลัง”</div>
+        <div>4) กดยืนยันการแก้ไข แล้วบันทึก</div>
+        <div>5) ถ้าเคยส่งใบแจ้งค่าเช่าไปแล้ว ให้ <b>ส่งบิลใหม่</b> หลังแก้ไข</div>
+        <div style="margin-top:8px;padding:10px;border-radius:10px;background:#fff7e6;border:1px solid #f0d06e;color:#7a5800;font-size:13px;font-weight:800;">
+          ถ้าห้องนั้นมีการรับชำระแล้วหรือจ่ายบางส่วนแล้ว ระบบจะกันไม่ให้แก้มิเตอร์ทับตรง ๆ เพื่อไม่ให้ประวัติยอดเพี้ยน
+        </div>
+        <div style="margin-top:6px;">กรณีมีเงินเข้าแล้ว แต่ต้องปรับยอด ให้จัดการต่อใน <b>💳 ยอดค้าง / รับชำระ</b> แทน</div>
       </div>
     </details>
 
     <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
-      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">📦 ล็อกเดือน / ปิดรอบเดือน</summary>
-      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.8;">
-        <div>1) ตรวจยอดรอบนี้ รับแล้ว และค้างชำระให้ครบ</div>
-        <div>2) กด <b>🛡️ Backup</b> ก่อนปิดรอบทุกครั้ง</div>
-        <div>3) ค่อยกดล็อกเดือนหรือปิดรอบเดือน</div>
-        <div>4) หลังปิดรอบแล้ว ให้ดู <b>📚 ประวัติรอบบิล</b> เพื่อตรวจข้อมูลย้อนหลัง</div>
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">📣 แจ้งบิล / ส่งยอดให้ผู้เช่า</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div><b>ส่งรายห้อง</b></div>
+        <div style="padding-left:16px;">1) แตะการ์ดห้อง</div>
+        <div style="padding-left:16px;">2) ตรวจยอดในห้องนั้น</div>
+        <div style="padding-left:16px;">3) กด <b>🚀 ส่ง LINE โดยตรง</b></div>
+        <div style="padding-left:16px;">4) จะเปิดดู <b>🧾 ใบแจ้งค่าเช่า</b> ก่อนส่งก็ได้</div>
+        <div style="margin-top:8px;"><b>ส่งหลายห้องพร้อมกัน</b></div>
+        <div style="padding-left:16px;">1) กด <b>📣 ส่งยอดทั้งหมด</b></div>
+        <div style="padding-left:16px;">2) ตรวจรายการห้อง ยอดคงเหลือ ห้องที่ไม่มี User ID และห้องที่ถูกงดแจ้ง</div>
+        <div style="padding-left:16px;">3) เลือกห้องที่จะส่ง แล้วกดส่ง LINE</div>
+        <div style="padding-left:16px;">4) ยืนยันอีกครั้งก่อนระบบส่งจริง</div>
+        <div style="margin-top:8px;padding:10px;border-radius:10px;background:var(--bg);border:1px dashed var(--border);font-size:13px;">
+          ถ้าระบบขึ้นป้ายเตือน เช่น มิเตอร์ลดลง / มิเตอร์สูงผิดปกติ / รอตรวจสลิป ควรตรวจห้องนั้นก่อนส่งบิล
+        </div>
       </div>
     </details>
 
     <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
-      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">🧪 ห้องทดสอบ 99</summary>
-      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.8;">
-        <div>ห้อง 99 ใช้ทดสอบระบบเท่านั้น</div>
-        <div>ไม่ควรรวมยอดกับรายได้จริง</div>
-        <div>การส่ง LINE ของห้อง 99 ให้ส่งเข้าเจ้าของ เพื่อไม่รบกวนผู้เช่าจริง</div>
-        <div>ถ้าจะทดสอบ EasySlip ห้อง 99 ต้องให้ Worker รองรับเลขห้อง 99 ด้วย</div>
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">💳 รับเงินสด / โอนนอกระบบ / โอนแต่ตรวจสลิปไม่ได้</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div>กรณีผู้เช่าส่งสลิปทาง LINE และตรวจผ่าน ระบบจะบันทึกให้เอง</div>
+        <div>ถ้าต้องบันทึกเอง ให้ทำตามนี้:</div>
+        <div style="padding-left:16px;">1) เข้า <b>💳 ยอดค้าง / รับชำระ</b></div>
+        <div style="padding-left:16px;">2) เลือกห้อง และกรอกยอดที่รับจริง</div>
+        <div style="padding-left:16px;">3) เลือกวิธีรับเงิน: เงินสด / โอนนอกระบบ / โอนแต่ตรวจสลิปไม่ได้</div>
+        <div style="padding-left:16px;">4) ถ้าต้องการให้ผู้เช่ารู้ว่าสถานะอัปเดตแล้ว ให้ติ๊ก <b>แจ้งผู้เช่าทาง LINE หลังบันทึก</b></div>
+        <div style="padding-left:16px;">5) ใส่หมายเหตุ แล้วดู Preview การตัดยอด</div>
+        <div style="padding-left:16px;">6) กด <b>✅ บันทึกรับเงินสด / โอนนอกระบบ</b></div>
+        <div style="margin-top:8px;padding:10px;border-radius:10px;background:var(--bg);border:1px dashed var(--border);font-size:13px;">
+          ระบบจะตัด <b>ยอดค้างเก่าก่อน</b> แล้วค่อยตัดยอดเดือนปัจจุบัน ถ้ายอดไม่ตรง ระบบจะถามยืนยันเพิ่มเพื่อกันกดผิดห้อง
+        </div>
       </div>
     </details>
 
     <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
-      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">⚠️ ข้อควรระวัง</summary>
-      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.8;">
-        <div>อย่ากด <b>↩️ ย้อนกลับปิดรอบล่าสุด</b> ถ้าไม่ได้ปิดรอบผิดจริง</div>
-        <div>ก่อน Restore Backup ต้องแน่ใจ เพราะข้อมูลใน KV จะถูกเขียนทับ</div>
-        <div>ถ้ากดส่ง LINE แล้วไม่เข้า ให้ตรวจ Worker URL, LINE Token, OWNER_ID และ Logs</div>
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">📅 ผู้เช่านัดวันชำระ / งดแจ้งเตือนห้องนั้น</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div><b>กรณีผู้เช่าแจ้งว่าจะจ่ายวันที่กำหนด</b></div>
+        <div style="padding-left:16px;">1) แตะการ์ดห้อง</div>
+        <div style="padding-left:16px;">2) กด <b>📅 นัดวันชำระ</b></div>
+        <div style="padding-left:16px;">3) ใส่วันที่ เช่น 25 และหมายเหตุ</div>
+        <div style="padding-left:16px;">4) ระบบจะข้ามแจ้งเตือนอัตโนมัติก่อนวันนัด</div>
+        <div style="margin-top:8px;"><b>กรณีอยากจัดการหลายห้อง</b></div>
+        <div style="padding-left:16px;">เข้า <b>🔕 งดแจ้งเตือน</b> เพื่อเลือกงดถาวร / นัดวันชำระ / ล้างสถานะงดแจ้ง</div>
+      </div>
+    </details>
+
+    <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">🚪 ผู้เช่าแจ้งออก ต้องทำยังไง</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div>1) แตะการ์ดห้องของผู้เช่าคนนั้น</div>
+        <div>2) กด <b>🚪 แจ้งออกจากห้อง</b></div>
+        <div>3) กรอก/ตรวจ <b>ค่าทำความสะอาด</b>, <b>ค่าเสียหายเพิ่มเติม</b>, และหมายเหตุ</div>
+        <div>4) ดูสรุปว่าต้อง <b>คืนเงินผู้เช่า</b> หรือ <b>ผู้เช่าต้องจ่ายเพิ่ม</b></div>
+        <div>5) ถ้าห้องมี LINE User ID ให้กด <b>📣 ส่ง LINE OA แจ้งผู้เช่า</b> ก่อน</div>
+        <div>6) จากนั้นกด <b>✓ ยืนยันออกจากห้อง และตั้งเป็นห้องว่าง</b></div>
+        <div style="margin-top:8px;padding:10px;border-radius:10px;background:var(--bg);border:1px dashed var(--border);font-size:13px;">
+          หลังยืนยัน ระบบจะปิดแฟ้มผู้เช่าปัจจุบัน ย้ายข้อมูลเก่าไปประวัติผู้เช่า ตั้งห้องเป็นว่าง และล้าง LINE User ID ของห้องเดิม
+        </div>
+      </div>
+    </details>
+
+    <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">🧍 รับผู้เช่าใหม่เข้าห้อง</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div>1) กด <b>🧍 รับผู้เช่าใหม่</b></div>
+        <div>2) เลือกห้องที่เป็นสถานะ <b>ห้องว่าง</b></div>
+        <div>3) กรอกข้อมูลผู้เช่า เบอร์โทร วันเข้าอยู่ สัญญา เงินประกัน และข้อมูลที่ต้องการ</div>
+        <div>4) แนบเอกสารได้ทันที หรือข้ามไปเพิ่มทีหลังใน <b>🧾 ผู้เช่า/เอกสาร</b></div>
+        <div>5) ตรวจสรุป แล้วกด <b>✅ ยืนยันรับผู้เช่าใหม่</b></div>
+        <div style="margin-top:8px;padding:10px;border-radius:10px;background:#fff7e6;border:1px solid #f0d06e;color:#7a5800;font-size:13px;font-weight:800;">
+          ถ้าห้องยังไม่ว่าง มียอดค้าง หรือแฟ้มผู้เช่าเดิมยังค้างอยู่ ระบบอาจกันไม่ให้รับผู้เช่าใหม่ก่อน เพื่อป้องกันข้อมูลซ้อนกัน
+        </div>
+      </div>
+    </details>
+
+    <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">🛠️ ผู้เช่าแจ้งซ่อมจาก Tenant Portal</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div>1) เมื่อผู้เช่าแจ้งซ่อมจาก Tenant Portal ระบบจะเก็บงานไว้ในหลังบ้าน</div>
+        <div>2) เจ้าของเข้า <b>🛠️ งานแจ้งซ่อม</b></div>
+        <div>3) เปิดดูรายละเอียด ห้อง หมวดงาน ข้อความ และรูปแนบ</div>
+        <div>4) เปลี่ยนสถานะได้เป็น <b>รอรับเรื่อง / กำลังทำ / เสร็จแล้ว / ปิดงาน</b></div>
+        <div>5) ใส่ <b>📝 หมายเหตุ</b> ไว้กับงานได้</div>
+      </div>
+    </details>
+
+    <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">📢 ส่งประกาศถึงผู้เช่า</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div>1) กด <b>📢 ประกาศผู้เช่า</b></div>
+        <div>2) พิมพ์ข้อความประกาศ หรือเลือก Template ที่เตรียมไว้</div>
+        <div>3) เลือกกลุ่ม/ห้องที่จะส่ง</div>
+        <div>4) ตรวจข้อความก่อน แล้วกด <b>📢 ส่งประกาศที่เลือก</b></div>
+      </div>
+    </details>
+
+    <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">🔐 ปิดรอบ / สำรองข้อมูล / ดูย้อนหลัง</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div>1) ก่อนจบรอบ ให้ตรวจยอดค้าง รายการรับชำระ และห้องที่ยังต้องติดตาม</div>
+        <div>2) ระบบมี Auto Backup ก่อนงานสำคัญอยู่แล้ว แต่จะกด <b>🛡️ Backup</b> เองเพิ่มก่อนปิดรอบก็ได้</div>
+        <div>3) เข้า <b>🔐 ล็อก/ปิดรอบบิล</b> เพื่อตรวจสรุปและปิดรอบ</div>
+        <div>4) หลังปิดรอบ ดูย้อนหลังได้ที่ <b>📚 ประวัติรอบบิล</b></div>
+        <div>5) ถ้าต้อง Restore Backup ให้ตรวจชื่อไฟล์และช่วงเวลาที่ต้องการให้แน่ใจก่อน เพราะข้อมูลในระบบจะถูกเขียนทับ</div>
+      </div>
+    </details>
+
+    <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">🧪 ห้อง 99 ใช้เมื่อไหร่</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div>ใช้ห้อง 99 สำหรับทดลอง Flow ต่าง ๆ โดยไม่กระทบห้องจริง</div>
+        <div>เช่น ทดลองจดมิเตอร์ ส่ง LINE ทดสอบ หรือเช็กการแจ้งออก</div>
+        <div>ยอดของห้อง 99 ไม่ควรนำไปรวมกับรายได้จริง</div>
+      </div>
+    </details>
+
+    <details style="background:white;border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;">
+      <summary style="padding:14px;font-weight:800;color:var(--primary);cursor:pointer;">⚠️ ข้อควรระวังที่จำเป็น</summary>
+      <div style="padding:0 14px 14px;color:var(--text);font-size:14px;line-height:1.85;">
+        <div>• เดือนที่หน้าแรกเปลี่ยนเองไม่ได้ เพื่อกันส่งบิลผิดรอบ — เปลี่ยนรอบด้วยปุ่ม <b>เปิดรอบรับชำระใหม่</b> เท่านั้น</div>
+        <div>• ถ้าแก้มิเตอร์หลังส่งบิลแล้ว อย่าลืมส่งบิลใหม่</div>
+        <div>• ถ้าผู้เช่าแจ้งออก ควรส่งสรุป LINE ก่อนกดยืนยันตั้งห้องว่าง</div>
+        <div>• ก่อน Restore Backup ต้องแน่ใจ เพราะข้อมูลใน KV จะถูกเขียนทับ</div>
+        <div>• ถ้าส่ง LINE ไม่เข้า ให้เช็ก Worker URL, LINE Token/OWNER_ID และหน้า Logs/ตรวจสุขภาพระบบ</div>
       </div>
     </details>
   </div>
