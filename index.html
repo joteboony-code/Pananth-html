@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.72</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.71</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -271,6 +271,110 @@ function saveMeterPhotosLocal(value = {}) {
 function saveRepairRequestsLocal(value = []) {
   repairRequests = Array.isArray(value) ? value : [];
   try { localStorage.setItem('pananth_repair_requests', JSON.stringify(repairRequests)); } catch(e) {}
+}
+
+let lineMessageQuota = null;
+try { lineMessageQuota = JSON.parse(localStorage.getItem('pananth_line_message_quota') || 'null'); } catch(e) { lineMessageQuota = null; }
+
+function saveLineMessageQuotaLocal(value = null) {
+  lineMessageQuota = value && typeof value === 'object' ? value : null;
+  try {
+    if (lineMessageQuota) localStorage.setItem('pananth_line_message_quota', JSON.stringify(lineMessageQuota));
+    else localStorage.removeItem('pananth_line_message_quota');
+  } catch(e) {}
+}
+
+function renderLineMessageQuotaCard() {
+  const main = document.getElementById('lineMessageQuotaMain');
+  const detail = document.getElementById('lineMessageQuotaDetail');
+  const barWrap = document.getElementById('lineMessageQuotaBarWrap');
+  const bar = document.getElementById('lineMessageQuotaBar');
+  const foot = document.getElementById('lineMessageQuotaFoot');
+  if (!main || !detail || !barWrap || !bar || !foot) return;
+
+  const quota = lineMessageQuota && typeof lineMessageQuota === 'object' ? lineMessageQuota : null;
+  if (!quota) {
+    main.textContent = 'กด ⟳ เพื่อโหลด';
+    main.style.color = 'var(--primary)';
+    detail.textContent = 'จะแสดงจำนวนข้อความ LINE ที่เหลือในเดือนปัจจุบัน';
+    barWrap.style.display = 'none';
+    foot.style.display = 'none';
+    return;
+  }
+
+  if (quota.ok === false) {
+    main.textContent = 'โหลดไม่สำเร็จ';
+    main.style.color = '#c0392b';
+    detail.textContent = quota.error || 'ดึงโควตา LINE ไม่สำเร็จ';
+    barWrap.style.display = 'none';
+    foot.style.display = 'block';
+    foot.textContent = quota.fetchedAtText ? 'ตรวจล่าสุด: ' + quota.fetchedAtText : '';
+    return;
+  }
+
+  const totalUsage = Math.max(0, Number(quota.totalUsage || 0) || 0);
+  const fetchedAtText = quota.fetchedAtText || quota.fetchedAt || '';
+  if (String(quota.type || '') === 'limited') {
+    const limit = Math.max(0, Number(quota.limit || 0) || 0);
+    const fallbackRemaining = Math.max(0, limit - totalUsage);
+    const remaining = Math.max(0, Number(quota.remaining ?? fallbackRemaining) || 0);
+    const usedPercent = Number.isFinite(Number(quota.usedPercent))
+      ? Math.min(100, Math.max(0, Number(quota.usedPercent)))
+      : (limit > 0 ? Math.min(100, Math.max(0, (totalUsage / limit) * 100)) : 0);
+    main.textContent = 'เหลือ ' + remaining.toLocaleString('th-TH') + ' ข้อความ';
+    main.style.color = remaining <= 30 ? '#c0392b' : (remaining <= 100 ? '#e67e22' : 'var(--green)');
+    detail.textContent = 'ใช้ไป ' + totalUsage.toLocaleString('th-TH') + ' / ' + limit.toLocaleString('th-TH') + ' ข้อความ • ใช้แล้ว ' + usedPercent.toLocaleString('th-TH', { maximumFractionDigits: 1 }) + '%';
+    barWrap.style.display = 'block';
+    bar.style.width = usedPercent + '%';
+    bar.style.background = remaining <= 30 ? '#c0392b' : (remaining <= 100 ? '#e67e22' : 'var(--accent)');
+  } else if (String(quota.type || '') === 'none') {
+    main.textContent = 'ยังไม่ได้ตั้งเพดานโควตา';
+    main.style.color = 'var(--primary)';
+    detail.textContent = 'เดือนนี้ใช้ไปประมาณ ' + totalUsage.toLocaleString('th-TH') + ' ข้อความ';
+    barWrap.style.display = 'none';
+  } else {
+    main.textContent = 'พบข้อมูลโควตา';
+    main.style.color = 'var(--primary)';
+    detail.textContent = 'เดือนนี้ใช้ไปประมาณ ' + totalUsage.toLocaleString('th-TH') + ' ข้อความ';
+    barWrap.style.display = 'none';
+  }
+
+  const footParts = [];
+  if (fetchedAtText) footParts.push('ตรวจล่าสุด: ' + fetchedAtText);
+  footParts.push(quota.note || 'ยอดใช้ไปเป็นค่าประมาณการจาก LINE API และรวมข้อความที่ส่งจาก LINE OA Manager ด้วย');
+  foot.textContent = footParts.join(' • ');
+  foot.style.display = 'block';
+}
+
+async function refreshLineMessageQuota(showAlert = false) {
+  const main = document.getElementById('lineMessageQuotaMain');
+  const detail = document.getElementById('lineMessageQuotaDetail');
+  if (main) {
+    main.textContent = 'กำลังโหลด...';
+    main.style.color = 'var(--primary)';
+  }
+  if (detail) detail.textContent = 'กำลังตรวจโควตา LINE ล่าสุด';
+
+  try {
+    const data = await workerPost({ action: 'getLineMessageQuota' });
+    saveLineMessageQuotaLocal({ ok: true, ...(data.lineMessageQuota || {}) });
+    renderLineMessageQuotaCard();
+    if (showAlert) {
+      const q = lineMessageQuota || {};
+      if (String(q.type || '') === 'limited') {
+        alert('✅ โควตา LINE เหลือ ' + Number(q.remaining || 0).toLocaleString('th-TH') + ' ข้อความ');
+      } else {
+        alert('✅ โหลดโควตา LINE ล่าสุดแล้ว');
+      }
+    }
+    return true;
+  } catch(e) {
+    const apiQuota = e?.data?.lineMessageQuota;
+    saveLineMessageQuotaLocal({ ok: false, ...(apiQuota && typeof apiQuota === 'object' ? apiQuota : {}), error: e?.message || 'โหลดโควตา LINE ไม่สำเร็จ' });
+    renderLineMessageQuotaCard();
+    if (showAlert) alert('❌ โหลดโควตา LINE ไม่สำเร็จ: ' + (e?.message || e));
+    return false;
+  }
 }
 
 function renderAutoBackupStatus() {
@@ -6115,6 +6219,22 @@ body.dark .checklist-item.attn {
 </div>
 
 
+
+<div id="lineMessageQuotaCard" style="background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:14px 16px;margin:14px 0;box-shadow:var(--shadow);">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+    <div style="min-width:220px;flex:1;">
+      <div style="font-family:Kanit,sans-serif;font-size:17px;font-weight:900;color:var(--primary);">💬 โควตาส่งข้อความ LINE OA</div>
+      <div id="lineMessageQuotaMain" style="font-size:24px;font-weight:900;color:var(--green);margin-top:5px;">กำลังโหลด...</div>
+      <div id="lineMessageQuotaDetail" style="font-size:12px;color:var(--muted);line-height:1.55;margin-top:4px;">ตรวจจำนวนข้อความที่เหลือในเดือนปัจจุบัน</div>
+    </div>
+    <button class="owner-assistant-refresh" onclick="refreshLineMessageQuota(true)" title="โหลดโควตา LINE ล่าสุด">⟳</button>
+  </div>
+  <div id="lineMessageQuotaBarWrap" style="display:none;margin-top:10px;background:var(--bg);border-radius:999px;height:10px;overflow:hidden;border:1px solid var(--border);">
+    <div id="lineMessageQuotaBar" style="height:100%;width:0%;background:var(--accent);"></div>
+  </div>
+  <div id="lineMessageQuotaFoot" style="display:none;font-size:11px;color:var(--muted);line-height:1.55;margin-top:8px;"></div>
+</div>
+
 <div class="owner-assistant-layout">
   <section class="owner-assistant-card">
     <div class="owner-assistant-head">
@@ -10326,6 +10446,7 @@ function updatePaymentMonthDisplay() {
 }
 
 function renderAll() {
+  try { renderLineMessageQuotaCard(); } catch(e) {}
   const monthText = getMonthText();
   const billingMeta = getBillingMetaFromPaymentMonth(getMonthKey());
   updatePaymentMonthDisplay();
@@ -15209,7 +15330,6 @@ function openTenantBroadcastPage() {
 
     <div style="background:white;border-radius:12px;padding:12px;margin-bottom:12px;border:1.5px solid var(--border);">
       <div style="font-size:13px;font-weight:900;color:var(--primary);margin-bottom:6px;">1. ข้อความประกาศ</div>
-      <div id="tenantBroadcastQuotaInfo" style="margin-bottom:10px;padding:10px 12px;background:#eef6ff;border:1px solid #cfe3ff;border-radius:10px;font-size:13px;font-weight:800;color:#0b5cab;">กำลังโหลดข้อมูลโควต้า LINE OA...</div>
       <textarea id="tenantBroadcastMessage" class="form-input" rows="6" maxlength="4500"
         placeholder="เช่น แจ้งผู้เช่าทุกท่าน วันนี้มีการซ่อมระบบน้ำช่วงเวลา 13:00–15:00 น. ขออภัยในความไม่สะดวกครับ"
         oninput="renderTenantBroadcastPreview()"
@@ -15251,7 +15371,6 @@ function openTenantBroadcastPage() {
   refreshModalLockSafe();
   renderTenantBroadcastRoomGrid();
   renderTenantBroadcastPreview();
-  loadTenantBroadcastQuota();
 }
 
 function renderTenantBroadcastRoomGrid() {
@@ -15348,28 +15467,6 @@ function renderTenantBroadcastPreview() {
   }
 }
 
-async function loadTenantBroadcastQuota() {
-  const box = document.getElementById('tenantBroadcastQuotaInfo');
-  if (!box) return;
-  box.textContent = 'กำลังโหลดข้อมูลโควต้า LINE OA...';
-  try {
-    const data = await workerPost({ action: 'getLineQuota' });
-
-    if (data.type === 'unlimited') {
-      box.innerHTML = '📨 แพ็กเกจ LINE OA ของคุณเป็นแบบ <b>Unlimited</b> (ไม่จำกัดจำนวนข้อความ)';
-      return;
-    }
-
-    if (data.monthlyLimit === null) {
-      box.innerHTML = '📨 แพ็กเกจ LINE OA ไม่รองรับการแสดงจำนวนข้อความคงเหลือ';
-      return;
-    }
-
-    box.innerHTML = `📨 ใช้ไป <b>${Number(data.used || 0).toLocaleString('th-TH')}</b> / <b>${Number(data.monthlyLimit || 0).toLocaleString('th-TH')}</b> ข้อความ &nbsp;|&nbsp; คงเหลือ <b style="color:#0a8f3d;">${Number(data.remaining || 0).toLocaleString('th-TH')}</b> ข้อความ`;
-  } catch (err) {
-    box.innerHTML = `⚠️ ไม่สามารถโหลดข้อมูลโควต้า LINE OA ได้ (${escapeHtml(err.message || String(err))})`;
-  }
-}
 async function sendTenantBroadcastAnnouncement() {
   const message = String(document.getElementById('tenantBroadcastMessage')?.value || '').trim();
   const stats = getTenantBroadcastSelectionStats();
@@ -17193,6 +17290,7 @@ async function refreshData() {
     }
 
     renderAll();
+    refreshLineMessageQuota(false).catch(() => {});
 
     const toast = document.createElement('div');
     toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2e7d52;color:white;padding:10px 20px;border-radius:20px;font-weight:700;font-size:14px;z-index:999;';
@@ -17319,6 +17417,8 @@ function organizeMobileTools() {
   initActiveBillingMonth();
   renderAll();
   organizeMobileTools();
+  renderLineMessageQuotaCard();
+  refreshLineMessageQuota(false).catch(() => {});
 })();
 
 window.addEventListener('resize', organizeMobileTools);

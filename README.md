@@ -35,3 +35,8 @@ If the backend Worker URL changes later, update `WORKER_URL` in `index.html`.
 ## v15.4.2.56 Tenant Portal LIFF beta
 - เพิ่ม `tenant.html` สำหรับหน้า Tenant Portal ที่เปิดจาก Rich Menu/LIFF
 - ต้องใส่ LIFF ID ในไฟล์ tenant.html ก่อนใช้งานจริง
+
+
+## v15.4.2.72 LINE quota dashboard
+- เพิ่มการ์ดแสดงโควตาส่งข้อความ LINE OA บนหน้าเจ้าของ
+- แสดงจำนวนที่ใช้ไป / คงเหลือ / เปอร์เซ็นต์การใช้งาน และปุ่มรีเฟรช
