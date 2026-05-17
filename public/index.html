@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.71</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.72</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -15209,6 +15209,7 @@ function openTenantBroadcastPage() {
 
     <div style="background:white;border-radius:12px;padding:12px;margin-bottom:12px;border:1.5px solid var(--border);">
       <div style="font-size:13px;font-weight:900;color:var(--primary);margin-bottom:6px;">1. ข้อความประกาศ</div>
+      <div id="tenantBroadcastQuotaInfo" style="margin-bottom:10px;padding:10px 12px;background:#eef6ff;border:1px solid #cfe3ff;border-radius:10px;font-size:13px;font-weight:800;color:#0b5cab;">กำลังโหลดข้อมูลโควต้า LINE OA...</div>
       <textarea id="tenantBroadcastMessage" class="form-input" rows="6" maxlength="4500"
         placeholder="เช่น แจ้งผู้เช่าทุกท่าน วันนี้มีการซ่อมระบบน้ำช่วงเวลา 13:00–15:00 น. ขออภัยในความไม่สะดวกครับ"
         oninput="renderTenantBroadcastPreview()"
@@ -15250,6 +15251,7 @@ function openTenantBroadcastPage() {
   refreshModalLockSafe();
   renderTenantBroadcastRoomGrid();
   renderTenantBroadcastPreview();
+  loadTenantBroadcastQuota();
 }
 
 function renderTenantBroadcastRoomGrid() {
@@ -15346,6 +15348,28 @@ function renderTenantBroadcastPreview() {
   }
 }
 
+async function loadTenantBroadcastQuota() {
+  const box = document.getElementById('tenantBroadcastQuotaInfo');
+  if (!box) return;
+  box.textContent = 'กำลังโหลดข้อมูลโควต้า LINE OA...';
+  try {
+    const data = await workerPost({ action: 'getLineQuota' });
+
+    if (data.type === 'unlimited') {
+      box.innerHTML = '📨 แพ็กเกจ LINE OA ของคุณเป็นแบบ <b>Unlimited</b> (ไม่จำกัดจำนวนข้อความ)';
+      return;
+    }
+
+    if (data.monthlyLimit === null) {
+      box.innerHTML = '📨 แพ็กเกจ LINE OA ไม่รองรับการแสดงจำนวนข้อความคงเหลือ';
+      return;
+    }
+
+    box.innerHTML = `📨 ใช้ไป <b>${Number(data.used || 0).toLocaleString('th-TH')}</b> / <b>${Number(data.monthlyLimit || 0).toLocaleString('th-TH')}</b> ข้อความ &nbsp;|&nbsp; คงเหลือ <b style="color:#0a8f3d;">${Number(data.remaining || 0).toLocaleString('th-TH')}</b> ข้อความ`;
+  } catch (err) {
+    box.innerHTML = `⚠️ ไม่สามารถโหลดข้อมูลโควต้า LINE OA ได้ (${escapeHtml(err.message || String(err))})`;
+  }
+}
 async function sendTenantBroadcastAnnouncement() {
   const message = String(document.getElementById('tenantBroadcastMessage')?.value || '').trim();
   const stats = getTenantBroadcastSelectionStats();
