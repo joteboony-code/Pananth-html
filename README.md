@@ -40,3 +40,9 @@ If the backend Worker URL changes later, update `WORKER_URL` in `index.html`.
 ## v15.4.2.72 LINE quota dashboard
 - เพิ่มการ์ดแสดงโควตาส่งข้อความ LINE OA บนหน้าเจ้าของ
 - แสดงจำนวนที่ใช้ไป / คงเหลือ / เปอร์เซ็นต์การใช้งาน และปุ่มรีเฟรช
+
+
+## v15.4.2.73 Hash page routing
+- ปรับเมนูหน้าเจ้าของให้มี URL แบบ `#dashboard`, `#meter`, `#payment-history`, `#settings` โดยยังเป็น HTML ไฟล์เดียว
+- รีเฟรชหน้าแล้วกลับเข้าเมนูเดิมได้หลังปลดล็อก PIN
+- ปุ่มย้อนกลับในหน้าและ Back ของเบราว์เซอร์ทำงานเป็นลำดับหน้าได้ดีขึ้น

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.71</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.73</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -202,6 +202,7 @@ async function refreshPaymentHistory() {
 function openPaymentHistory() {
   renderPaymentHistory();
   document.getElementById('paymentHistoryPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRouteHash('payment-history');
   refreshPaymentHistory();
 }
 
@@ -586,6 +587,7 @@ function renderPaymentHistory() {
 function toggleSimple(id) { const el = document.getElementById(id); if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
 function openBackupRestore() {
   document.getElementById('backupPage').classList.add('open');
+  pananthPushRouteHash('backups');
   refreshModalLockSafe();
   try { renderAutoBackupStatus(); } catch(e) {}
   try { refreshR2BackupStatus(false); } catch(e) {}
@@ -777,6 +779,7 @@ async function restoreR2Backup(objectKey) {
     alert('✅ Restore จาก R2 สำเร็จครับ กำลังรีเฟรชข้อมูล');
     await refreshData();
     document.getElementById('backupPage').classList.remove('open');
+    pananthReplaceRouteHash('');
     refreshModalLockSafe();
   } catch(e) {
     alert('❌ Restore จาก R2 ไม่สำเร็จ: ' + e.message);
@@ -794,11 +797,16 @@ async function restoreBackupFromFile(event) {
     await workerPost({ action: 'restoreBackup', data });
     alert('✅ Restore สำเร็จครับ กำลังรีเฟรชข้อมูล');
     await refreshData();
-    document.getElementById('backupPage').classList.remove('open'); refreshModalLockSafe();
+    document.getElementById('backupPage').classList.remove('open'); pananthReplaceRouteHash(''); refreshModalLockSafe();
   } catch(e) { alert('❌ Restore ไม่สำเร็จ: ' + e.message); }
 }
 
-async function openErrorLogs() { document.getElementById('errorLogsPage').classList.add('open'); refreshModalLockSafe(); await refreshErrorLogs(); }
+async function openErrorLogs() {
+  document.getElementById('errorLogsPage').classList.add('open');
+  pananthPushRouteHash('logs');
+  refreshModalLockSafe();
+  await refreshErrorLogs();
+}
 async function refreshErrorLogs() {
   try {
     const res = await fetch(WORKER_URL + '?t=' + Date.now(), { cache: 'no-store' });
@@ -1023,6 +1031,7 @@ async function openSystemActivityHistory() {
   const page = document.getElementById('systemActivityPage');
   if (!page) return;
   page.classList.add('open');
+  pananthPushRouteHash('activity');
   refreshModalLockSafe();
   await refreshSystemActivityHistory();
 }
@@ -6616,7 +6625,7 @@ body.dark .checklist-item.attn {
 <!-- TIPS PAGE -->
 <div class="page-overlay" id="tipsPage">
   <div class="page-header">
-    <button class="back-btn" onclick="closeModal('tipsPage')">←</button>
+    <button class="back-btn" onclick="pananthRouteBack('tipsPage')">←</button>
     <h2>💡 วิธีใช้ / Tips</h2>
   </div>
   <div style="padding:16px;padding-bottom:90px;max-width:760px;margin:0 auto;">
@@ -6933,7 +6942,7 @@ body.dark .checklist-item.attn {
 <!-- DASHBOARD PAGE -->
 <div class="page-overlay" id="dashboardPage">
   <div class="page-header">
-    <button class="back-btn" onclick="document.getElementById('dashboardPage').classList.remove('open')">←</button>
+    <button class="back-btn" onclick="pananthRouteBack('dashboardPage')">←</button>
     <h2>📊 Dashboard รายได้</h2>
   </div>
   <div style="padding:16px;" id="dashboardContent"></div>
@@ -6943,7 +6952,7 @@ body.dark .checklist-item.attn {
 <!-- PAYMENT HISTORY PAGE -->
 <div class="page-overlay" id="paymentHistoryPage">
   <div class="page-header">
-    <button class="back-btn" onclick="document.getElementById('paymentHistoryPage').classList.remove('open')">←</button>
+    <button class="back-btn" onclick="pananthRouteBack('paymentHistoryPage')">←</button>
     <h2>📜 ประวัติการชำระล่าสุด</h2>
     <button class="meter-save-btn" onclick="refreshPaymentHistory()">รีเฟรช</button>
   </div>
@@ -6953,7 +6962,7 @@ body.dark .checklist-item.attn {
 <!-- BACKUP / RESTORE PAGE -->
 <div class="page-overlay" id="backupPage">
   <div class="page-header">
-    <button class="back-btn" onclick="document.getElementById('backupPage').classList.remove('open')">←</button>
+    <button class="back-btn" onclick="pananthRouteBack('backupPage')">←</button>
     <h2>🛡️ Backup / Restore</h2>
   </div>
   <div style="padding:16px;padding-bottom:80px;">
@@ -6997,7 +7006,7 @@ body.dark .checklist-item.attn {
 <!-- ERROR LOGS PAGE -->
 <div class="page-overlay" id="errorLogsPage">
   <div class="page-header">
-    <button class="back-btn" onclick="document.getElementById('errorLogsPage').classList.remove('open')">←</button>
+    <button class="back-btn" onclick="pananthRouteBack('errorLogsPage')">←</button>
     <h2>🧾 Worker Logs</h2>
     <button class="meter-save-btn" onclick="clearErrorLogs()">ล้าง</button>
   </div>
@@ -7008,7 +7017,7 @@ body.dark .checklist-item.attn {
 <!-- SYSTEM ACTIVITY HISTORY PAGE v15.4.2.51 -->
 <div class="page-overlay" id="systemActivityPage">
   <div class="page-header">
-    <button class="back-btn" onclick="document.getElementById('systemActivityPage').classList.remove('open'); refreshModalLockSafe();">←</button>
+    <button class="back-btn" onclick="pananthRouteBack('systemActivityPage')">←</button>
     <h2>🧾 ประวัติเหตุการณ์</h2>
     <button class="meter-save-btn" onclick="refreshSystemActivityHistory()">รีเฟรช</button>
   </div>
@@ -7034,7 +7043,7 @@ body.dark .checklist-item.attn {
 <!-- EXPENSE PAGE -->
 <div class="page-overlay" id="expensePage">
   <div class="page-header">
-    <button class="back-btn" onclick="document.getElementById('expensePage').classList.remove('open')">←</button>
+    <button class="back-btn" onclick="pananthRouteBack('expensePage')">←</button>
     <h2>💸 บันทึกค่าใช้จ่าย</h2>
     <button class="meter-save-btn" onclick="saveExpense()">บันทึก ✓</button>
   </div>
@@ -7622,13 +7631,12 @@ function openRoomSettings() {
   renderRoomSettingsPage();
   const page = document.getElementById('roomSettingsPage');
   if (page) page.classList.add('open');
+  pananthPushRouteHash('room-settings');
   refreshModalLockSafe();
 }
 
 function closeRoomSettings() {
-  const page = document.getElementById('roomSettingsPage');
-  if (page) page.classList.remove('open');
-  refreshModalLockSafe();
+  pananthRouteBack('roomSettingsPage');
 }
 
 function renderRoomSettingsPage() {
@@ -8048,13 +8056,12 @@ function openTenantDocs(roomNum = '') {
   }
   renderTenantDocsPage();
   page.classList.add('open');
+  pananthPushRouteHash('tenants');
   refreshModalLockSafe();
 }
 
 function closeTenantDocs() {
-  const page = document.getElementById('tenantDocsPage');
-  if (page) page.classList.remove('open');
-  refreshModalLockSafe();
+  pananthRouteBack('tenantDocsPage');
 }
 
 async function refreshTenantDocsPage() {
@@ -8566,6 +8573,7 @@ function openTenantOnboardingWizard() {
   renderTenantOnboardingWizard();
   const page = document.getElementById('tenantOnboardingPage');
   if (page) page.classList.add('open');
+  pananthPushRouteHash('tenant-onboarding');
   refreshModalLockSafe();
 }
 
@@ -8573,10 +8581,8 @@ function closeTenantOnboardingWizard(force = false) {
   if (!force && tenantOnboardingHasDraft() && !tenantOnboardingState.saving) {
     if (!confirm('ยังไม่ได้บันทึกรับผู้เช่าใหม่\nต้องการออกจากหน้านี้ใช่ไหมครับ?')) return;
   }
-  const page = document.getElementById('tenantOnboardingPage');
-  if (page) page.classList.remove('open');
   tenantOnboardingState = createTenantOnboardingState();
-  refreshModalLockSafe();
+  pananthRouteBack('tenantOnboardingPage');
 }
 
 function tenantOnboardingTodayInputValue() {
@@ -10955,6 +10961,7 @@ function openTips() {
   const page = document.getElementById('tipsPage');
   if (page) {
     page.classList.add('open');
+    pananthPushRouteHash('tips');
     refreshModalLockSafe();
   }
 }
@@ -11921,10 +11928,11 @@ function openMeterPage() {
     if (hasRoomMeterForCurrentCycle(i)) updateMeterPreview(i);
   }
   document.getElementById('meterPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRouteHash('meter');
 }
 
 function closeMeterPage() {
-  document.getElementById('meterPage').classList.remove('open'); refreshModalLockSafe();
+  pananthRouteBack('meterPage');
 }
 
 
@@ -15330,6 +15338,7 @@ function openTenantBroadcastPage() {
 
     <div style="background:white;border-radius:12px;padding:12px;margin-bottom:12px;border:1.5px solid var(--border);">
       <div style="font-size:13px;font-weight:900;color:var(--primary);margin-bottom:6px;">1. ข้อความประกาศ</div>
+      <div id="tenantBroadcastQuotaInfo" style="margin-bottom:10px;padding:10px 12px;background:#eef6ff;border:1px solid #cfe3ff;border-radius:10px;font-size:13px;font-weight:800;color:#0b5cab;">กำลังโหลดข้อมูลโควต้า LINE OA...</div>
       <textarea id="tenantBroadcastMessage" class="form-input" rows="6" maxlength="4500"
         placeholder="เช่น แจ้งผู้เช่าทุกท่าน วันนี้มีการซ่อมระบบน้ำช่วงเวลา 13:00–15:00 น. ขออภัยในความไม่สะดวกครับ"
         oninput="renderTenantBroadcastPreview()"
@@ -15371,6 +15380,7 @@ function openTenantBroadcastPage() {
   refreshModalLockSafe();
   renderTenantBroadcastRoomGrid();
   renderTenantBroadcastPreview();
+  loadTenantBroadcastQuota();
 }
 
 function renderTenantBroadcastRoomGrid() {
@@ -15467,6 +15477,28 @@ function renderTenantBroadcastPreview() {
   }
 }
 
+async function loadTenantBroadcastQuota() {
+  const box = document.getElementById('tenantBroadcastQuotaInfo');
+  if (!box) return;
+  box.textContent = 'กำลังโหลดข้อมูลโควต้า LINE OA...';
+  try {
+    const data = await workerPost({ action: 'getLineQuota' });
+
+    if (data.type === 'unlimited') {
+      box.innerHTML = '📨 แพ็กเกจ LINE OA ของคุณเป็นแบบ <b>Unlimited</b> (ไม่จำกัดจำนวนข้อความ)';
+      return;
+    }
+
+    if (data.monthlyLimit === null) {
+      box.innerHTML = '📨 แพ็กเกจ LINE OA ไม่รองรับการแสดงจำนวนข้อความคงเหลือ';
+      return;
+    }
+
+    box.innerHTML = `📨 ใช้ไป <b>${Number(data.used || 0).toLocaleString('th-TH')}</b> / <b>${Number(data.monthlyLimit || 0).toLocaleString('th-TH')}</b> ข้อความ &nbsp;|&nbsp; คงเหลือ <b style="color:#0a8f3d;">${Number(data.remaining || 0).toLocaleString('th-TH')}</b> ข้อความ`;
+  } catch (err) {
+    box.innerHTML = `⚠️ ไม่สามารถโหลดข้อมูลโควต้า LINE OA ได้ (${escapeHtml(err.message || String(err))})`;
+  }
+}
 async function sendTenantBroadcastAnnouncement() {
   const message = String(document.getElementById('tenantBroadcastMessage')?.value || '').trim();
   const stats = getTenantBroadcastSelectionStats();
@@ -16202,6 +16234,7 @@ function openDashboard() {
 
   document.getElementById('dashboardContent').innerHTML = html;
   document.getElementById('dashboardPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRouteHash('dashboard');
 }
 
 function toggleHistoryDetail(id) {
@@ -16252,6 +16285,7 @@ function openExpense() {
   document.getElementById('expDate').value = today;
   renderExpenseList();
   document.getElementById('expensePage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRouteHash('expenses');
 }
 
 function saveExpense() {
@@ -16410,10 +16444,11 @@ function openSettings() {
       </div>`;
   }
   document.getElementById('settingsPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRouteHash('settings');
 }
 
 function closeSettings() {
-  document.getElementById('settingsPage').classList.remove('open'); refreshModalLockSafe();
+  pananthRouteBack('settingsPage');
 }
 
 function saveSettings() {
@@ -17195,7 +17230,7 @@ function changePin() {
   updatePinDots();
   document.getElementById('pinSubtitle').textContent = 'ตั้งรหัส PIN ใหม่ 6 หลัก';
   document.getElementById('pinError').textContent = '';
-  document.getElementById('settingsPage').classList.remove('open'); refreshModalLockSafe();
+  document.getElementById('settingsPage').classList.remove('open'); pananthReplaceRouteHash(''); refreshModalLockSafe();
   showPinScreenSafe();
 }
 
@@ -17409,6 +17444,118 @@ function organizeMobileTools() {
 }
 
 
+// ===== v15.4.2.73: Hash page routing แบบ HTML เดียว (#dashboard / #meter / #settings) =====
+const PANANTH_HASH_ROUTES = {
+  dashboard: { pageId: 'dashboardPage', open: () => openDashboard() },
+  meter: { pageId: 'meterPage', open: () => openMeterPage() },
+  'payment-history': { pageId: 'paymentHistoryPage', open: () => openPaymentHistory() },
+  backups: { pageId: 'backupPage', open: () => openBackupRestore() },
+  logs: { pageId: 'errorLogsPage', open: () => openErrorLogs() },
+  activity: { pageId: 'systemActivityPage', open: () => openSystemActivityHistory() },
+  expenses: { pageId: 'expensePage', open: () => openExpense() },
+  tenants: { pageId: 'tenantDocsPage', open: () => openTenantDocs() },
+  'tenant-onboarding': { pageId: 'tenantOnboardingPage', open: () => openTenantOnboardingWizard() },
+  'room-settings': { pageId: 'roomSettingsPage', open: () => openRoomSettings() },
+  settings: { pageId: 'settingsPage', open: () => openSettings() },
+  tips: { pageId: 'tipsPage', open: () => openTips() },
+};
+
+const PANANTH_PAGE_ROUTE_MAP = Object.fromEntries(
+  Object.entries(PANANTH_HASH_ROUTES).map(([route, cfg]) => [cfg.pageId, route])
+);
+
+let pananthHashRouterReady = false;
+let pananthApplyingHashRoute = false;
+
+function pananthGetHashRoute() {
+  try {
+    return decodeURIComponent(String(window.location.hash || '').replace(/^#/, '')).trim().toLowerCase();
+  } catch (e) {
+    return String(window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
+  }
+}
+
+function pananthBuildRouteUrl(route = '') {
+  const clean = String(route || '').replace(/^#/, '').trim();
+  const base = `${window.location.pathname}${window.location.search}`;
+  return clean ? `${base}#${encodeURIComponent(clean)}` : base;
+}
+
+function pananthPushRouteHash(route = '') {
+  if (!pananthHashRouterReady || pananthApplyingHashRoute) return;
+  const clean = String(route || '').replace(/^#/, '').trim().toLowerCase();
+  if (pananthGetHashRoute() === clean) return;
+  history.pushState({ pananthRoute: clean }, '', pananthBuildRouteUrl(clean));
+}
+
+function pananthReplaceRouteHash(route = '') {
+  if (!pananthHashRouterReady) return;
+  const clean = String(route || '').replace(/^#/, '').trim().toLowerCase();
+  if (pananthGetHashRoute() === clean) return;
+  history.replaceState({ pananthRoute: clean }, '', pananthBuildRouteUrl(clean));
+}
+
+function pananthCloseRoutedPages(exceptPageId = '') {
+  Object.values(PANANTH_HASH_ROUTES).forEach(cfg => {
+    if (!cfg?.pageId || cfg.pageId === exceptPageId) return;
+    const page = document.getElementById(cfg.pageId);
+    if (page) page.classList.remove('open');
+  });
+  refreshModalLockSafe();
+}
+
+function pananthRouteBack(pageId = '') {
+  const page = document.getElementById(pageId);
+  if (page) page.classList.remove('open');
+  refreshModalLockSafe();
+
+  const route = PANANTH_PAGE_ROUTE_MAP[pageId] || '';
+  if (route && pananthGetHashRoute() === route) {
+    history.back();
+    return;
+  }
+  pananthReplaceRouteHash('');
+}
+
+async function pananthApplyHashRoute() {
+  if (!pananthHashRouterReady || pananthApplyingHashRoute) return;
+
+  const route = pananthGetHashRoute();
+  const cfg = PANANTH_HASH_ROUTES[route];
+
+  if (!cfg) {
+    pananthApplyingHashRoute = true;
+    try {
+      pananthCloseRoutedPages();
+    } finally {
+      pananthApplyingHashRoute = false;
+      refreshModalLockSafe();
+    }
+    return;
+  }
+
+  pananthApplyingHashRoute = true;
+  try {
+    pananthCloseRoutedPages(cfg.pageId);
+    await Promise.resolve(cfg.open());
+
+    const openedPage = document.getElementById(cfg.pageId);
+    if (!openedPage || !openedPage.classList.contains('open')) {
+      pananthReplaceRouteHash('');
+    }
+  } finally {
+    pananthApplyingHashRoute = false;
+    refreshModalLockSafe();
+  }
+}
+
+function pananthInstallHashRouter() {
+  if (pananthHashRouterReady) return;
+  pananthHashRouterReady = true;
+  window.addEventListener('hashchange', () => {
+    pananthApplyHashRoute().catch(e => console.log('hash route failed:', e));
+  });
+}
 // ===== START =====
 (async () => {
   initDark();
@@ -17419,6 +17566,8 @@ function organizeMobileTools() {
   organizeMobileTools();
   renderLineMessageQuotaCard();
   refreshLineMessageQuota(false).catch(() => {});
+  pananthInstallHashRouter();
+  await pananthApplyHashRoute();
 })();
 
 window.addEventListener('resize', organizeMobileTools);
