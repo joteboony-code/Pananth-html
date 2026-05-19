@@ -8058,7 +8058,7 @@ async function createLinePairQrForRoom(roomNum) {
   openLinePairQrModal();
 
   try {
-    const data = await workerPost({ action: 'createLinePairToken', roomNum: room });
+    const data = await workerPost({ action: 'createLinePairToken', roomNum: room, reuseActive: '1' });
     const link = buildLinePairPortalLink(data.token || '');
     if (linkBox) linkBox.value = link;
     renderLinePairQr(link);
