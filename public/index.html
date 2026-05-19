@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.82</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.83</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -17205,8 +17205,15 @@ async function hashPin(pin) {
 }
 
 async function verifyPinWithWorker(pin) {
-  const pinHash = await hashPin(pin);
-  const result = await workerPost({ action: 'verifyPin', pinHash });
+  let payload = { action: 'verifyPin', pin };
+  try {
+    const pinHash = await hashPin(pin);
+    payload = { action: 'verifyPin', pinHash };
+  } catch (hashErr) {
+    console.warn('Client-side PIN hashing unavailable; using Worker fallback.', hashErr);
+  }
+
+  const result = await workerPost(payload);
   if (result.token) setAdminToken(result.token);
   return result;
 }
@@ -17279,8 +17286,15 @@ function startAutoLockTimer() {
 }
 
 async function savePinToKV(pin) {
-  const hashed = await hashPin(pin);
-  const result = await workerPost({ action: 'savePin', data: hashed });
+  let payload = { action: 'savePin', pin };
+  try {
+    const hashed = await hashPin(pin);
+    payload = { action: 'savePin', data: hashed };
+  } catch (hashErr) {
+    console.warn('Client-side PIN hashing unavailable; using Worker fallback for savePin.', hashErr);
+  }
+
+  const result = await workerPost(payload);
   if (result.token) setAdminToken(result.token);
   pinHashedKV = '__SERVER_PIN__';
   return result;
