@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.74</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.75</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -10739,7 +10739,7 @@ function makeCard(r) {
 
   if (isEmpty) {
     card.innerHTML = `
-      <div class="room-card-header" onclick="openEdit(${r})" style="cursor:pointer;">
+      <div class="room-card-header" onclick="openRoomDetailRoute(${r})" style="cursor:pointer;">
         <div>
           <div class="room-num">${testRoom ? 'ห้อง 99' : 'ห้อง ' + r} ${testRoom ? '<span style="font-size:11px;background:#8e44ad;color:white;border-radius:999px;padding:2px 6px;vertical-align:middle;">TEST</span>' : ''}</div>
           <div class="room-tier" style="color:var(--muted);">ห้องว่าง</div>
@@ -10762,7 +10762,7 @@ function makeCard(r) {
   }
 
   card.innerHTML = `
-    <div class="room-card-header" onclick="openEdit(${r})" style="cursor:pointer;">
+    <div class="room-card-header" onclick="openRoomDetailRoute(${r})" style="cursor:pointer;">
       <div>
         <div class="room-num">${testRoom ? 'ห้อง 99' : 'ห้อง ' + r} ${testRoom ? '<span style="font-size:11px;background:#8e44ad;color:white;border-radius:999px;padding:2px 6px;vertical-align:middle;">TEST</span>' : ''}</div>
         <div class="room-tier">${testRoom ? '🧪 ทดสอบระบบ / LINE ส่งหาเจ้าของ' : (tenants[r]?.name ? `👤 ${tenants[r].name}` : `ค่าเช่า ${d.prorateRent ? d.prorateRent.toLocaleString()+' ฿ 📅' : roomRent.toLocaleString()+' ฿'}`)}</div>
@@ -10773,7 +10773,7 @@ function makeCard(r) {
         <div style="font-size:10px;color:${statusColor};font-weight:700;margin-top:3px;">${statusText}</div>
       </div>
     </div>
-    <div class="room-card-body" onclick="openEdit(${r})" style="cursor:pointer;">
+    <div class="room-card-body" onclick="openRoomDetailRoute(${r})" style="cursor:pointer;">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-bottom:6px;font-size:10px;color:var(--muted);font-weight:700;text-align:center;">
         <span></span><span>ก่อน</span><span>หลัง</span>
       </div>
@@ -10827,7 +10827,7 @@ function makeCard(r) {
 
 function toggleVacant(r) {
   if (rooms[r].vacant) {
-    openEdit(r, true); // true = โหมดเพิ่มผู้เช่าใหม่
+    openRoomDetailRoute(r, true); // true = โหมดเพิ่มผู้เช่าใหม่
     setTimeout(() => document.getElementById('tenantName').focus(), 300);
     const toast = document.createElement('div');
     toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:20px;font-weight:700;font-size:14px;z-index:999;color:white;background:var(--primary);';
@@ -10872,6 +10872,16 @@ function filterRooms(mode, el) {
 }
 
 // ===== EDIT MODAL =====
+function openRoomDetailRoute(r, isNew = false) {
+  const roomNum = Number(r);
+  if (!Number.isFinite(roomNum)) {
+    openEdit(r, isNew);
+    return;
+  }
+  pananthPushRoutePath(`room/${roomNum}`);
+  openEdit(roomNum, isNew);
+}
+
 function openEdit(r, isNew = false) {
   currentRoom = r;
   prorateRentOverride = null;
@@ -10968,7 +10978,18 @@ function openTips() {
   }
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove('open'); refreshModalLockSafe(); }
+function closeModal(id) {
+  if (id === 'editOverlay') {
+    const currentRoute = pananthGetPathRoute();
+    if (/^room\/\d+$/.test(currentRoute)) {
+      pananthRouteBack('editOverlay');
+      return;
+    }
+  }
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('open');
+  refreshModalLockSafe();
+}
 
 
 // ===== v15.4.2.71: Tips เฉพาะหน้า =====
@@ -14418,7 +14439,7 @@ function openAnomalyReport() {
             <div style="font-weight:900;color:#1a3a5c;">ห้อง ${a.room} — ${a.title}</div>
             <div style="font-size:12px;color:#5d6d7e;">${a.detail}</div>
           </div>
-          <button onclick="openEdit(${a.room})" style="border:none;border-radius:8px;padding:8px 10px;background:var(--primary);color:white;font-weight:800;">แก้ไข</button>
+          <button onclick="openRoomDetailRoute(${a.room})" style="border:none;border-radius:8px;padding:8px 10px;background:var(--primary);color:white;font-weight:800;">แก้ไข</button>
         </div>
         <div style="font-size:12px;color:#5d6d7e;margin-top:6px;">💡 ${a.advice}</div>
       </div>
@@ -17497,6 +17518,21 @@ const PANANTH_PATH_ROUTES = {
   'portal-unread': { pageId: 'alertPage', open: () => openPortalUnreadSummary() },
 };
 
+function pananthGetDynamicRouteConfig(route = '') {
+  const clean = pananthNormalizeRoute(route);
+  const match = /^room\/(\d+)$/.exec(clean);
+  if (!match) return null;
+
+  const roomNum = Number(match[1]);
+  if (!Number.isInteger(roomNum) || roomNum <= 0) return null;
+  if (!rooms || typeof rooms !== 'object' || !rooms[roomNum]) return null;
+
+  return {
+    pageId: 'editOverlay',
+    open: () => openEdit(roomNum),
+  };
+}
+
 let pananthPathRouterReady = false;
 let pananthApplyingPathRoute = false;
 
@@ -17553,6 +17589,7 @@ function pananthReplaceRoutePath(route = '') {
 
 function pananthCloseRoutedPages(exceptPageId = '') {
   const pageIds = new Set(Object.values(PANANTH_PATH_ROUTES).map(cfg => cfg?.pageId).filter(Boolean));
+  pageIds.add('editOverlay');
   pageIds.forEach(pageId => {
     if (!pageId || pageId === exceptPageId) return;
     const page = document.getElementById(pageId);
@@ -17567,7 +17604,7 @@ function pananthRouteBack(pageId = '') {
   refreshModalLockSafe();
 
   const currentRoute = pananthGetPathRoute();
-  const cfg = PANANTH_PATH_ROUTES[currentRoute];
+  const cfg = PANANTH_PATH_ROUTES[currentRoute] || pananthGetDynamicRouteConfig(currentRoute);
   const routeMatchesPage = !!cfg && (!pageId || cfg.pageId === pageId);
   const state = history.state || {};
 
@@ -17587,12 +17624,12 @@ async function pananthApplyPathRoute() {
   const legacyHashRoute = pananthGetLegacyHashRoute();
 
   // รองรับลิงก์รุ่นก่อนแบบ #dashboard / #meter แล้วแปลงเป็น URL path จริงให้ทันที
-  if (!route && legacyHashRoute && PANANTH_PATH_ROUTES[legacyHashRoute]) {
+  if (!route && legacyHashRoute && (PANANTH_PATH_ROUTES[legacyHashRoute] || pananthGetDynamicRouteConfig(legacyHashRoute))) {
     pananthReplaceRoutePath(legacyHashRoute);
     route = legacyHashRoute;
   }
 
-  const cfg = PANANTH_PATH_ROUTES[route];
+  const cfg = PANANTH_PATH_ROUTES[route] || pananthGetDynamicRouteConfig(route);
 
   if (!cfg) {
     pananthApplyingPathRoute = true;
