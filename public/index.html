@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.73</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.74</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -202,7 +202,7 @@ async function refreshPaymentHistory() {
 function openPaymentHistory() {
   renderPaymentHistory();
   document.getElementById('paymentHistoryPage').classList.add('open'); refreshModalLockSafe();
-  pananthPushRouteHash('payment-history');
+  pananthPushRoutePath('payment-history');
   refreshPaymentHistory();
 }
 
@@ -587,7 +587,7 @@ function renderPaymentHistory() {
 function toggleSimple(id) { const el = document.getElementById(id); if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none'; }
 function openBackupRestore() {
   document.getElementById('backupPage').classList.add('open');
-  pananthPushRouteHash('backups');
+  pananthPushRoutePath('backups');
   refreshModalLockSafe();
   try { renderAutoBackupStatus(); } catch(e) {}
   try { refreshR2BackupStatus(false); } catch(e) {}
@@ -778,9 +778,7 @@ async function restoreR2Backup(objectKey) {
     if (!result.ok) throw new Error(result.error || 'Restore R2 failed');
     alert('✅ Restore จาก R2 สำเร็จครับ กำลังรีเฟรชข้อมูล');
     await refreshData();
-    document.getElementById('backupPage').classList.remove('open');
-    pananthReplaceRouteHash('');
-    refreshModalLockSafe();
+    pananthRouteBack('backupPage');
   } catch(e) {
     alert('❌ Restore จาก R2 ไม่สำเร็จ: ' + e.message);
   }
@@ -797,13 +795,13 @@ async function restoreBackupFromFile(event) {
     await workerPost({ action: 'restoreBackup', data });
     alert('✅ Restore สำเร็จครับ กำลังรีเฟรชข้อมูล');
     await refreshData();
-    document.getElementById('backupPage').classList.remove('open'); pananthReplaceRouteHash(''); refreshModalLockSafe();
+    pananthRouteBack('backupPage');
   } catch(e) { alert('❌ Restore ไม่สำเร็จ: ' + e.message); }
 }
 
 async function openErrorLogs() {
   document.getElementById('errorLogsPage').classList.add('open');
-  pananthPushRouteHash('logs');
+  pananthPushRoutePath('logs');
   refreshModalLockSafe();
   await refreshErrorLogs();
 }
@@ -1031,7 +1029,7 @@ async function openSystemActivityHistory() {
   const page = document.getElementById('systemActivityPage');
   if (!page) return;
   page.classList.add('open');
-  pananthPushRouteHash('activity');
+  pananthPushRoutePath('activity');
   refreshModalLockSafe();
   await refreshSystemActivityHistory();
 }
@@ -4036,13 +4034,13 @@ body.dark .checklist-item.attn {
 </style>
 
 <!-- PWA START: ติดตั้งเป็นแอปบนมือถือ -->
-<link rel="manifest" href="./manifest.webmanifest">
+<link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#1a3a5c">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ป้านันท์">
-<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <!-- PWA END -->
 
 <!-- ===== v15.4.2.50: Preview ก่อนปิดรอบบิล / เปิดรอบรับชำระใหม่ ===== -->
@@ -6933,7 +6931,7 @@ body.dark .checklist-item.attn {
 <!-- ALERT PAGE -->
 <div class="page-overlay" id="alertPage">
   <div class="page-header">
-    <button class="back-btn" onclick="document.getElementById('alertPage').classList.remove('open')">←</button>
+    <button class="back-btn" onclick="pananthRouteBack('alertPage')">←</button>
     <h2>🔔 แจ้งเตือนค้างชำระ</h2>
   </div>
   <div style="padding:16px;padding-bottom:80px;" id="alertPageContent"></div>
@@ -7488,12 +7486,13 @@ function openLineTemplateSettings() {
     ${cards}
     <div style="display:flex;gap:8px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--bg);padding:12px 0 4px;">
       <button class="ctrl-btn green" style="flex:1;justify-content:center;min-height:48px;" onclick="saveLineTemplatesFromPage()">💾 บันทึก Template ข้อความ LINE</button>
-      <button class="ctrl-btn outline" style="justify-content:center;min-height:48px;" onclick="document.getElementById('alertPage').classList.remove('open');refreshModalLockSafe();">ปิด</button>
+      <button class="ctrl-btn outline" style="justify-content:center;min-height:48px;" onclick="pananthRouteBack('alertPage');">ปิด</button>
     </div>
     <div id="lineTemplateSaveStatus" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
   `;
   document.getElementById('alertPage').classList.add('open');
   refreshModalLockSafe();
+  pananthPushRoutePath('line-templates');
   renderAllLineTemplatePreviews();
 }
 
@@ -7631,7 +7630,7 @@ function openRoomSettings() {
   renderRoomSettingsPage();
   const page = document.getElementById('roomSettingsPage');
   if (page) page.classList.add('open');
-  pananthPushRouteHash('room-settings');
+  pananthPushRoutePath('room-settings');
   refreshModalLockSafe();
 }
 
@@ -7920,7 +7919,7 @@ async function workerPost(payload) {
 
 function downloadRentalAgreementTemplate() {
   const fileName = 'Rental_Agreement_V3.pdf';
-  const url = new URL(fileName, window.location.href).toString();
+  const url = new URL('/' + fileName, window.location.origin).toString();
   try {
     const a = document.createElement('a');
     a.href = url;
@@ -8056,7 +8055,7 @@ function openTenantDocs(roomNum = '') {
   }
   renderTenantDocsPage();
   page.classList.add('open');
-  pananthPushRouteHash('tenants');
+  pananthPushRoutePath('tenants');
   refreshModalLockSafe();
 }
 
@@ -8573,7 +8572,7 @@ function openTenantOnboardingWizard() {
   renderTenantOnboardingWizard();
   const page = document.getElementById('tenantOnboardingPage');
   if (page) page.classList.add('open');
-  pananthPushRouteHash('tenant-onboarding');
+  pananthPushRoutePath('tenant-onboarding');
   refreshModalLockSafe();
 }
 
@@ -10379,6 +10378,7 @@ function openOwnerPendingSlipCenter() {
     `;
   }).join('');
   openAlertUtilityPage('🧾 สลิปรอตรวจสอบ', cards);
+  pananthPushRoutePath('pending-slips');
 }
 
 function openPaymentPromiseSummary() {
@@ -10407,6 +10407,7 @@ function openPaymentPromiseSummary() {
     `;
   }).join('');
   openAlertUtilityPage('📅 ผู้เช่านัดวันชำระ', cards);
+  pananthPushRoutePath('payment-promises');
 }
 
 function openPortalUnreadSummary() {
@@ -10427,6 +10428,7 @@ function openPortalUnreadSummary() {
     <button onclick="sendPortalUnreadReminders()" style="width:100%;border:none;border-radius:12px;padding:12px;background:#e67e22;color:white;font-size:14px;font-weight:900;cursor:pointer;">🔔 ส่งเตือนห้องที่ยังไม่เปิด Portal</button>
   `;
   openAlertUtilityPage('👀 Portal ยังไม่ถูกเปิด', cards);
+  pananthPushRoutePath('portal-unread');
 }
 
 
@@ -10961,7 +10963,7 @@ function openTips() {
   const page = document.getElementById('tipsPage');
   if (page) {
     page.classList.add('open');
-    pananthPushRouteHash('tips');
+    pananthPushRoutePath('tips');
     refreshModalLockSafe();
   }
 }
@@ -11928,7 +11930,7 @@ function openMeterPage() {
     if (hasRoomMeterForCurrentCycle(i)) updateMeterPreview(i);
   }
   document.getElementById('meterPage').classList.add('open'); refreshModalLockSafe();
-  pananthPushRouteHash('meter');
+  pananthPushRoutePath('meter');
 }
 
 function closeMeterPage() {
@@ -12563,6 +12565,7 @@ function openAlertPage() {
   document.getElementById('alertPageContent').innerHTML = html;
   window._alertSelected = new Set();
   document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRoutePath('overdue-reminders');
 }
 
 function toggleAlertRoom(r) {
@@ -12695,7 +12698,7 @@ async function sendAlertSelected() {
     `${failed > 0 ? `\n❌ ส่งไม่ได้ ${failed} ห้อง` : ''}`
   );
 
-  document.getElementById('alertPage').classList.remove('open'); refreshModalLockSafe();
+  pananthRouteBack('alertPage');
 }
 
 // ===== งดแจ้งเตือน / สรุปค้างชำระ =====
@@ -12815,6 +12818,7 @@ function openMutedRooms() {
   html += `</div>`;
   document.getElementById('alertPageContent').innerHTML = html;
   document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRoutePath('muted-rooms');
 }
 
 async function sendOwnerUnpaidSummary() {
@@ -13178,6 +13182,7 @@ async function openMonthlyArchive() {
     ${listHtml}
   `;
   document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRoutePath('monthly-archive');
 }
 
 function buildMonthlyArchiveInlineHtml(archive) {
@@ -14110,6 +14115,7 @@ async function openArrearsPage() {
   document.getElementById('alertPageContent').innerHTML = html;
   handleManualPayMethodChange();
   document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRoutePath('arrears');
 }
 
 function getManualPaymentCheck(roomNum, amount) {
@@ -14421,6 +14427,7 @@ function openAnomalyReport() {
 
   document.getElementById('alertPageContent').innerHTML = html;
   document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRoutePath('anomaly-report');
 }
 
 async function openSystemTest() {
@@ -14484,6 +14491,7 @@ async function openSystemTest() {
 
   document.getElementById('alertPageContent').innerHTML = html;
   document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRoutePath('system-test');
 }
 
 async function openMonthlyReport() {
@@ -14581,6 +14589,7 @@ async function openMonthlyReport() {
 
   document.getElementById('alertPageContent').innerHTML = html;
   document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRoutePath('monthly-report');
 }
 
 function exportMonthlyReportCsv() {
@@ -14696,6 +14705,7 @@ async function openBulkMonthlySend() {
 
   document.getElementById('alertPageContent').innerHTML = html;
   document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRoutePath('bulk-monthly-send');
 }
 
 
@@ -14788,7 +14798,7 @@ ${details}
   }
 
   alert(`✅ ส่งสำเร็จ ${sent} ห้อง${failed ? `\n❌ ส่งไม่สำเร็จ ${failed} ห้อง` : ''}`);
-  document.getElementById('alertPage').classList.remove('open'); refreshModalLockSafe();
+  pananthRouteBack('alertPage');
 }
 
 
@@ -14859,6 +14869,7 @@ async function openPaymentSearch() {
   document.getElementById('alertPageContent').innerHTML = html;
   document.getElementById('alertPage').classList.add('open');
   refreshModalLockSafe();
+  pananthPushRoutePath('payment-search');
   renderPaymentSearchResults();
 
   const ok = await refreshPaymentSearchSilent();
@@ -15118,6 +15129,7 @@ async function openTenantDocumentSearch() {
   document.getElementById('alertPageContent').innerHTML = html;
   document.getElementById('alertPage').classList.add('open');
   refreshModalLockSafe();
+  pananthPushRoutePath('tenant-document-search');
   renderTenantDocumentSearchResults();
 
   const ok = await refreshTenantDocumentSearchSilent();
@@ -15378,6 +15390,7 @@ function openTenantBroadcastPage() {
   document.getElementById('alertPageContent').innerHTML = html;
   document.getElementById('alertPage').classList.add('open');
   refreshModalLockSafe();
+  pananthPushRoutePath('tenant-broadcast');
   renderTenantBroadcastRoomGrid();
   renderTenantBroadcastPreview();
   loadTenantBroadcastQuota();
@@ -15901,6 +15914,7 @@ async function openSystemHealth() {
   if (content) content.innerHTML = htmlOut;
   document.getElementById('alertPage').classList.add('open');
   refreshModalLockSafe();
+  pananthPushRoutePath('system-health');
 }
 
 
@@ -15981,6 +15995,7 @@ async function openRoomEditHistory() {
     content.innerHTML = html;
     page.classList.add('open');
     refreshModalLockSafe();
+    pananthPushRoutePath('room-edit-history');
   } else {
     alert('ไม่พบหน้าสำหรับแสดงประวัติแก้ไขห้อง');
   }
@@ -16023,6 +16038,7 @@ function openContractExpiryCenter() {
   `;
   document.getElementById('alertPageContent').innerHTML = html;
   document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRoutePath('contract-expiry');
 }
 
 function repairStatusBadge(status = '') {
@@ -16037,6 +16053,7 @@ async function openRepairCenter() {
   setAlertPageTitle('🛠️ งานแจ้งซ่อมจาก Tenant Portal');
   document.getElementById('alertPageContent').innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-weight:900;">กำลังโหลดรายการแจ้งซ่อม...</div>';
   document.getElementById('alertPage').classList.add('open'); refreshModalLockSafe();
+  pananthPushRoutePath('repair-center');
   try {
     const data = await workerPost({ action: 'getRepairRequests' });
     saveRepairRequestsLocal(data.repairRequests || []);
@@ -16234,7 +16251,7 @@ function openDashboard() {
 
   document.getElementById('dashboardContent').innerHTML = html;
   document.getElementById('dashboardPage').classList.add('open'); refreshModalLockSafe();
-  pananthPushRouteHash('dashboard');
+  pananthPushRoutePath('dashboard');
 }
 
 function toggleHistoryDetail(id) {
@@ -16285,7 +16302,7 @@ function openExpense() {
   document.getElementById('expDate').value = today;
   renderExpenseList();
   document.getElementById('expensePage').classList.add('open'); refreshModalLockSafe();
-  pananthPushRouteHash('expenses');
+  pananthPushRoutePath('expenses');
 }
 
 function saveExpense() {
@@ -16444,7 +16461,7 @@ function openSettings() {
       </div>`;
   }
   document.getElementById('settingsPage').classList.add('open'); refreshModalLockSafe();
-  pananthPushRouteHash('settings');
+  pananthPushRoutePath('settings');
 }
 
 function closeSettings() {
@@ -17230,7 +17247,7 @@ function changePin() {
   updatePinDots();
   document.getElementById('pinSubtitle').textContent = 'ตั้งรหัส PIN ใหม่ 6 หลัก';
   document.getElementById('pinError').textContent = '';
-  document.getElementById('settingsPage').classList.remove('open'); pananthReplaceRouteHash(''); refreshModalLockSafe();
+  pananthRouteBack('settingsPage');
   showPinScreenSafe();
 }
 
@@ -17444,8 +17461,8 @@ function organizeMobileTools() {
 }
 
 
-// ===== v15.4.2.73: Hash page routing แบบ HTML เดียว (#dashboard / #meter / #settings) =====
-const PANANTH_HASH_ROUTES = {
+// ===== v15.4.2.74: Real page routing แบบ Path URL (/dashboard /meter /arrears) =====
+const PANANTH_PATH_ROUTES = {
   dashboard: { pageId: 'dashboardPage', open: () => openDashboard() },
   meter: { pageId: 'meterPage', open: () => openMeterPage() },
   'payment-history': { pageId: 'paymentHistoryPage', open: () => openPaymentHistory() },
@@ -17458,47 +17475,87 @@ const PANANTH_HASH_ROUTES = {
   'room-settings': { pageId: 'roomSettingsPage', open: () => openRoomSettings() },
   settings: { pageId: 'settingsPage', open: () => openSettings() },
   tips: { pageId: 'tipsPage', open: () => openTips() },
+
+  arrears: { pageId: 'alertPage', open: () => openArrearsPage() },
+  'overdue-reminders': { pageId: 'alertPage', open: () => alertUnpaid() },
+  'monthly-report': { pageId: 'alertPage', open: () => openMonthlyReport() },
+  'payment-search': { pageId: 'alertPage', open: () => openPaymentSearch() },
+  'tenant-document-search': { pageId: 'alertPage', open: () => openTenantDocumentSearch() },
+  'anomaly-report': { pageId: 'alertPage', open: () => openAnomalyReport() },
+  'contract-expiry': { pageId: 'alertPage', open: () => openContractExpiryCenter() },
+  'repair-center': { pageId: 'alertPage', open: () => openRepairCenter() },
+  'room-edit-history': { pageId: 'alertPage', open: () => openRoomEditHistory() },
+  'system-health': { pageId: 'alertPage', open: () => openSystemHealth() },
+  'system-test': { pageId: 'alertPage', open: () => openSystemTest() },
+  'bulk-monthly-send': { pageId: 'alertPage', open: () => openBulkMonthlySend() },
+  'line-templates': { pageId: 'alertPage', open: () => openLineTemplateSettings() },
+  'muted-rooms': { pageId: 'alertPage', open: () => openMutedRooms() },
+  'tenant-broadcast': { pageId: 'alertPage', open: () => openTenantBroadcastPage() },
+  'monthly-archive': { pageId: 'alertPage', open: () => openMonthlyArchive() },
+  'pending-slips': { pageId: 'alertPage', open: () => openOwnerPendingSlipCenter() },
+  'payment-promises': { pageId: 'alertPage', open: () => openPaymentPromiseSummary() },
+  'portal-unread': { pageId: 'alertPage', open: () => openPortalUnreadSummary() },
 };
 
-const PANANTH_PAGE_ROUTE_MAP = Object.fromEntries(
-  Object.entries(PANANTH_HASH_ROUTES).map(([route, cfg]) => [cfg.pageId, route])
-);
+let pananthPathRouterReady = false;
+let pananthApplyingPathRoute = false;
 
-let pananthHashRouterReady = false;
-let pananthApplyingHashRoute = false;
+function pananthNormalizeRoute(route = '') {
+  return String(route || '')
+    .replace(/^#/, '')
+    .replace(/^\/+|\/+$/g, '')
+    .trim()
+    .toLowerCase();
+}
 
-function pananthGetHashRoute() {
+function pananthGetPathRoute() {
   try {
-    return decodeURIComponent(String(window.location.hash || '').replace(/^#/, '')).trim().toLowerCase();
+    const path = decodeURIComponent(String(window.location.pathname || '/'));
+    const route = pananthNormalizeRoute(path);
+    return route === 'index.html' ? '' : route;
   } catch (e) {
-    return String(window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
+    const route = pananthNormalizeRoute(window.location.pathname || '/');
+    return route === 'index.html' ? '' : route;
+  }
+}
+
+function pananthGetLegacyHashRoute() {
+  try {
+    return pananthNormalizeRoute(decodeURIComponent(String(window.location.hash || '').replace(/^#/, '')));
+  } catch (e) {
+    return pananthNormalizeRoute(String(window.location.hash || '').replace(/^#/, ''));
   }
 }
 
 function pananthBuildRouteUrl(route = '') {
-  const clean = String(route || '').replace(/^#/, '').trim();
-  const base = `${window.location.pathname}${window.location.search}`;
-  return clean ? `${base}#${encodeURIComponent(clean)}` : base;
+  const clean = pananthNormalizeRoute(route);
+  const path = clean
+    ? '/' + clean.split('/').filter(Boolean).map(part => encodeURIComponent(part)).join('/')
+    : '/';
+  return `${path}${window.location.search || ''}`;
 }
 
-function pananthPushRouteHash(route = '') {
-  if (!pananthHashRouterReady || pananthApplyingHashRoute) return;
-  const clean = String(route || '').replace(/^#/, '').trim().toLowerCase();
-  if (pananthGetHashRoute() === clean) return;
-  history.pushState({ pananthRoute: clean }, '', pananthBuildRouteUrl(clean));
+function pananthPushRoutePath(route = '') {
+  if (!pananthPathRouterReady || pananthApplyingPathRoute) return;
+  const clean = pananthNormalizeRoute(route);
+  if (pananthGetPathRoute() === clean) return;
+  history.pushState({ pananthRoute: clean, pananthFromApp: true }, '', pananthBuildRouteUrl(clean));
 }
 
-function pananthReplaceRouteHash(route = '') {
-  if (!pananthHashRouterReady) return;
-  const clean = String(route || '').replace(/^#/, '').trim().toLowerCase();
-  if (pananthGetHashRoute() === clean) return;
-  history.replaceState({ pananthRoute: clean }, '', pananthBuildRouteUrl(clean));
+function pananthReplaceRoutePath(route = '') {
+  if (!pananthPathRouterReady) return;
+  const clean = pananthNormalizeRoute(route);
+  const current = pananthGetPathRoute();
+  const hashRoute = pananthGetLegacyHashRoute();
+  if (current === clean && !hashRoute) return;
+  history.replaceState({ pananthRoute: clean, pananthFromApp: false }, '', pananthBuildRouteUrl(clean));
 }
 
 function pananthCloseRoutedPages(exceptPageId = '') {
-  Object.values(PANANTH_HASH_ROUTES).forEach(cfg => {
-    if (!cfg?.pageId || cfg.pageId === exceptPageId) return;
-    const page = document.getElementById(cfg.pageId);
+  const pageIds = new Set(Object.values(PANANTH_PATH_ROUTES).map(cfg => cfg?.pageId).filter(Boolean));
+  pageIds.forEach(pageId => {
+    if (!pageId || pageId === exceptPageId) return;
+    const page = document.getElementById(pageId);
     if (page) page.classList.remove('open');
   });
   refreshModalLockSafe();
@@ -17509,51 +17566,74 @@ function pananthRouteBack(pageId = '') {
   if (page) page.classList.remove('open');
   refreshModalLockSafe();
 
-  const route = PANANTH_PAGE_ROUTE_MAP[pageId] || '';
-  if (route && pananthGetHashRoute() === route) {
+  const currentRoute = pananthGetPathRoute();
+  const cfg = PANANTH_PATH_ROUTES[currentRoute];
+  const routeMatchesPage = !!cfg && (!pageId || cfg.pageId === pageId);
+  const state = history.state || {};
+
+  if (routeMatchesPage && state.pananthFromApp) {
     history.back();
     return;
   }
-  pananthReplaceRouteHash('');
+
+  pananthReplaceRoutePath('');
+  pananthCloseRoutedPages();
 }
 
-async function pananthApplyHashRoute() {
-  if (!pananthHashRouterReady || pananthApplyingHashRoute) return;
+async function pananthApplyPathRoute() {
+  if (!pananthPathRouterReady || pananthApplyingPathRoute) return;
 
-  const route = pananthGetHashRoute();
-  const cfg = PANANTH_HASH_ROUTES[route];
+  let route = pananthGetPathRoute();
+  const legacyHashRoute = pananthGetLegacyHashRoute();
+
+  // รองรับลิงก์รุ่นก่อนแบบ #dashboard / #meter แล้วแปลงเป็น URL path จริงให้ทันที
+  if (!route && legacyHashRoute && PANANTH_PATH_ROUTES[legacyHashRoute]) {
+    pananthReplaceRoutePath(legacyHashRoute);
+    route = legacyHashRoute;
+  }
+
+  const cfg = PANANTH_PATH_ROUTES[route];
 
   if (!cfg) {
-    pananthApplyingHashRoute = true;
+    pananthApplyingPathRoute = true;
     try {
       pananthCloseRoutedPages();
     } finally {
-      pananthApplyingHashRoute = false;
+      pananthApplyingPathRoute = false;
       refreshModalLockSafe();
     }
     return;
   }
 
-  pananthApplyingHashRoute = true;
+  pananthApplyingPathRoute = true;
   try {
     pananthCloseRoutedPages(cfg.pageId);
     await Promise.resolve(cfg.open());
 
     const openedPage = document.getElementById(cfg.pageId);
     if (!openedPage || !openedPage.classList.contains('open')) {
-      pananthReplaceRouteHash('');
+      pananthReplaceRoutePath('');
     }
   } finally {
-    pananthApplyingHashRoute = false;
+    pananthApplyingPathRoute = false;
     refreshModalLockSafe();
   }
 }
 
-function pananthInstallHashRouter() {
-  if (pananthHashRouterReady) return;
-  pananthHashRouterReady = true;
-  window.addEventListener('hashchange', () => {
-    pananthApplyHashRoute().catch(e => console.log('hash route failed:', e));
+function pananthInstallPathRouter() {
+  if (pananthPathRouterReady) return;
+  pananthPathRouterReady = true;
+
+  const currentRoute = pananthGetPathRoute();
+  const currentState = history.state || {};
+  history.replaceState(
+    { pananthRoute: currentRoute, pananthFromApp: !!currentState.pananthFromApp },
+    '',
+    window.location.href
+  );
+
+  window.addEventListener('popstate', () => {
+    pananthApplyPathRoute().catch(e => console.log('path route failed:', e));
   });
 }
 // ===== START =====
@@ -17566,8 +17646,8 @@ function pananthInstallHashRouter() {
   organizeMobileTools();
   renderLineMessageQuotaCard();
   refreshLineMessageQuota(false).catch(() => {});
-  pananthInstallHashRouter();
-  await pananthApplyHashRoute();
+  pananthInstallPathRouter();
+  await pananthApplyPathRoute();
 })();
 
 window.addEventListener('resize', organizeMobileTools);
@@ -17584,7 +17664,7 @@ document.head.appendChild(s);
 (function () {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('./sw.js').catch(function (err) {
+      navigator.serviceWorker.register('/sw.js').catch(function (err) {
         console.log('PWA service worker register failed:', err);
       });
     });
