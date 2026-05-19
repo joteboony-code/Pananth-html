@@ -1,11 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.75</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.77</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 
 let __pananthModalScrollY = 0;
@@ -1957,6 +1958,34 @@ function renderSystemActivityHistory() {
     padding: 0;
   }
   .modal-overlay.open { display: flex; }
+
+  .line-pair-modal { max-width: 460px; }
+  .line-pair-note {
+    background: #eef5ff; color: var(--primary); border: 1px solid #cfe0f8;
+    border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.55;
+    margin-bottom: 12px;
+  }
+  .line-pair-note.warn { background:#fff6e8; border-color:#f0d6a2; color:#8a5a00; }
+  .line-pair-qr {
+    width: 250px; min-height: 250px; margin: 10px auto 12px; padding: 14px;
+    border: 1.5px solid var(--border); border-radius: 16px; background: white;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .line-pair-qr canvas, .line-pair-qr img { max-width: 220px !important; max-height: 220px !important; }
+  .line-pair-link {
+    width: 100%; min-height: 70px; resize: vertical; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--bg); padding: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--text);
+  }
+  .line-pair-meta { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .line-pair-full-btn {
+    width:100%; padding:11px 12px; border:none; border-radius:10px; cursor:pointer;
+    background: linear-gradient(135deg, #18a957, #0f8d46); color:white;
+    font-family:'Sarabun',sans-serif; font-size:13px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .line-pair-full-btn:active { transform: scale(0.98); }
 
   /* EDIT MODAL */
   .edit-modal {
@@ -6506,6 +6535,9 @@ body.dark .checklist-item.attn {
         <button class="action-btn img" onclick="openReceipt()">🧾 ใบแจ้งค่าเช่า</button>
       </div>
       <div style="margin-top:8px;">
+        <button class="line-pair-full-btn" onclick="createLinePairQrForRoom(currentRoom)">📱 สร้าง QR จับคู่ LINE ผู้เช่าใหม่</button>
+      </div>
+      <div style="margin-top:8px;">
         <button onclick="openReceiptEdit()" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:white;color:var(--primary);font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
           ✏️ แก้ไขรายละเอียดใบแจ้งค่าเช่า
         </button>
@@ -7866,6 +7898,8 @@ let selectedTenantProfileRoom = '';
 let tenantDocPreviewObjectUrl = '';
 
 const WORKER_URL = 'https://white-rice-cf72.joteboony.workers.dev';
+const LINE_PAIR_PORTAL_URL = 'https://liff.line.me/2010080282-gZXtNu0U';
+const LINE_PAIR_LIFF_PLACEHOLDER = 'REPLACE_WITH_LINE_PAIR_LIFF_ID';
 const ADMIN_TOKEN_KEY = 'pananth_admin_token_v1';
 
 function getAdminToken() {
@@ -7912,6 +7946,115 @@ async function workerPost(payload) {
     throw err;
   }
   return data;
+}
+
+
+function isLinePairPortalConfigured() {
+  return !!LINE_PAIR_PORTAL_URL &&
+    !LINE_PAIR_PORTAL_URL.includes(LINE_PAIR_LIFF_PLACEHOLDER) &&
+    /^https:\/\/liff\.line\.me\/.+/i.test(LINE_PAIR_PORTAL_URL);
+}
+
+function buildLinePairPortalLink(token) {
+  const base = String(LINE_PAIR_PORTAL_URL || '').trim();
+  const joiner = base.includes('?') ? '&' : '?';
+  return base + joiner + 'token=' + encodeURIComponent(String(token || '').trim());
+}
+
+function openLinePairQrModal() {
+  const el = document.getElementById('linePairQrOverlay');
+  if (el) {
+    el.classList.add('open');
+    refreshModalLockSafe();
+  }
+}
+
+function closeLinePairQrModal() {
+  closeModal('linePairQrOverlay');
+}
+
+async function copyLinePairQrLink() {
+  const el = document.getElementById('linePairQrLink');
+  const value = el ? String(el.value || '').trim() : '';
+  if (!value) return alert('ยังไม่มีลิงก์สำหรับคัดลอก');
+  try {
+    await navigator.clipboard.writeText(value);
+    alert('คัดลอกลิงก์ QR แล้วครับ');
+  } catch (err) {
+    if (el) {
+      el.focus();
+      el.select();
+    }
+    alert('คัดลอกอัตโนมัติไม่สำเร็จ กรุณากดคัดลอกจากช่องลิงก์');
+  }
+}
+
+function renderLinePairQr(link) {
+  const box = document.getElementById('linePairQrCanvas');
+  if (!box) return;
+  box.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(box, {
+      text: link,
+      width: 220,
+      height: 220,
+      colorDark: '#10233f',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  } else {
+    box.innerHTML = '<div style="padding:12px;text-align:center;color:#b45309;font-size:13px;">โหลดตัวสร้าง QR ไม่สำเร็จ<br>ยังคัดลอกลิงก์ด้านล่างไปส่งให้ผู้เช่าได้</div>';
+  }
+}
+
+async function createLinePairQrForRoom(roomNum) {
+  const room = String(parseInt(roomNum || 0, 10) || '').trim();
+  if (!room) return alert('ไม่พบเลขห้องสำหรับสร้าง QR');
+
+  if (!isLinePairPortalConfigured()) {
+    alert('ยังไม่ได้ตั้งค่า LIFF URL สำหรับหน้า QR จับคู่ผู้เช่าใหม่\nกรุณาสร้าง LIFF App หน้า pair.html แล้วตรวจสอบค่า LIFF ID ในไฟล์ HTML ก่อนครับ');
+    return;
+  }
+
+  const cfg = loadConfig();
+  if (cfg.userIds && String(cfg.userIds[room] || '').trim()) {
+    alert(`ห้อง ${room} มี LINE User ID อยู่แล้ว\nระบบจะไม่ทับให้อัตโนมัติ หากเป็นผู้เช่าใหม่ กรุณาตรวจสอบ/ล้างการจับคู่เดิมก่อนสร้าง QR ครับ`);
+    return;
+  }
+
+  if (!confirm(`สร้าง QR จับคู่ LINE สำหรับผู้เช่าใหม่ของห้อง ${room} ใช่ไหมครับ?\nQR นี้เป็นลิงก์ชั่วคราวและใช้ได้ครั้งเดียว`)) return;
+
+  const title = document.getElementById('linePairQrTitle');
+  const summary = document.getElementById('linePairQrSummary');
+  const linkBox = document.getElementById('linePairQrLink');
+  const meta = document.getElementById('linePairQrMeta');
+  const qrBox = document.getElementById('linePairQrCanvas');
+
+  if (title) title.textContent = `📱 QR จับคู่ LINE — ห้อง ${room}`;
+  if (summary) {
+    summary.className = 'line-pair-note';
+    summary.textContent = 'กำลังสร้างลิงก์จับคู่แบบใช้ครั้งเดียว...';
+  }
+  if (linkBox) linkBox.value = '';
+  if (meta) meta.textContent = '';
+  if (qrBox) qrBox.textContent = 'กำลังสร้าง QR...';
+  openLinePairQrModal();
+
+  try {
+    const data = await workerPost({ action: 'createLinePairToken', roomNum: room });
+    const link = buildLinePairPortalLink(data.token || '');
+    if (linkBox) linkBox.value = link;
+    renderLinePairQr(link);
+    if (summary) summary.textContent = `ให้ผู้เช่าใหม่สแกน QR นี้เพื่อเปิดหน้า Portal จับคู่ LINE กับห้อง ${room}`;
+    if (meta) meta.textContent = `ใช้ได้ครั้งเดียว • หมดอายุ ${data.expiresAtText || data.expiresAt || 'ภายใน 24 ชั่วโมง'} • หากหมดอายุสามารถสร้างใหม่ได้`;
+  } catch (err) {
+    if (qrBox) qrBox.innerHTML = '<div style="padding:12px;text-align:center;color:#c2410c;font-size:13px;">สร้าง QR ไม่สำเร็จ</div>';
+    if (summary) {
+      summary.className = 'line-pair-note warn';
+      summary.textContent = err?.message || 'สร้าง QR ไม่สำเร็จ';
+    }
+    if (meta) meta.textContent = 'ตรวจสอบว่าปลดล็อก PIN แล้ว และ Worker เวอร์ชันล่าสุดถูก Deploy แล้ว';
+  }
 }
 
 
@@ -17848,5 +17991,22 @@ document.head.appendChild(s);
 })();
 </script>
 <!-- ===== END PANANTH v15.4.2.37 duplicate arrears repair ===== -->
+
+<!-- QR จับคู่ LINE ผู้เช่าใหม่ -->
+<div class="modal-overlay" id="linePairQrOverlay">
+  <div class="edit-modal line-pair-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="linePairQrTitle">📱 QR จับคู่ LINE ผู้เช่าใหม่</div>
+    <div class="line-pair-note" id="linePairQrSummary">กำลังเตรียม QR...</div>
+    <div class="line-pair-qr" id="linePairQrCanvas">กำลังสร้าง QR...</div>
+    <textarea id="linePairQrLink" class="line-pair-link" readonly></textarea>
+    <div class="modal-btns">
+      <button class="modal-btn save" onclick="copyLinePairQrLink()">คัดลอกลิงก์</button>
+      <button class="modal-btn cancel" onclick="closeLinePairQrModal()">ปิด</button>
+    </div>
+    <div class="line-pair-meta" id="linePairQrMeta"></div>
+  </div>
+</div>
+
 </body>
 </html>
