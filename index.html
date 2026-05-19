@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.79</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.81</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -17323,17 +17323,18 @@ function pinInput(num) {
             document.getElementById('pinError').textContent = `❌ รหัสไม่ถูกต้อง เหลืออีก ${data.remainingAttempts} ครั้งครับ`;
             setTimeout(() => document.getElementById('pinError').textContent = '', 2000);
           } else {
-            // fallback เผื่อ Worker เก่า/เน็ตหลุด: ยังล็อกหน้าเว็บไว้ชั่วคราว แต่ Worker v15.4.2.30 จะล็อกจริงใน KV
-            pinFailCount++;
-            if (pinFailCount >= PIN_MAX_FAIL) {
-              pinLockUntil = Date.now() + PIN_LOCK_MINUTES * 60 * 1000;
-              pinFailCount = 0;
-              document.getElementById('pinError').textContent = `🔒 กรอกผิดเกินกำหนด ล็อก ${PIN_LOCK_MINUTES} นาทีครับ`;
-            } else {
-              const remaining = PIN_MAX_FAIL - pinFailCount;
-              document.getElementById('pinError').textContent = `❌ รหัสไม่ถูกต้อง เหลืออีก ${remaining} ครั้งครับ`;
-              setTimeout(() => document.getElementById('pinError').textContent = '', 2000);
-            }
+            // กรณี Worker/เครือข่าย/Response ผิดรูปแบบ ห้ามสรุปว่า PIN ผิด
+            // เพราะจะทำให้เจ้าของเข้าใจผิด ทั้งที่รหัสอาจถูกต้องอยู่แล้ว
+            const statusCode = Number(e?.status || 0);
+            const detail = String(e?.message || '').trim();
+            const suffix = statusCode ? ` (HTTP ${statusCode})` : '';
+            document.getElementById('pinError').textContent =
+              `⚠️ ตรวจสอบ PIN ไม่สำเร็จ${suffix} กรุณาลองใหม่ หรือตรวจสอบ Worker`;
+            console.warn('PIN verification request failed:', { statusCode, detail, data });
+            setTimeout(() => {
+              const el = document.getElementById('pinError');
+              if (el && el.textContent.includes('ตรวจสอบ PIN ไม่สำเร็จ')) el.textContent = '';
+            }, 3500);
           }
         }
       }
