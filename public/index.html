@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.81</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.82</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -7937,10 +7937,27 @@ async function workerPost(payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload || {}),
   });
+
   const contentType = res.headers.get('Content-Type') || '';
-  const data = contentType.includes('application/json') ? await res.json() : { text: await res.text() };
+  let data = {};
+  let rawText = '';
+
+  try {
+    rawText = await res.text();
+    if (contentType.includes('application/json')) {
+      data = rawText ? JSON.parse(rawText) : {};
+    } else {
+      data = { text: rawText };
+    }
+  } catch (parseErr) {
+    data = {
+      text: rawText || '',
+      parseError: parseErr?.message || 'Invalid response body',
+    };
+  }
+
   if (!res.ok || data.ok === false) {
-    const err = new Error(data.error || data.text || ('HTTP ' + res.status));
+    const err = new Error(data.error || data.text || data.parseError || ('HTTP ' + res.status));
     err.status = res.status;
     err.data = data;
     throw err;
@@ -17313,19 +17330,34 @@ function pinInput(num) {
           updatePinDots();
 
           const data = e.data || {};
-          if (data.locked) {
+          const statusCode = Number(e?.status || 0);
+          const workerError = String(data.error || '').trim();
+
+          if (data.locked || statusCode === 423 || workerError === 'PIN locked') {
             pinLockUntil = data.lockedUntil ? new Date(data.lockedUntil).getTime() : (Date.now() + Number(data.remainingMs || PIN_LOCK_MINUTES * 60 * 1000));
             pinFailCount = 0;
             const remaining = Math.max(1, Math.ceil((pinLockUntil - Date.now()) / 60000));
             document.getElementById('pinError').textContent = `🔒 กรอกผิดเกินกำหนด ล็อก ${remaining} นาทีครับ`;
-          } else if (typeof data.remainingAttempts === 'number') {
-            pinFailCount = Math.max(0, PIN_MAX_FAIL - data.remainingAttempts);
-            document.getElementById('pinError').textContent = `❌ รหัสไม่ถูกต้อง เหลืออีก ${data.remainingAttempts} ครั้งครับ`;
-            setTimeout(() => document.getElementById('pinError').textContent = '', 2000);
+          } else if (
+            typeof data.remainingAttempts === 'number' ||
+            statusCode === 401 ||
+            workerError === 'Invalid PIN'
+          ) {
+            const remainingAttempts =
+              typeof data.remainingAttempts === 'number'
+                ? data.remainingAttempts
+                : null;
+            pinFailCount = remainingAttempts === null
+              ? pinFailCount + 1
+              : Math.max(0, PIN_MAX_FAIL - remainingAttempts);
+            document.getElementById('pinError').textContent =
+              remainingAttempts === null
+                ? '❌ รหัสไม่ถูกต้อง กรุณาลองอีกครั้งครับ'
+                : `❌ รหัสไม่ถูกต้อง เหลืออีก ${remainingAttempts} ครั้งครับ`;
+            setTimeout(() => document.getElementById('pinError').textContent = '', 2200);
           } else {
             // กรณี Worker/เครือข่าย/Response ผิดรูปแบบ ห้ามสรุปว่า PIN ผิด
             // เพราะจะทำให้เจ้าของเข้าใจผิด ทั้งที่รหัสอาจถูกต้องอยู่แล้ว
-            const statusCode = Number(e?.status || 0);
             const detail = String(e?.message || '').trim();
             const suffix = statusCode ? ` (HTTP ${statusCode})` : '';
             document.getElementById('pinError').textContent =
@@ -17334,7 +17366,7 @@ function pinInput(num) {
             setTimeout(() => {
               const el = document.getElementById('pinError');
               if (el && el.textContent.includes('ตรวจสอบ PIN ไม่สำเร็จ')) el.textContent = '';
-            }, 3500);
+            }, 4000);
           }
         }
       }
