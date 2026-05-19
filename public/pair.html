@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ป่านันท์ • จับคู่ LINE ผู้เช่าใหม่ v15.4.2.77</title>
+  <title>ป่านันท์ • จับคู่ LINE ผู้เช่าใหม่ v15.4.2.78</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=Kanit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
@@ -115,7 +115,7 @@
 
   <script>
     const LINE_PAIR_PORTAL_CONFIG = {
-      // LIFF ID สำหรับหน้า pair.html
+      // ต้องแทนค่า LIFF ID หลังสร้าง LIFF App สำหรับ pair.html
       liffId: '2010080282-gZXtNu0U',
       workerUrl: 'https://white-rice-cf72.joteboony.workers.dev',
     };
@@ -299,7 +299,7 @@
         return;
       }
 
-      if (!LINE_PAIR_PORTAL_CONFIG.liffId || LINE_PAIR_PORTAL_CONFIG.liffId.includes('REPLACE_WITH_LINE_PAIR_LIFF_ID')) {
+      if (!LINE_PAIR_PORTAL_CONFIG.liffId || LINE_PAIR_PORTAL_CONFIG.liffId.includes('PUT_PAIR_LIFF_ID_HERE')) {
         setStatus('หน้านี้ยังไม่ได้ตั้งค่า LIFF ID กรุณาให้เจ้าของหออัปเดตการตั้งค่าก่อนใช้งาน', 'err');
         return;
       }
