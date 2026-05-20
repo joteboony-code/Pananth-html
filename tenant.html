@@ -460,6 +460,36 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
+    function normalizeLinePictureUrl(value = '') {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      try {
+        const url = new URL(raw, window.location.href);
+        if (url.protocol !== 'https:') return '';
+        return url.href;
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function mergeLineProfile(profile = {}, decodedToken = {}) {
+      return {
+        displayName: String(
+          profile?.displayName ||
+          decodedToken?.name ||
+          decodedToken?.displayName ||
+          ''
+        ).trim(),
+        pictureUrl: normalizeLinePictureUrl(
+          profile?.pictureUrl ||
+          profile?.picture ||
+          decodedToken?.picture ||
+          decodedToken?.pictureUrl ||
+          ''
+        ),
+      };
+    }
+
     function setNotice(message, type = '') {
       const notice = $('systemNotice');
       const section = $('systemNoticeSection');
@@ -521,13 +551,18 @@
           return;
         }
 
+        let lineProfile = null;
+        let decodedToken = null;
         try {
           // ใช้สำหรับแสดงชื่อ/รูปบนหน้า Portal เท่านั้น
           // การยืนยันสิทธิ์และจับคู่ห้องยังคงใช้ ID Token ที่ตรวจสอบจาก Worker ตามเดิม
-          portalLineProfile = await liff.getProfile();
+          lineProfile = await liff.getProfile();
         } catch (profileErr) {
-          portalLineProfile = null;
         }
+        try {
+          decodedToken = typeof liff.getDecodedIDToken === 'function' ? liff.getDecodedIDToken() : null;
+        } catch (decodedErr) {}
+        portalLineProfile = mergeLineProfile(lineProfile, decodedToken);
 
         const idToken = liff.getIDToken();
         portalIdToken = String(idToken || '');
@@ -560,7 +595,13 @@
 
     function renderLineProfileHeader() {
       const lineDisplayName = String(portalLineProfile?.displayName || portalData?.user?.displayName || '').trim();
-      const linePictureUrl = String(portalLineProfile?.pictureUrl || portalData?.user?.pictureUrl || '').trim();
+      const linePictureUrl = normalizeLinePictureUrl(
+        portalLineProfile?.pictureUrl ||
+        portalLineProfile?.picture ||
+        portalData?.user?.pictureUrl ||
+        portalData?.user?.picture ||
+        ''
+      );
 
       $('heroTenantName').textContent = lineDisplayName || 'ผู้เช่า';
       const nameNote = $('heroLineNameNote');
@@ -582,16 +623,18 @@
 
       if (!avatarWrap || !avatar) return;
 
-      avatarWrap.classList.remove('has-photo');
-      avatar.removeAttribute('src');
-
-      if (!linePictureUrl) return;
+      if (!linePictureUrl) {
+        avatarWrap.classList.remove('has-photo');
+        avatar.removeAttribute('src');
+        return;
+      }
 
       avatar.onload = () => avatarWrap.classList.add('has-photo');
       avatar.onerror = () => {
         avatarWrap.classList.remove('has-photo');
         avatar.removeAttribute('src');
       };
+      avatarWrap.classList.remove('has-photo');
       avatar.src = linePictureUrl;
     }
 

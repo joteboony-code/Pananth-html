@@ -1,6 +1,6 @@
 {
   "name": "pananth-html",
-  "version": "15.4.2.86",
+  "version": "15.4.2.87",
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy"
