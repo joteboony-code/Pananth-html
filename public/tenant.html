@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ป่านันท์ • ข้อมูลค่าเช่าของฉัน v15.4.2.86</title>
+  <title>ป่านันท์ • ข้อมูลค่าเช่าของฉัน v15.4.2.92</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=Kanit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
@@ -278,6 +278,36 @@
     .qr-return-chat-btn:active{transform:scale(.97)}
     .qr-return-chat-hint{text-align:center;font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}
 
+    /* ── PORTAL SLIP UPLOAD ── */
+    .portal-slip-card{
+      margin-top:14px;padding:16px;border-radius:22px;
+      border:1px solid #bfe8d9;background:linear-gradient(145deg,#f3fffb,#e7fbf3);
+      box-shadow:0 8px 22px rgba(9,115,81,.08);
+    }
+    .portal-slip-title{font-family:'Kanit',sans-serif;font-size:16px;font-weight:900;color:#075c40}
+    .portal-slip-sub{font-size:12px;color:#316555;line-height:1.6;margin-top:4px;font-weight:700}
+    .portal-slip-input{
+      width:100%;margin-top:12px;border:1.5px solid #bfe8d9;border-radius:16px;
+      padding:12px 14px;background:#fff;color:var(--text);font:inherit;
+    }
+    .portal-slip-button{
+      width:100%;margin-top:10px;border:none;border-radius:18px;padding:15px 14px;
+      background:linear-gradient(135deg,#0b8a5d,#06c755);color:#fff;font:inherit;
+      font-size:15px;font-weight:900;cursor:pointer;
+      box-shadow:0 12px 26px rgba(6,199,85,.22);transition:transform .12s;
+    }
+    .portal-slip-button:active{transform:scale(.97)}
+    .portal-slip-button:disabled{opacity:.60;cursor:not-allowed}
+    .portal-slip-status{
+      display:none;margin-top:10px;padding:12px 13px;border-radius:16px;
+      border:1px solid #bfe8d9;background:#fff;color:#075c40;
+      font-size:13px;line-height:1.6;font-weight:800;
+    }
+    .portal-slip-status.show{display:block}
+    .portal-slip-status.success{border-color:#a9e7c7;background:#ecfff4;color:#087443}
+    .portal-slip-status.review{border-color:#f1d08a;background:#fff8e8;color:#8a6100}
+    .portal-slip-status.duplicate{border-color:#efc0ab;background:#fff1eb;color:#a43c1c}
+
     /* ── REPAIR ── */
     .repair-form{display:grid;gap:10px}
     .repair-input,.repair-textarea,.repair-select{
@@ -429,7 +459,7 @@
         <div id="tenantPaymentQrPanel" class="qr-panel">
           <div class="qr-panel-note">
             สแกน QR นี้เพื่อโอนชำระค่าเช่า<br>
-            หลังโอนแล้ว สามารถส่งสลิปในแชต LINE OA ได้ตามปกติ
+            หลังโอนแล้ว แนบสลิปใน Portal ได้ทันที หรือส่งสลิปในแชต LINE OA ได้ตามปกติ
           </div>
           <div class="qr-image-wrap">
             <img src="promptpay-rent-qr.jpg" alt="QR PromptPay สำหรับชำระค่าเช่า" loading="lazy">
@@ -438,6 +468,14 @@
           <button class="qr-return-chat-btn" type="button" onclick="returnToLineChatForSlip()">📤 โอนแล้ว กลับไปส่งสลิปในแชต LINE</button>
           <div class="qr-return-chat-hint">ปุ่มนี้จะปิดหน้า Portal แล้วพากลับไปยัง LINE เพื่อส่งสลิปต่อ</div>
         </div>
+      </div>
+
+      <div class="portal-slip-card" id="portalSlipCard">
+        <div class="portal-slip-title">🧾 แนบสลิปจาก Tenant Portal</div>
+        <div class="portal-slip-sub">ระบบจะตรวจสลิปอัตโนมัติและกันการตัดยอดซ้ำระหว่าง “แชต LINE” กับ “Portal” ให้ครับ</div>
+        <input id="portalSlipFile" class="portal-slip-input" type="file" accept="image/jpeg,image/png,image/webp">
+        <button id="portalSlipSubmitBtn" class="portal-slip-button" type="button" onclick="submitPortalSlip()">📎 แนบสลิปและตรวจสอบ</button>
+        <div id="portalSlipStatus" class="portal-slip-status"></div>
       </div>
     </section>
 
@@ -721,6 +759,22 @@
       }
     }
 
+    async function refreshPortalData(statusText = 'กำลังโหลดสถานะล่าสุด...') {
+      if (!portalIdToken) return;
+      setNotice(statusText);
+      const res = await fetch(TENANT_PORTAL_CONFIG.workerUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'getTenantPortalData', idToken: portalIdToken }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.error || ('HTTP ' + res.status));
+      }
+      portalData = data;
+      renderPortal();
+    }
+
     function renderPortal() {
       if (!portalData || !Array.isArray(portalData.rooms)) {
         setNotice('ยังไม่มีข้อมูลให้แสดง', 'warn');
@@ -825,6 +879,109 @@
       renderArrears(room.arrears || []);
       renderArchives(room.history?.archives || [], room.history?.historyCutoffText || '');
       renderPayments(room.history?.payments || [], room.history?.historyCutoffText || '');
+    }
+
+    function setPortalSlipStatus(message = '', cls = '') {
+      const box = $('portalSlipStatus');
+      if (!box) return;
+      box.className = 'portal-slip-status' + (message ? ' show' : '') + (cls ? ' ' + cls : '');
+      box.textContent = message || '';
+    }
+
+    function portalSlipFileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error || new Error('อ่านไฟล์สลิปไม่สำเร็จ'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function compressPortalSlipFile(file) {
+      if (!file) throw new Error('กรุณาเลือกรูปสลิปก่อน');
+      const type = String(file.type || '').toLowerCase();
+      if (!['image/jpeg','image/png','image/webp'].includes(type)) {
+        throw new Error('รองรับสลิปเฉพาะ JPG, PNG หรือ WEBP');
+      }
+      // ไฟล์ไม่ใหญ่มาก ส่งต้นฉบับเพื่อความคมชัดในการตรวจสลิป
+      if (Number(file.size || 0) > 0 && Number(file.size || 0) <= 2.8 * 1024 * 1024) {
+        return {
+          base64: await portalSlipFileToDataUrl(file),
+          mimeType: type,
+          fileName: String(file.name || 'tenant-slip'),
+          originalSize: Number(file.size || 0),
+        };
+      }
+
+      const img = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => reject(new Error('เปิดรูปสลิปไม่สำเร็จ'));
+          image.src = String(reader.result || '');
+        };
+        reader.onerror = () => reject(reader.error || new Error('อ่านรูปสลิปไม่สำเร็จ'));
+        reader.readAsDataURL(file);
+      });
+      const maxSide = 2400;
+      const ratio = Math.min(1, maxSide / Math.max(img.naturalWidth || img.width || 1, img.naturalHeight || img.height || 1));
+      const width = Math.max(1, Math.round((img.naturalWidth || img.width || 1) * ratio));
+      const height = Math.max(1, Math.round((img.naturalHeight || img.height || 1) * ratio));
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('เตรียมรูปสลิปไม่สำเร็จ');
+      ctx.drawImage(img, 0, 0, width, height);
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(next => next ? resolve(next) : reject(new Error('บีบอัดรูปสลิปไม่สำเร็จ')), 'image/jpeg', 0.90);
+      });
+      return {
+        base64: await portalSlipFileToDataUrl(blob),
+        mimeType: 'image/jpeg',
+        fileName: String(file.name || 'tenant-slip').replace(/\.[^.]+$/, '') + '.jpg',
+        originalSize: Number(file.size || 0),
+        compressedSize: Number(blob.size || 0),
+      };
+    }
+
+    async function submitPortalSlip() {
+      const room = (portalData?.rooms || []).find(item => String(item.roomNum) === String(selectedRoomNum));
+      if (!room) return alert('ไม่พบห้องที่เลือก');
+      const file = $('portalSlipFile')?.files?.[0];
+      if (!file) return alert('กรุณาเลือกรูปสลิปก่อน');
+      const btn = $('portalSlipSubmitBtn');
+      try {
+        if (btn) { btn.disabled = true; btn.textContent = 'กำลังแนบสลิปและตรวจสอบ...'; }
+        setPortalSlipStatus('กำลังเตรียมรูปสลิปและส่งตรวจสอบครับ...');
+        const slip = await compressPortalSlipFile(file);
+        const res = await fetch(TENANT_PORTAL_CONFIG.workerUrl, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            action:'submitPortalSlip',
+            idToken:portalIdToken,
+            roomNum:room.roomNum,
+            slip,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.ok === false) throw new Error(data.error || ('HTTP ' + res.status));
+        const status = String(data.status || 'review');
+        const cls = status === 'verified' || status === 'partial'
+          ? 'success'
+          : (status === 'duplicate' ? 'duplicate' : 'review');
+        setPortalSlipStatus(data.message || 'ระบบรับสลิปแล้วครับ', cls);
+        if ($('portalSlipFile')) $('portalSlipFile').value = '';
+        if (status === 'verified' || status === 'partial') {
+          await refreshPortalData('อัปเดตสถานะหลังตรวจสลิปแล้ว กำลังโหลดข้อมูลล่าสุด...');
+          setPortalSlipStatus(data.message || 'บันทึกยอดชำระแล้วครับ', 'success');
+        }
+      } catch(err) {
+        setPortalSlipStatus('แนบสลิปไม่สำเร็จ: ' + (err?.message || err), 'duplicate');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '📎 แนบสลิปและตรวจสอบ'; }
+      }
     }
 
     function renderMeterPhotos(items) {
