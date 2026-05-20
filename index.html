@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.97</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.98</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -9751,6 +9751,16 @@ function getMeterCycleMonthKey() {
     return getMonthKey() || activeMonthKey || localStorage.getItem('pananth_active_month_key') || '';
   } catch(e) {
     return activeMonthKey || localStorage.getItem('pananth_active_month_key') || '';
+  }
+}
+
+function getCurrentBillingMonthKey() {
+  try {
+    const paymentMonthKey = getMeterCycleMonthKey() || getMonthKey() || '';
+    const meta = getBillingMetaFromPaymentMonth(paymentMonthKey);
+    return meta.billingMonthKey || paymentMonthKey || '';
+  } catch(e) {
+    return getMeterCycleMonthKey() || '';
   }
 }
 
