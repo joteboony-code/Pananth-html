@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.98</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.99</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -6320,9 +6320,6 @@ body.dark .checklist-item.attn {
   <button type="button" class="month-action-btn meter" data-meter-cycle-action="1" onclick="openMeterPage()">
     <span style="font-size:20px;">📝</span> จดมิเตอร์รอบบิลใหม่
   </button>
-  <button type="button" class="month-action-btn" onclick="return openMeterOcrTestPage(event)" title="เปิดหน้า OCR เพื่อทดลองอ่านรูปมิเตอร์ได้ แม้ยังไม่ได้เปิดรอบรับชำระใหม่" style="background:linear-gradient(135deg,#eaf4ff,#dff7ff);color:#175cd3;border:1.5px solid #b9d8ff;">
-    <span style="font-size:20px;">🔎</span> ทดสอบ OCR มิเตอร์
-  </button>
 </div>
 <div class="month-action-note" style="display:none;">
   <span id="openCycleLockNote" style="font-weight:800;color:var(--accent);"></span>
@@ -6347,7 +6344,6 @@ body.dark .checklist-item.attn {
         <button class="ctrl-btn important" onclick="openArrearsPage()">💳 รับชำระ / ยอดค้าง</button>
         <button class="ctrl-btn important" onclick="openTenantOnboardingWizard()">🧍 รับผู้เช่าใหม่</button>
         <button type="button" class="ctrl-btn important" data-meter-cycle-action="1" onclick="openMeterPage()">📝 จดมิเตอร์รอบบิลใหม่</button>
-        <button type="button" class="ctrl-btn outline" onclick="return openMeterOcrTestPage(event)">🔎 ทดสอบ OCR มิเตอร์</button>
         <button class="ctrl-btn danger" onclick="alertUnpaid()">🔔 แจ้งเตือนค้างชำระ</button>
         <button class="ctrl-btn purple" onclick="sendOwnerUnpaidSummary()">📋 สรุปค้างส่งเจ้าของ</button>
         <button class="ctrl-btn outline" onclick="openTenantBroadcastPage()">📢 ประกาศผู้เช่า</button>
@@ -7128,9 +7124,6 @@ body.dark .checklist-item.attn {
   </div>
   <div style="background:#fff8e6;padding:10px 16px;font-size:12px;color:#7a5800;border-bottom:1px solid #f0d580;">
     💡 กรอกเฉพาะ <strong>ครั้งหลัง (ใหม่)</strong> — ค่าเก่าจะเป็นครั้งก่อนอัตโนมัติ
-  </div>
-  <div id="meterOcrTestBanner" style="display:none;background:#eaf4ff;padding:10px 16px;font-size:12px;color:#175cd3;border-bottom:1px solid #b9d8ff;font-weight:800;line-height:1.55;">
-    🔎 โหมดทดสอบ OCR: แนบรูปเพื่อทดลองอ่านเลขมิเตอร์ได้ทันที แต่ระบบยังไม่อนุญาตให้บันทึกมิเตอร์จนกว่าจะกด “เปิดรอบรับชำระใหม่”
   </div>
   <div class="meter-table-wrap" id="meterTableWrap"></div>
 </div>
@@ -9824,22 +9817,17 @@ async function markMeterCycleOpenedForMonth(monthKey) {
 
 function renderMeterCycleLockStatus() {
   const canMeter = canUseMeterEntryForCurrentCycle(null);
-  const lockedTitle = 'เปิดหน้าจดมิเตอร์เพื่อทดสอบ OCR ได้ แต่ยังบันทึกมิเตอร์ไม่ได้จนกว่าจะกด “เปิดรอบรับชำระใหม่”';
+  const lockedTitle = 'ต้องกด “เปิดรอบรับชำระใหม่” ก่อน จึงจะจดมิเตอร์รอบบิลใหม่ได้';
   document.querySelectorAll('[data-meter-cycle-action="1"]').forEach(btn => {
     if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
-    // v15.4.2.95: เปิดหน้า OCR ได้แม้ยังไม่เปิดรอบ เพื่อให้เทส Vision API ได้
-    // การบันทึกจริงยังถูกกันไว้ใน saveAllMeters/saveSingleMeter/saveRoomMeter เหมือนเดิม
-    btn.disabled = false;
-    btn.removeAttribute('aria-disabled');
-    btn.classList.remove('meter-cycle-disabled');
+    btn.disabled = !canMeter;
+    if (canMeter) btn.removeAttribute('aria-disabled');
+    else btn.setAttribute('aria-disabled', 'true');
+    btn.classList.toggle('meter-cycle-disabled', !canMeter);
     btn.title = canMeter ? 'จดมิเตอร์รอบบิลใหม่' : lockedTitle;
-    btn.innerHTML = canMeter ? btn.dataset.originalHtml : '📷 ทดสอบ OCR / จดมิเตอร์';
+    btn.innerHTML = btn.dataset.originalHtml;
   });
 }
-
-// v15.4.2.95: อนุญาตให้เปิดหน้าจดมิเตอร์/หน้าต่างรายห้องเพื่อทดสอบ OCR ได้แม้ยังไม่เปิดรอบ
-// การบันทึกจริงยังถูกบล็อกในฟังก์ชัน save* ด้วย requireMeterCycleOpenedForRoom() อยู่แล้ว
-
 
 // ===== v15.4.2.34: แก้ไขมิเตอร์ได้เฉพาะรอบปัจจุบัน =====
 function getRoomMeterCycleKey(roomNum) {
@@ -10880,17 +10868,16 @@ function makeCard(r) {
   const roomTrash = getRoomTrashValue(r, d);
   const meterEntryAllowed = canUseMeterEntryForCurrentCycle(r);
   const hasCurrentMeter = hasRoomMeterForCurrentCycle(r);
-  // v15.4.2.95: ห้องยังเปิดหน้ามิเตอร์ได้เพื่อทดสอบ OCR แม้ยังไม่เปิดรอบใหม่
-  const meterBtnDisabled = false;
+  const meterBtnDisabled = !meterEntryAllowed;
   const meterBtnTitle = meterEntryAllowed
     ? (hasCurrentMeter ? 'แก้ไขมิเตอร์รอบนี้' : 'จดมิเตอร์ห้องนี้')
-    : 'ทดสอบ OCR ได้ แต่ยังบันทึกมิเตอร์ไม่ได้จนกว่าจะเปิดรอบรับชำระใหม่';
+    : 'ต้องเปิดรอบรับชำระใหม่ก่อนจึงจดมิเตอร์ได้';
   const meterBtnText = meterEntryAllowed
     ? (hasCurrentMeter ? '✏️ แก้ไขมิเตอร์' : '📝 จดมิเตอร์')
-    : '📷 ทดสอบ OCR';
+    : '🔒 ยังไม่เปิดรอบ';
   const meterBtnStyle = meterEntryAllowed
     ? 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:pointer;font-size:11px;font-weight:800;background:var(--accent);color:#1a2036;box-shadow:0 2px 6px rgba(232,160,32,0.28);white-space:nowrap;'
-    : 'padding:7px 14px;border:1px solid #b9d8ff;border-radius:16px;cursor:pointer;font-size:11px;font-weight:800;background:#eaf4ff;color:#175cd3;box-shadow:none;white-space:nowrap;';
+    : 'padding:7px 14px;border:1px solid #d6d9de;border-radius:16px;cursor:not-allowed;font-size:11px;font-weight:800;background:#e5e7eb;color:#6b7280;box-shadow:none;white-space:nowrap;';
 
   const portalState = portalOpenInfo(r);
   const paymentPromise = getPaymentPromiseInfo(r);
@@ -12123,8 +12110,7 @@ document.getElementById('paidToggle').addEventListener('change', () => {
 });
 
 // ===== METER PAGE =====
-function openMeterPage(opts = {}) {
-  const forceOcrTestMode = opts && opts.ocrTestMode === true;
+function openMeterPage() {
   const meterCanSave = canUseMeterEntryForCurrentCycle(null);
   const page = document.getElementById('meterPage');
   const wrap = document.getElementById('meterTableWrap');
@@ -12133,13 +12119,11 @@ function openMeterPage(opts = {}) {
     return false;
   }
   const meterPageTitle = document.querySelector('#meterPage .page-header h2');
-  if (meterPageTitle) meterPageTitle.textContent = forceOcrTestMode && !meterCanSave ? '🔎 ทดสอบ OCR มิเตอร์' : '📝 จดมิเตอร์รอบบิลใหม่';
-  const banner = document.getElementById('meterOcrTestBanner');
-  if (banner) banner.style.display = (!meterCanSave || forceOcrTestMode) ? 'block' : 'none';
+  if (meterPageTitle) meterPageTitle.textContent = '📝 จดมิเตอร์รอบบิลใหม่';
   const saveAllBtn = document.getElementById('meterSaveAllBtn');
   if (saveAllBtn) {
     saveAllBtn.disabled = !meterCanSave;
-    saveAllBtn.title = meterCanSave ? 'บันทึกมิเตอร์ทั้งหมด' : 'ทดสอบ OCR ได้ แต่ต้องเปิดรอบรับชำระใหม่ก่อนจึงบันทึกได้';
+    saveAllBtn.title = meterCanSave ? 'บันทึกมิเตอร์ทั้งหมด' : 'ต้องเปิดรอบรับชำระใหม่ก่อนจึงบันทึกได้';
     saveAllBtn.textContent = meterCanSave ? 'บันทึกทั้งหมด ✓' : '🔒 เปิดรอบก่อนจึงบันทึก';
   }
   page.classList.add('open');
@@ -12152,16 +12136,9 @@ function openMeterPage(opts = {}) {
     }
   } catch (err) {
     console.error('openMeterPage failed:', err);
-    wrap.innerHTML = `<div style="margin:16px;padding:14px;border-radius:10px;background:#fff1f2;color:#9f1239;font-weight:800;line-height:1.55;">เปิดหน้าทดสอบ OCR ไม่สำเร็จ<br><span style="font-weight:600;font-size:12px;">${escapeHtml(err && err.message ? err.message : String(err || 'unknown error'))}</span></div>`;
+    wrap.innerHTML = `<div style="margin:16px;padding:14px;border-radius:10px;background:#fff1f2;color:#9f1239;font-weight:800;line-height:1.55;">เปิดหน้าจดมิเตอร์ไม่สำเร็จ<br><span style="font-weight:600;font-size:12px;">${escapeHtml(err && err.message ? err.message : String(err || 'unknown error'))}</span></div>`;
   }
-  if (!forceOcrTestMode) pananthPushRoutePath('meter');
-  return false;
-}
-
-function openMeterOcrTestPage(event) {
-  if (event && typeof event.preventDefault === 'function') event.preventDefault();
-  if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
-  openMeterPage({ ocrTestMode: true });
+  pananthPushRoutePath('meter');
   return false;
 }
 
@@ -18005,7 +17982,6 @@ function organizeMobileTools() {
             <button class="ctrl-btn important" onclick="openArrearsPage()">💳 รับชำระ / ยอดค้าง</button>
             <button class="ctrl-btn important" onclick="openTenantOnboardingWizard()">🧍 รับผู้เช่าใหม่</button>
             <button type="button" class="ctrl-btn important" data-meter-cycle-action="1" onclick="openMeterPage()">📝 จดมิเตอร์</button>
-            <button type="button" class="ctrl-btn outline" onclick="return openMeterOcrTestPage(event)">🔎 ทดสอบ OCR</button>
             <button class="ctrl-btn danger" onclick="alertUnpaid()">🔔 แจ้งเตือนค้าง</button>
             <button class="ctrl-btn purple" onclick="sendOwnerUnpaidSummary()">📋 สรุปค้าง</button>
           </div>
