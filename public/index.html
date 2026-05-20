@@ -3,11 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.100</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.101</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
+
+(() => {
+  try {
+    const sessionOk = sessionStorage.getItem('pananth_pin_unlocked_session') === '1';
+    const adminToken = sessionStorage.getItem('pananth_admin_token_v1') || '';
+    const last = Number(sessionStorage.getItem('pananth_pin_last_activity') || '0');
+    if (sessionOk && adminToken && last > 0 && (Date.now() - last) < 5 * 60 * 1000) {
+      document.documentElement.classList.add('pananth-pin-session-candidate');
+    }
+  } catch(e) {}
+})();
 
 let __pananthModalScrollY = 0;
 
@@ -2164,6 +2175,7 @@ function renderSystemActivityHistory() {
   }
   .pin-screen.show { display: flex; }
   .pin-screen.hide { display: none !important; }
+  html.pananth-pin-session-candidate #pinScreen.show { display: none !important; }
   .pin-title { font-family: 'Kanit',sans-serif; font-size: 22px; font-weight: 700; color: white; margin-bottom: 6px; }
   .pin-subtitle { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 30px; }
   .pin-dots { display: flex; gap: 14px; margin-bottom: 36px; }
@@ -17571,6 +17583,7 @@ function resolvePinUnlock() {
 function showPinScreenSafe() {
   const pinScreen = document.getElementById('pinScreen');
   if (!pinScreen) return;
+  document.documentElement.classList.remove('pananth-pin-session-candidate');
   pinScreen.classList.remove('hide');
   pinScreen.classList.add('show');
   lockPinScrollSafe();
@@ -17579,6 +17592,7 @@ function showPinScreenSafe() {
 function hidePinScreenSafe() {
   const pinScreen = document.getElementById('pinScreen');
   if (!pinScreen) return;
+  document.documentElement.classList.remove('pananth-pin-session-candidate');
   pinScreen.classList.remove('show');
   pinScreen.classList.add('hide');
   unlockPinScrollSafe();
