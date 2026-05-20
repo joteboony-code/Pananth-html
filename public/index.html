@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.99</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.100</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -12206,6 +12206,28 @@ function setMeterOcrStatus(el, text = '', tone = 'muted') {
   el.textContent = text || '';
 }
 
+function confirmMeterOcrReading({ roomNum, meterType, reading, candidates = [], prevReading = 0 } = {}) {
+  const label = String(meterType || '') === 'electric' ? 'ไฟฟ้า' : 'น้ำ';
+  const alt = candidates.filter(value => Number.isFinite(value) && value !== reading).slice(0, 5);
+  const warning = Number.isFinite(prevReading) && prevReading > 0 && Number.isFinite(reading) && reading < prevReading
+    ? `\n\n⚠️ เลขที่อ่านได้น้อยกว่าครั้งก่อน (${prevReading.toLocaleString()}) กรุณาตรวจรูปให้แน่ใจก่อนยืนยัน`
+    : '';
+  const raw = prompt(
+    `OCR อ่านเลขมิเตอร์${label} ห้อง ${roomNum} ได้: ${Number(reading).toLocaleString()}` +
+    `${alt.length ? `\nตัวเลือกอื่น: ${alt.map(v => Number(v).toLocaleString()).join(', ')}` : ''}` +
+    `${warning}\n\nถ้าถูกต้องให้กด OK หรือแก้เลขในช่องนี้ก่อนกด OK\nถ้าไม่แน่ใจให้กด Cancel แล้วกรอกเอง`,
+    String(reading)
+  );
+  if (raw === null) return null;
+  const cleaned = String(raw || '').replace(/[^\d]/g, '');
+  const confirmed = parseInt(cleaned, 10);
+  if (!Number.isFinite(confirmed) || confirmed < 0) {
+    alert('กรุณาใส่ตัวเลขมิเตอร์เป็นตัวเลขเท่านั้น');
+    return null;
+  }
+  return confirmed;
+}
+
 async function runMeterPhotoOCR({ roomNum, meterType, file, prevReading = 0, inputEl = null, statusEl = null } = {}) {
   if (!file) return null;
   if (statusEl) setMeterOcrStatus(statusEl, '⏳ กำลังอ่านเลขจากรูป...', 'muted');
@@ -12230,12 +12252,18 @@ async function runMeterPhotoOCR({ roomNum, meterType, file, prevReading = 0, inp
       rawTextPreview: String(data?.rawTextPreview || ''),
     };
     if (Number.isFinite(reading) && reading >= 0) {
-      if (inputEl) {
-        inputEl.value = String(reading);
-        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-      }
       const alt = candidates.filter(value => value !== reading).slice(0, 3);
-      setMeterOcrStatus(statusEl, `✅ OCR อ่านได้ ${reading.toLocaleString()}${alt.length ? ' • ตัวเลือกอื่น ' + alt.join(', ') : ''} — ตรวจทานก่อนบันทึก`, 'ok');
+      const confirmedReading = inputEl
+        ? confirmMeterOcrReading({ roomNum, meterType, reading, candidates, prevReading })
+        : reading;
+      if (inputEl && Number.isFinite(confirmedReading) && confirmedReading >= 0) {
+        meterOcrState[meterOcrKey(roomNum, meterType)].confirmedReading = confirmedReading;
+        inputEl.value = String(confirmedReading);
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        setMeterOcrStatus(statusEl, `✅ ยืนยันเลข OCR แล้ว: ${confirmedReading.toLocaleString()}${alt.length ? ' • ตัวเลือกอื่น ' + alt.join(', ') : ''} — ตรวจทานก่อนบันทึก`, 'ok');
+      } else {
+        setMeterOcrStatus(statusEl, `⚠️ OCR อ่านได้ ${reading.toLocaleString()}${alt.length ? ' • ตัวเลือกอื่น ' + alt.join(', ') : ''} แต่ยังไม่ได้ใส่ค่า กรุณากรอกหรือเลือกเอง`, 'warn');
+      }
     } else {
       setMeterOcrStatus(statusEl, '⚠️ OCR ยังอ่านเลขไม่ชัด กรุณากรอกเองหรือถ่ายใหม่', 'warn');
     }
