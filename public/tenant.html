@@ -3,64 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ป่านันท์ • ข้อมูลค่าเช่าของฉัน v15.4.2.85</title>
+  <title>ป่านันท์ • ข้อมูลค่าเช่าของฉัน v15.4.2.86</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&family=Kanit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     :root{
-      --bg:#f3f6fb;--card:#fff;--primary:#173a63;--primary2:#265f9e;--accent:#e4a43b;
-      --text:#142033;--muted:#667085;--border:#dbe4f1;--green:#15803d;--orange:#d97706;
-      --red:#c2410c;--greenBg:#eaf8ef;--orangeBg:#fff4e5;--redBg:#fff0ea;--shadow:0 14px 34px rgba(23,58,99,.10)
+      --bg:#f5f8fd;--card:#fff;--primary:#123b70;--primary2:#2d75cb;--accent:#ffb24a;
+      --teal:#15b7b1;--mint:#4fddb3;--text:#13243c;--muted:#617086;--border:#d9e4f3;
+      --green:#0f8a50;--orange:#cf7300;--red:#c2410c;
+      --greenBg:#e9fbf2;--orangeBg:#fff3df;--redBg:#fff0ea;
+      --shadow:0 18px 44px rgba(18,59,112,.12)
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:'Sarabun',sans-serif;color:var(--text);background:radial-gradient(circle at top right,rgba(228,164,59,.22),transparent 32%),linear-gradient(180deg,#edf4ff 0%,var(--bg) 32%,#eef3f9 100%);min-height:100vh}
+    body{margin:0;font-family:'Sarabun',sans-serif;color:var(--text);background:
+      radial-gradient(circle at 8% 5%,rgba(79,221,179,.28),transparent 24%),
+      radial-gradient(circle at 96% 0%,rgba(255,178,74,.30),transparent 28%),
+      linear-gradient(180deg,#edf6ff 0%,var(--bg) 38%,#eef4fb 100%);min-height:100vh}
     .app{width:min(100%,980px);margin:0 auto;padding:16px 14px 72px}
-    .hero{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-radius:28px;padding:18px;box-shadow:0 18px 42px rgba(20,51,90,.26)}
-    .hero:after{content:'';position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.11);right:-78px;top:-92px}
+    .hero{position:relative;overflow:hidden;background:
+      radial-gradient(circle at 10% 12%,rgba(79,221,179,.36),transparent 28%),
+      radial-gradient(circle at 98% 2%,rgba(255,178,74,.34),transparent 25%),
+      linear-gradient(135deg,#0f3561 0%,#1e63af 56%,#2d87c9 100%);
+      color:#fff;border-radius:30px;padding:19px;box-shadow:0 24px 54px rgba(14,48,90,.30);border:1px solid rgba(255,255,255,.15)}
+    .hero:before{content:'';position:absolute;width:180px;height:180px;border-radius:50%;left:-88px;bottom:-96px;background:rgba(255,255,255,.09)}
+    .hero:after{content:'';position:absolute;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.12);right:-88px;top:-104px}
     .brand,.hero-grid,.userbox{position:relative;z-index:1}
     .brand{display:flex;gap:12px;align-items:center;margin-bottom:16px}
-    .logo{width:50px;height:50px;border-radius:18px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.20);display:flex;align-items:center;justify-content:center;font-size:25px}
-    .brand-title{font-family:'Kanit',sans-serif;font-size:20px;font-weight:800;line-height:1.15}
-    .brand-sub{font-size:12px;opacity:.86;margin-top:2px}
+    .logo{width:54px;height:54px;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,.28),rgba(255,255,255,.12));border:1px solid rgba(255,255,255,.26);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 12px 28px rgba(4,31,62,.24)}
+    .brand-title{font-family:'Kanit',sans-serif;font-size:22px;font-weight:800;line-height:1.12;letter-spacing:.01em}
+    .brand-sub{font-size:12px;opacity:.92;margin-top:3px;font-weight:700}
     .hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
-    .hero-panel{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.20);border-radius:20px;padding:14px;backdrop-filter:blur(10px)}
-    .hero-profile-panel{background:linear-gradient(135deg,rgba(255,255,255,.20),rgba(72,214,156,.16));}
-    .hero-balance-panel{background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,204,128,.18));}
+    .hero-panel{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);border-radius:22px;padding:15px;backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+    .hero-profile-panel{background:linear-gradient(135deg,rgba(255,255,255,.24),rgba(79,221,179,.22));}
+    .hero-balance-panel{background:linear-gradient(135deg,rgba(255,255,255,.20),rgba(255,190,96,.24));}
     .tenant-identity{display:flex;align-items:center;gap:12px;min-width:0}
     .line-avatar{
-      position:relative;flex:0 0 auto;width:68px;height:68px;border-radius:24px;
+      position:relative;flex:0 0 auto;width:74px;height:74px;border-radius:26px;
       display:flex;align-items:center;justify-content:center;overflow:hidden;
-      border:2px solid rgba(255,255,255,.38);
-      background:linear-gradient(135deg,rgba(255,255,255,.30),rgba(255,255,255,.12));
-      box-shadow:0 10px 22px rgba(5,31,60,.24);
+      border:2px solid rgba(255,255,255,.46);
+      background:linear-gradient(135deg,rgba(255,255,255,.34),rgba(255,255,255,.14));
+      box-shadow:0 14px 28px rgba(5,31,60,.28);
     }
     .line-avatar img{display:none;width:100%;height:100%;object-fit:cover}
     .line-avatar.has-photo img{display:block}
     .line-avatar.has-photo .line-avatar-fallback{display:none}
     .line-avatar-fallback{
       display:flex;align-items:center;justify-content:center;width:100%;height:100%;
-      font-family:'Kanit',sans-serif;font-size:18px;font-weight:900;color:#fff;
-      background:linear-gradient(135deg,#21c063,#48d696);
+      font-family:'Kanit',sans-serif;font-size:22px;font-weight:900;color:#fff;
+      background:linear-gradient(135deg,#17bd60,#4fddb3);
     }
     .line-avatar:after{
       content:'LINE';position:absolute;right:-2px;bottom:-2px;
-      padding:3px 6px;border-radius:999px;background:#21c063;color:#fff;
-      border:2px solid rgba(23,58,99,.86);font-size:9px;font-weight:900;line-height:1;
+      padding:4px 7px;border-radius:999px;background:#17bd60;color:#fff;
+      border:2px solid rgba(15,53,97,.90);font-size:9px;font-weight:900;line-height:1;
     }
     .identity-copy{min-width:0;flex:1}
-    .line-name-note{font-size:11px;opacity:.82;margin-top:3px;font-weight:800}
+    .line-name-note{font-size:11px;opacity:.94;margin-top:4px;font-weight:800;letter-spacing:.01em}
 
-    .hello{font-size:12px;opacity:.88}
-    .tenant-name{font-family:'Kanit',sans-serif;font-size:24px;font-weight:800;margin-top:2px;line-height:1.16;word-break:break-word}
-    .room-pill,.info-pill{display:inline-flex;gap:7px;align-items:center;margin-top:10px;padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.18);font-size:12px;font-weight:800}
-    .bill-label{font-size:12px;opacity:.86;margin-bottom:3px}
-    .bill-total{font-family:'Kanit',sans-serif;font-size:34px;font-weight:800;line-height:1}
-    .bill-status{display:inline-flex;gap:6px;align-items:center;margin-top:11px;padding:7px 10px;border-radius:999px;background:rgba(255,224,178,.22);border:1px solid rgba(255,224,178,.30);font-size:12px;font-weight:800}
-    .section{margin-top:14px;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:22px;padding:15px;box-shadow:var(--shadow)}
+    .hello{font-size:12px;opacity:.94;font-weight:700}
+    .tenant-name{font-family:'Kanit',sans-serif;font-size:26px;font-weight:800;margin-top:3px;line-height:1.15;word-break:break-word;letter-spacing:.01em;text-shadow:0 2px 12px rgba(0,0,0,.12)}
+    .room-pill,.info-pill{display:inline-flex;gap:7px;align-items:center;margin-top:11px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.18);font-size:12px;font-weight:900;box-shadow:0 8px 18px rgba(6,32,61,.14)}
+    .bill-label{font-size:12px;opacity:.94;margin-bottom:4px;font-weight:700}
+    .bill-total{font-family:'Kanit',sans-serif;font-size:40px;font-weight:800;line-height:1;letter-spacing:.01em;text-shadow:0 3px 18px rgba(0,0,0,.16)}
+    .bill-status{display:inline-flex;gap:6px;align-items:center;margin-top:12px;padding:8px 11px;border-radius:999px;background:rgba(255,230,185,.28);border:1px solid rgba(255,230,185,.38);font-size:12px;font-weight:900}
+    .section{margin-top:15px;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:24px;padding:16px;box-shadow:var(--shadow)}
     .section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}
-    .section-title{font-family:'Kanit',sans-serif;font-size:18px;font-weight:800;color:var(--primary)}
+    .section-title{font-family:'Kanit',sans-serif;font-size:20px;font-weight:800;color:var(--primary);letter-spacing:.01em}
     .section-sub{font-size:12px;color:var(--muted);line-height:1.48;margin-top:2px}
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#eef5ff;color:var(--primary);font-size:12px;font-weight:800;white-space:nowrap}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border-radius:999px;background:linear-gradient(135deg,#eef6ff,#e9fbf2);color:var(--primary);font-size:12px;font-weight:900;white-space:nowrap;border:1px solid #dfeaf7}
     .selector{display:flex;gap:8px;overflow:auto;padding-bottom:2px}
     .room-select{min-width:160px;text-align:left;border:2px solid var(--border);background:#fff;border-radius:16px;padding:11px;font:inherit;cursor:pointer}
     .room-select.active{border-color:#2c7be5;background:#eef5ff}
@@ -68,13 +78,15 @@
     .room-select-sub{font-size:12px;color:var(--muted);margin-top:3px}
     .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
     .summary-card,.bill-row,.history-card,.empty,.notice{border-radius:16px;border:1px solid #e6edf7;background:#f8fbff}
-    .summary-card{padding:12px;min-height:88px}
+    .summary-card{padding:13px;min-height:92px;background:linear-gradient(135deg,#f9fbff,#eef5ff)}
+    .summary-card:nth-child(2){background:linear-gradient(135deg,#f9fffc,#eafbf3)}
+    .summary-card:nth-child(3){background:linear-gradient(135deg,#fffaf1,#fff1df)}
     .summary-label{font-size:12px;color:var(--muted)}
-    .summary-value{font-family:'Kanit',sans-serif;color:var(--primary);font-size:20px;font-weight:800;margin-top:6px}
+    .summary-value{font-family:'Kanit',sans-serif;color:var(--primary);font-size:22px;font-weight:800;margin-top:7px}
     .bill-list{display:grid;gap:8px}
     .bill-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 12px}
     .bill-row strong{color:var(--primary)}
-    .bill-row.total{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border:none;padding:14px 12px}
+    .bill-row.total{background:linear-gradient(135deg,#123b70,#2d75cb);color:#fff;border:none;padding:15px 13px;box-shadow:0 14px 28px rgba(18,59,112,.20)}
     .bill-row.total strong{color:#fff;font-family:'Kanit',sans-serif;font-size:18px}
     .progress{margin-top:12px;padding:12px;border-radius:16px;background:var(--orangeBg);border:1px solid #f7d9aa}
     .progress-top{display:flex;justify-content:space-between;gap:10px;color:var(--orange);font-size:13px;font-weight:800;margin-bottom:8px}
@@ -439,6 +451,7 @@
     let portalData = null;
     let selectedRoomNum = '';
     let portalIdToken = '';
+    let portalLineProfile = null;
 
     const $ = (id) => document.getElementById(id);
     const money = (value) => (Number(value || 0)).toLocaleString('th-TH') + ' ฿';
@@ -508,6 +521,14 @@
           return;
         }
 
+        try {
+          // ใช้สำหรับแสดงชื่อ/รูปบนหน้า Portal เท่านั้น
+          // การยืนยันสิทธิ์และจับคู่ห้องยังคงใช้ ID Token ที่ตรวจสอบจาก Worker ตามเดิม
+          portalLineProfile = await liff.getProfile();
+        } catch (profileErr) {
+          portalLineProfile = null;
+        }
+
         const idToken = liff.getIDToken();
         portalIdToken = String(idToken || '');
         if (!idToken) {
@@ -538,8 +559,8 @@
     }
 
     function renderLineProfileHeader() {
-      const lineDisplayName = String(portalData?.user?.displayName || '').trim();
-      const linePictureUrl = String(portalData?.user?.pictureUrl || '').trim();
+      const lineDisplayName = String(portalLineProfile?.displayName || portalData?.user?.displayName || '').trim();
+      const linePictureUrl = String(portalLineProfile?.pictureUrl || portalData?.user?.pictureUrl || '').trim();
 
       $('heroTenantName').textContent = lineDisplayName || 'ผู้เช่า';
       const nameNote = $('heroLineNameNote');
@@ -643,7 +664,7 @@
       const billing = room.billingMeta || {};
       const meters = room.meters || {};
       const roomTenantName = String(room.tenantName || '').trim();
-      const lineDisplayName = String(portalData?.user?.displayName || '').trim();
+      const lineDisplayName = String(portalLineProfile?.displayName || portalData?.user?.displayName || '').trim();
       $('heroTenantName').textContent = lineDisplayName || roomTenantName || 'ผู้เช่า';
 
       // v15.4.2.68: ซ่อนฟอร์มแจ้งซ่อมใน Tenant Portal ไว้ก่อน แต่คงระบบ/โค้ดเดิมไว้ครบ
