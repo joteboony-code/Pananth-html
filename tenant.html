@@ -8,252 +8,319 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     :root{
-      --bg:#f5f8fd;--card:#fff;--primary:#123b70;--primary2:#2d75cb;--accent:#ffb24a;
-      --teal:#15b7b1;--mint:#4fddb3;--text:#13243c;--muted:#617086;--border:#d9e4f3;
-      --green:#0f8a50;--orange:#cf7300;--red:#c2410c;
-      --greenBg:#e9fbf2;--orangeBg:#fff3df;--redBg:#fff0ea;
-      --shadow:0 18px 44px rgba(18,59,112,.12)
+      --bg:#f0f4fa;--card:#fff;--primary:#0f3461;--primary2:#2463b0;--accent:#ffb84d;
+      --teal:#0fb8b1;--mint:#3fd9b0;--text:#12243c;--muted:#5a6a80;--border:#d4e0f0;
+      --green:#0c8045;--orange:#c96d00;--red:#b83010;
+      --greenBg:#e4f9ed;--orangeBg:#fff2d8;--redBg:#fff0e8;
+      --shadow:0 20px 48px rgba(15,52,97,.13);
+      --radius:28px;--radius-sm:18px;--radius-xs:12px;
     }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:'Sarabun',sans-serif;color:var(--text);background:
-      radial-gradient(circle at 8% 5%,rgba(79,221,179,.28),transparent 24%),
-      radial-gradient(circle at 96% 0%,rgba(255,178,74,.30),transparent 28%),
-      linear-gradient(180deg,#edf6ff 0%,var(--bg) 38%,#eef4fb 100%);min-height:100vh}
-    .app{width:min(100%,980px);margin:0 auto;padding:16px 14px 72px}
-    .hero{position:relative;overflow:hidden;background:
-      radial-gradient(circle at 10% 12%,rgba(79,221,179,.36),transparent 28%),
-      radial-gradient(circle at 98% 2%,rgba(255,178,74,.34),transparent 25%),
-      linear-gradient(135deg,#0f3561 0%,#1e63af 56%,#2d87c9 100%);
-      color:#fff;border-radius:30px;padding:19px;box-shadow:0 24px 54px rgba(14,48,90,.30);border:1px solid rgba(255,255,255,.15)}
-    .hero:before{content:'';position:absolute;width:180px;height:180px;border-radius:50%;left:-88px;bottom:-96px;background:rgba(255,255,255,.09)}
-    .hero:after{content:'';position:absolute;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.12);right:-88px;top:-104px}
-    .brand,.hero-grid,.userbox{position:relative;z-index:1}
-    .brand{display:flex;gap:12px;align-items:center;margin-bottom:16px}
-    .logo{width:54px;height:54px;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,.28),rgba(255,255,255,.12));border:1px solid rgba(255,255,255,.26);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 12px 28px rgba(4,31,62,.24)}
-    .brand-title{font-family:'Kanit',sans-serif;font-size:22px;font-weight:800;line-height:1.12;letter-spacing:.01em}
-    .brand-sub{font-size:12px;opacity:.92;margin-top:3px;font-weight:700}
-    .hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
-    .hero-panel{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);border-radius:22px;padding:15px;backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
-    .hero-profile-panel{background:linear-gradient(135deg,rgba(255,255,255,.24),rgba(79,221,179,.22));}
-    .hero-balance-panel{background:linear-gradient(135deg,rgba(255,255,255,.20),rgba(255,190,96,.24));}
-    .tenant-identity{display:flex;align-items:center;gap:12px;min-width:0}
-    .line-avatar{
-      position:relative;flex:0 0 auto;width:74px;height:74px;border-radius:26px;
-      display:flex;align-items:center;justify-content:center;overflow:hidden;
-      border:2px solid rgba(255,255,255,.46);
-      background:linear-gradient(135deg,rgba(255,255,255,.34),rgba(255,255,255,.14));
-      box-shadow:0 14px 28px rgba(5,31,60,.28);
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{
+      margin:0;font-family:'Sarabun',sans-serif;color:var(--text);
+      background:#e8eef8;
+      min-height:100vh;
     }
-    .line-avatar img{display:none;width:100%;height:100%;object-fit:cover}
-    .line-avatar.has-photo img{display:block}
-    .line-avatar.has-photo .line-avatar-fallback{display:none}
-    .line-avatar-fallback{
-      display:flex;align-items:center;justify-content:center;width:100%;height:100%;
-      font-family:'Kanit',sans-serif;font-size:22px;font-weight:900;color:#fff;
-      background:linear-gradient(135deg,#17bd60,#4fddb3);
-    }
-    .line-avatar:after{
-      content:'LINE';position:absolute;right:-2px;bottom:-2px;
-      padding:4px 7px;border-radius:999px;background:#17bd60;color:#fff;
-      border:2px solid rgba(15,53,97,.90);font-size:9px;font-weight:900;line-height:1;
-    }
-    .identity-copy{min-width:0;flex:1}
-    .line-name-note{font-size:11px;opacity:.94;margin-top:4px;font-weight:800;letter-spacing:.01em}
+    .app{width:min(100%,980px);margin:0 auto;padding:16px 14px 80px}
 
-    .hello{font-size:12px;opacity:.94;font-weight:700}
-    .tenant-name{font-family:'Kanit',sans-serif;font-size:26px;font-weight:800;margin-top:3px;line-height:1.15;word-break:break-word;letter-spacing:.01em;text-shadow:0 2px 12px rgba(0,0,0,.12)}
-    .room-pill,.info-pill{display:inline-flex;gap:7px;align-items:center;margin-top:11px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.18);font-size:12px;font-weight:900;box-shadow:0 8px 18px rgba(6,32,61,.14)}
-    .bill-label{font-size:12px;opacity:.94;margin-bottom:4px;font-weight:700}
-    .bill-total{font-family:'Kanit',sans-serif;font-size:40px;font-weight:800;line-height:1;letter-spacing:.01em;text-shadow:0 3px 18px rgba(0,0,0,.16)}
-    .bill-status{display:inline-flex;gap:6px;align-items:center;margin-top:12px;padding:8px 11px;border-radius:999px;background:rgba(255,230,185,.28);border:1px solid rgba(255,230,185,.38);font-size:12px;font-weight:900}
-    .section{margin-top:15px;background:rgba(255,255,255,.98);border:1px solid var(--border);border-radius:24px;padding:16px;box-shadow:var(--shadow)}
-    .section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}
-    .section-title{font-family:'Kanit',sans-serif;font-size:20px;font-weight:800;color:var(--primary);letter-spacing:.01em}
-    .section-sub{font-size:12px;color:var(--muted);line-height:1.48;margin-top:2px}
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border-radius:999px;background:linear-gradient(135deg,#eef6ff,#e9fbf2);color:var(--primary);font-size:12px;font-weight:900;white-space:nowrap;border:1px solid #dfeaf7}
-    .selector{display:flex;gap:8px;overflow:auto;padding-bottom:2px}
-    .room-select{min-width:160px;text-align:left;border:2px solid var(--border);background:#fff;border-radius:16px;padding:11px;font:inherit;cursor:pointer}
-    .room-select.active{border-color:#2c7be5;background:#eef5ff}
+    /* ── HERO ── */
+    .hero{
+      position:relative;overflow:hidden;
+      background:linear-gradient(145deg,#0a2a52 0%,#1455a4 55%,#1e79c8 100%);
+      color:#fff;border-radius:var(--radius);padding:22px 20px 20px;
+      box-shadow:0 28px 60px rgba(10,42,82,.35);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .hero-deco{
+      position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:inherit;
+    }
+    .hero-deco::before{
+      content:'';position:absolute;
+      width:300px;height:300px;border-radius:50%;
+      left:-100px;bottom:-140px;
+      background:radial-gradient(circle,rgba(79,221,179,.22) 0%,transparent 70%);
+    }
+    .hero-deco::after{
+      content:'';position:absolute;
+      width:260px;height:260px;border-radius:50%;
+      right:-80px;top:-100px;
+      background:radial-gradient(circle,rgba(255,184,77,.24) 0%,transparent 70%);
+    }
+    .brand,.hero-grid,.userbox{position:relative;z-index:1}
+    .brand{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+    .logo{
+      width:52px;height:52px;border-radius:18px;flex:0 0 auto;
+      background:linear-gradient(135deg,rgba(255,255,255,.30),rgba(255,255,255,.12));
+      border:1.5px solid rgba(255,255,255,.30);
+      display:flex;align-items:center;justify-content:center;
+      font-size:24px;box-shadow:0 10px 24px rgba(4,28,58,.28);
+    }
+    .brand-title{font-family:'Kanit',sans-serif;font-size:21px;font-weight:800;line-height:1.1;letter-spacing:.01em}
+    .brand-sub{font-size:11.5px;opacity:.88;margin-top:3px;font-weight:700;letter-spacing:.02em}
+
+    .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}
+    .hero-panel{
+      background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
+      border-radius:22px;padding:16px;
+      backdrop-filter:blur(14px);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 8px 20px rgba(0,0,0,.08);
+    }
+    .hero-profile-panel{background:linear-gradient(135deg,rgba(255,255,255,.20),rgba(79,221,179,.18))}
+    .hero-balance-panel{background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,184,77,.20))}
+
+    /* ── LINE AVATAR ── */
+    .tenant-identity{display:flex;align-items:center;gap:13px;min-width:0}
+    .line-avatar-wrap{
+      position:relative;flex:0 0 auto;width:72px;height:72px;
+    }
+    .line-avatar-img-shell{
+      width:72px;height:72px;border-radius:24px;overflow:hidden;
+      border:2.5px solid rgba(255,255,255,.50);
+      box-shadow:0 10px 26px rgba(5,28,56,.32);
+      background:linear-gradient(135deg,#17c06a,#3fd9b0);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .line-avatar-img-shell img{
+      width:100%;height:100%;object-fit:cover;
+      display:block;border-radius:21px;
+    }
+    .line-avatar-fallback-text{
+      font-family:'Kanit',sans-serif;font-size:26px;font-weight:900;color:#fff;
+      line-height:1;user-select:none;
+    }
+    .line-badge{
+      position:absolute;right:-5px;bottom:-5px;
+      width:22px;height:22px;border-radius:8px;
+      background:#06c755;border:2.5px solid rgba(12,44,90,.95);
+      display:flex;align-items:center;justify-content:center;
+      font-size:9px;font-weight:900;color:#fff;
+      box-shadow:0 3px 8px rgba(6,199,85,.45);
+    }
+
+    .identity-copy{min-width:0;flex:1}
+    .hello{font-size:11.5px;opacity:.90;font-weight:700;letter-spacing:.02em}
+    .tenant-name{
+      font-family:'Kanit',sans-serif;font-size:24px;font-weight:800;
+      margin-top:2px;line-height:1.15;word-break:break-word;
+      letter-spacing:.01em;text-shadow:0 2px 10px rgba(0,0,0,.14);
+    }
+    .line-name-note{font-size:11px;opacity:.85;margin-top:4px;font-weight:700;letter-spacing:.02em}
+    .room-pill{
+      display:inline-flex;gap:7px;align-items:center;margin-top:12px;
+      padding:8px 14px;border-radius:999px;
+      background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.20);
+      font-size:12px;font-weight:900;box-shadow:0 6px 16px rgba(6,32,61,.12);
+    }
+    .bill-label{font-size:12px;opacity:.90;margin-bottom:5px;font-weight:700;letter-spacing:.02em}
+    .bill-total{
+      font-family:'Kanit',sans-serif;font-size:38px;font-weight:800;
+      line-height:1;letter-spacing:.01em;text-shadow:0 3px 16px rgba(0,0,0,.18);
+    }
+    .bill-status{
+      display:inline-flex;gap:6px;align-items:center;margin-top:14px;
+      padding:8px 12px;border-radius:999px;
+      background:rgba(255,230,185,.26);border:1px solid rgba(255,225,170,.32);
+      font-size:12px;font-weight:900;
+    }
+
+    /* ── SECTIONS ── */
+    .section{
+      margin-top:14px;background:#fff;
+      border:1px solid var(--border);border-radius:var(--radius);
+      padding:18px;box-shadow:var(--shadow);
+    }
+    .section-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:14px}
+    .section-title{font-family:'Kanit',sans-serif;font-size:19px;font-weight:800;color:var(--primary);letter-spacing:.01em}
+    .section-sub{font-size:12px;color:var(--muted);line-height:1.5;margin-top:3px}
+    .chip{
+      display:inline-flex;align-items:center;gap:6px;padding:8px 12px;
+      border-radius:999px;background:linear-gradient(135deg,#eef6ff,#eaf9f2);
+      color:var(--primary);font-size:12px;font-weight:900;
+      white-space:nowrap;border:1px solid #daeaf8;
+    }
+    .selector{display:flex;gap:8px;overflow:auto;padding-bottom:4px}
+    .room-select{
+      min-width:160px;text-align:left;border:2px solid var(--border);
+      background:#f7faff;border-radius:18px;padding:12px;font:inherit;cursor:pointer;
+      transition:border-color .18s,background .18s,transform .12s;
+    }
+    .room-select:active{transform:scale(.97)}
+    .room-select.active{border-color:#2463b0;background:#eef5ff}
     .room-select-room{font-family:'Kanit',sans-serif;color:var(--primary);font-size:16px;font-weight:800}
     .room-select-sub{font-size:12px;color:var(--muted);margin-top:3px}
-    .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-    .summary-card,.bill-row,.history-card,.empty,.notice{border-radius:16px;border:1px solid #e6edf7;background:#f8fbff}
-    .summary-card{padding:13px;min-height:92px;background:linear-gradient(135deg,#f9fbff,#eef5ff)}
-    .summary-card:nth-child(2){background:linear-gradient(135deg,#f9fffc,#eafbf3)}
-    .summary-card:nth-child(3){background:linear-gradient(135deg,#fffaf1,#fff1df)}
-    .summary-label{font-size:12px;color:var(--muted)}
-    .summary-value{font-family:'Kanit',sans-serif;color:var(--primary);font-size:22px;font-weight:800;margin-top:7px}
+
+    /* ── SUMMARY GRID ── */
+    .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .summary-card{
+      border-radius:18px;border:1px solid #e2ecf8;padding:14px;min-height:88px;
+      background:linear-gradient(145deg,#f7fbff,#edf5ff);
+    }
+    .summary-card:nth-child(2){background:linear-gradient(145deg,#f5fffe,#e6f9f3)}
+    .summary-card:nth-child(3){background:linear-gradient(145deg,#fffaf2,#fff2de)}
+    .summary-label{font-size:11.5px;color:var(--muted);font-weight:600}
+    .summary-value{font-family:'Kanit',sans-serif;color:var(--primary);font-size:21px;font-weight:800;margin-top:8px}
+
+    /* ── BILL ── */
     .bill-list{display:grid;gap:8px}
-    .bill-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 12px}
-    .bill-row strong{color:var(--primary)}
-    .bill-row.total{background:linear-gradient(135deg,#123b70,#2d75cb);color:#fff;border:none;padding:15px 13px;box-shadow:0 14px 28px rgba(18,59,112,.20)}
+    .bill-row{
+      display:flex;justify-content:space-between;gap:12px;align-items:center;
+      padding:12px 14px;border-radius:16px;border:1px solid #e8f0f8;background:#f9fcff;
+    }
+    .bill-row strong{color:var(--primary);font-weight:800}
+    .bill-row.total{
+      background:linear-gradient(135deg,#0f3461,#2463b0);color:#fff;border:none;
+      padding:16px 14px;border-radius:20px;
+      box-shadow:0 14px 30px rgba(15,52,97,.25);
+    }
     .bill-row.total strong{color:#fff;font-family:'Kanit',sans-serif;font-size:18px}
-    .progress{margin-top:12px;padding:12px;border-radius:16px;background:var(--orangeBg);border:1px solid #f7d9aa}
-    .progress-top{display:flex;justify-content:space-between;gap:10px;color:var(--orange);font-size:13px;font-weight:800;margin-bottom:8px}
-    .bar{height:10px;border-radius:999px;background:rgba(217,119,6,.14);overflow:hidden}
-    .bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f59e0b,#d97706);width:0}
-    .arrears-list,.history-list,.payment-list{display:grid;gap:9px}
-    .arrears-card{border-radius:16px;border:1px solid #f7c2b0;background:var(--redBg);padding:12px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .progress{margin-top:12px;padding:14px;border-radius:18px;background:var(--orangeBg);border:1px solid #f5d8a0}
+    .progress-top{display:flex;justify-content:space-between;gap:10px;color:var(--orange);font-size:13px;font-weight:800;margin-bottom:10px}
+    .bar{height:10px;border-radius:999px;background:rgba(201,109,0,.14);overflow:hidden}
+    .bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f59e0b,#d97706);width:0;transition:width .6s cubic-bezier(.22,1,.36,1)}
+
+    /* ── ARREARS ── */
+    .arrears-list,.history-list,.payment-list{display:grid;gap:10px}
+    .arrears-card{
+      border-radius:18px;border:1px solid #f5bfaa;background:var(--redBg);
+      padding:14px;display:flex;justify-content:space-between;gap:12px;align-items:center;
+    }
     .arrears-title{font-weight:900;color:var(--red);font-size:14px}
-    .arrears-sub{font-size:12px;color:#8b4a2d;margin-top:3px}
+    .arrears-sub{font-size:12px;color:#8a3e26;margin-top:3px}
     .arrears-value{font-family:'Kanit',sans-serif;font-weight:800;font-size:22px;color:var(--red);white-space:nowrap}
-    .history-card{padding:12px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
-    .history-icon{width:42px;height:42px;border-radius:15px;background:#eef5ff;display:flex;align-items:center;justify-content:center;font-size:20px}
+
+    /* ── HISTORY ── */
+    .history-card{
+      padding:13px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;
+      align-items:center;border-radius:18px;border:1px solid #e2ecf8;background:#f8fbff;
+    }
+    .history-icon{
+      width:44px;height:44px;border-radius:16px;
+      background:linear-gradient(135deg,#eef5ff,#ddeeff);
+      display:flex;align-items:center;justify-content:center;font-size:20px;
+    }
     .history-title{font-weight:900;color:var(--primary);font-size:14px}
-    .history-sub{font-size:12px;color:var(--muted);line-height:1.45;margin-top:2px}
-    .status{padding:7px 10px;border-radius:999px;font-size:12px;font-weight:900;white-space:nowrap}
-    .paid{background:var(--greenBg);color:var(--green)}
-    .partial{background:var(--orangeBg);color:var(--orange)}
-    .unpaid{background:var(--redBg);color:var(--red)}
-    .vacant{background:#eef2f7;color:#667085}
-    .empty,.notice{padding:14px;color:var(--muted);font-weight:800;line-height:1.55}
-    .notice.warn{background:#fff8e7;border-color:#f2d49b;color:#9a6700}
-    .notice.error{background:#fff0ea;border-color:#f7c2b0;color:#c2410c}
-    .skeleton{animation:pulse 1.2s infinite ease-in-out;background:linear-gradient(90deg,#eef3fb,#f8fbff,#eef3fb);background-size:200% 100%;color:transparent;border-radius:12px}
+    .history-sub{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
+
+    /* ── STATUS PILLS ── */
+    .status{padding:7px 11px;border-radius:999px;font-size:12px;font-weight:900;white-space:nowrap}
+    .paid{background:var(--greenBg);color:var(--green);border:1px solid #b8efd6}
+    .partial{background:var(--orangeBg);color:var(--orange);border:1px solid #f5dca0}
+    .unpaid{background:var(--redBg);color:var(--red);border:1px solid #f5c0aa}
+    .vacant{background:#eef2f8;color:#566782;border:1px solid #d4dce8}
+
+    /* ── NOTICE ── */
+    .empty,.notice{
+      padding:15px;color:var(--muted);font-weight:800;line-height:1.6;
+      border-radius:16px;border:1px solid var(--border);background:#f8fbff;
+    }
+    .notice.warn{background:#fffbea;border-color:#f0d580;color:#8a6600}
+    .notice.error{background:#fff2ee;border-color:#f5bfaa;color:var(--red)}
+
+    /* ── SKELETON ── */
+    .skeleton{animation:pulse 1.4s infinite ease-in-out;background:linear-gradient(90deg,#edf2fb,#f5f9ff,#edf2fb);background-size:200% 100%;color:transparent;border-radius:12px}
     @keyframes pulse{0%{background-position:0 0}100%{background-position:-200% 0}}
-    .footer-note{font-size:12px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.55}
+
+    /* ── METER PHOTOS ── */
     .meter-photo-list{display:grid;gap:10px}
-    .meter-photo-card{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:18px;background:#fff}
-    .meter-photo-icon{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#eef5ff;font-size:20px;flex:0 0 auto}
+    .meter-photo-card{
+      display:flex;gap:12px;align-items:center;padding:14px;
+      border:1px solid var(--border);border-radius:20px;background:#fff;
+      box-shadow:0 4px 14px rgba(15,52,97,.06);
+    }
+    .meter-photo-icon{width:44px;height:44px;border-radius:15px;display:flex;align-items:center;justify-content:center;background:#eef5ff;font-size:20px;flex:0 0 auto}
     .meter-photo-main{min-width:0;flex:1}
     .meter-photo-title{font-family:'Kanit',sans-serif;font-size:14px;font-weight:900;color:var(--primary)}
-    .meter-photo-sub{font-size:12px;color:var(--muted);line-height:1.45;margin-top:2px}
-    .meter-photo-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:999px;padding:8px 11px;background:var(--primary);color:#fff;font-size:12px;font-weight:900;white-space:nowrap}
-    .meter-photo-empty{padding:14px;color:var(--muted);font-weight:800;line-height:1.55}
+    .meter-photo-sub{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
+    .meter-photo-link{
+      display:inline-flex;align-items:center;justify-content:center;text-decoration:none;
+      border-radius:999px;padding:8px 13px;
+      background:linear-gradient(135deg,var(--primary),var(--primary2));
+      color:#fff;font-size:12px;font-weight:900;white-space:nowrap;
+      box-shadow:0 6px 14px rgba(15,52,97,.22);
+    }
+    .meter-photo-empty{padding:15px;color:var(--muted);font-weight:800;line-height:1.6}
 
+    /* ── QR TOGGLE ── */
     .qr-toggle-card{
-      margin-top:14px;
-      border:1px solid var(--border);
-      border-radius:20px;
-      background:linear-gradient(135deg,#f8fbff,#eef5ff);
-      overflow:hidden;
+      margin-top:14px;border:1px solid var(--border);border-radius:22px;
+      background:linear-gradient(145deg,#f7faff,#eef5ff);overflow:hidden;
     }
     .qr-toggle-head{
-      width:100%;
-      border:none;
-      background:transparent;
-      padding:14px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      cursor:pointer;
-      text-align:left;
-      font:inherit;
-      color:var(--text);
+      width:100%;border:none;background:transparent;padding:16px;
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+      cursor:pointer;text-align:left;font:inherit;color:var(--text);
     }
-    .qr-toggle-title{
-      font-family:'Kanit',sans-serif;
-      font-size:16px;
-      font-weight:800;
-      color:var(--primary);
-    }
-    .qr-toggle-sub{
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.45;
-      margin-top:2px;
-    }
+    .qr-toggle-title{font-family:'Kanit',sans-serif;font-size:16px;font-weight:800;color:var(--primary)}
+    .qr-toggle-sub{font-size:12px;color:var(--muted);line-height:1.5;margin-top:2px}
     .qr-toggle-pill{
-      flex:0 0 auto;
-      min-width:112px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:6px;
-      padding:8px 10px;
-      border-radius:999px;
-      background:var(--primary);
-      color:#fff;
-      font-size:12px;
-      font-weight:900;
+      flex:0 0 auto;min-width:110px;display:inline-flex;align-items:center;
+      justify-content:center;gap:6px;padding:9px 12px;border-radius:999px;
+      background:linear-gradient(135deg,var(--primary),var(--primary2));
+      color:#fff;font-size:12px;font-weight:900;
+      box-shadow:0 6px 14px rgba(15,52,97,.22);
     }
-    .qr-panel{
-      display:none;
-      border-top:1px solid var(--border);
-      padding:14px;
-      background:#fff;
-    }
+    .qr-panel{display:none;border-top:1px solid var(--border);padding:16px;background:#fff}
     .qr-panel.open{display:block}
-    .qr-panel-note{
-      text-align:center;
-      font-size:13px;
-      color:var(--muted);
-      line-height:1.55;
-      margin-bottom:12px;
-      font-weight:800;
-    }
+    .qr-panel-note{text-align:center;font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px;font-weight:800}
     .qr-image-wrap{
-      width:min(100%,430px);
-      margin:0 auto;
-      padding:10px;
-      border-radius:20px;
-      background:#fff;
-      border:1px solid var(--border);
-      box-shadow:0 10px 24px rgba(23,58,99,.12);
+      width:min(100%,430px);margin:0 auto;padding:10px;
+      border-radius:22px;background:#fff;border:1px solid var(--border);
+      box-shadow:0 10px 28px rgba(20,55,100,.12);
     }
-    .qr-image-wrap img{
-      display:block;
-      width:100%;
-      height:auto;
-      border-radius:14px;
-    }
-    .qr-footer-hint{
-      text-align:center;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.5;
-      margin-top:12px;
-    }
-
-
+    .qr-image-wrap img{display:block;width:100%;height:auto;border-radius:16px}
+    .qr-footer-hint{text-align:center;color:var(--muted);font-size:12px;line-height:1.5;margin-top:12px}
     .qr-return-chat-btn{
-      width:100%;
-      margin-top:12px;
-      border:none;
-      border-radius:16px;
-      padding:14px 12px;
-      background:linear-gradient(135deg,#06c755,#05a846);
-      color:#fff;
-      font:inherit;
-      font-size:15px;
-      font-weight:900;
-      cursor:pointer;
-      box-shadow:0 12px 24px rgba(6,199,85,.18);
+      width:100%;margin-top:14px;border:none;border-radius:18px;padding:15px 14px;
+      background:linear-gradient(135deg,#06c755,#04a844);color:#fff;font:inherit;
+      font-size:15px;font-weight:900;cursor:pointer;
+      box-shadow:0 12px 26px rgba(6,199,85,.22);transition:transform .12s;
     }
-    .qr-return-chat-btn:active{transform:translateY(1px)}
-    .qr-return-chat-hint{
-      text-align:center;
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.5;
-      margin-top:8px;
-    }
+    .qr-return-chat-btn:active{transform:scale(.97)}
+    .qr-return-chat-hint{text-align:center;font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}
+
+    /* ── REPAIR ── */
     .repair-form{display:grid;gap:10px}
-    .repair-input,.repair-textarea,.repair-select{width:100%;border:1px solid var(--border);border-radius:16px;padding:12px 13px;background:#fff;color:var(--text);font:inherit}
+    .repair-input,.repair-textarea,.repair-select{
+      width:100%;border:1.5px solid var(--border);border-radius:16px;
+      padding:12px 14px;background:#f8fbff;color:var(--text);font:inherit;
+      transition:border-color .18s;
+    }
+    .repair-input:focus,.repair-textarea:focus,.repair-select:focus{
+      outline:none;border-color:var(--primary2);background:#fff;
+    }
     .repair-textarea{min-height:104px;resize:vertical}
-    .repair-button{border:none;border-radius:16px;padding:13px 14px;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;font:inherit;font-weight:900;cursor:pointer}
-    .repair-button:disabled{opacity:.65;cursor:not-allowed}
-    .repair-hint{font-size:12px;color:var(--muted);line-height:1.55}
-    .repair-list{display:grid;gap:10px;margin-top:12px}
-    .repair-card{border:1px solid var(--border);border-radius:18px;background:#fff;padding:12px}
+    .repair-button{
+      border:none;border-radius:18px;padding:14px;
+      background:linear-gradient(135deg,var(--primary),var(--primary2));
+      color:#fff;font:inherit;font-weight:900;cursor:pointer;
+      box-shadow:0 10px 24px rgba(15,52,97,.22);transition:transform .12s;
+    }
+    .repair-button:active{transform:scale(.97)}
+    .repair-button:disabled{opacity:.60;cursor:not-allowed}
+    .repair-hint{font-size:12px;color:var(--muted);line-height:1.6}
+    .repair-list{display:grid;gap:10px;margin-top:14px}
+    .repair-card{border:1px solid var(--border);border-radius:20px;background:#fff;padding:14px;box-shadow:0 4px 14px rgba(15,52,97,.06)}
     .repair-card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
     .repair-title{font-family:'Kanit',sans-serif;font-size:15px;font-weight:900;color:var(--primary)}
     .repair-sub{font-size:12px;color:var(--muted);line-height:1.5;margin-top:3px}
-    .repair-note{margin-top:8px;padding:9px 10px;border-radius:14px;background:#f8fbff;border:1px dashed var(--border);font-size:12px;line-height:1.55;color:var(--text)}
+    .repair-note{margin-top:8px;padding:10px 11px;border-radius:14px;background:#f6f9ff;border:1px dashed var(--border);font-size:12px;line-height:1.6;color:var(--text)}
     .repair-files{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+
+    .footer-note{font-size:12px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.6}
 
     @media(max-width:720px){
       .hero-grid,.summary-grid{grid-template-columns:1fr}
       .history-card{grid-template-columns:auto 1fr}
       .history-card>:last-child{grid-column:2;justify-self:start}
       .arrears-card,.progress-top{align-items:flex-start;flex-direction:column}
+      .bill-total{font-size:34px}
     }
   </style>
 </head>
 <body>
   <main class="app">
     <section class="hero">
+      <div class="hero-deco"></div>
       <div class="brand">
         <div class="logo">🏢</div>
         <div>
@@ -264,14 +331,20 @@
       <div class="hero-grid">
         <div class="hero-panel hero-profile-panel">
           <div class="tenant-identity">
-            <div class="line-avatar" id="heroLineAvatarWrap">
-              <img id="heroLineAvatar" alt="รูปโปรไฟล์ LINE" loading="lazy" referrerpolicy="no-referrer">
-              <div class="line-avatar-fallback" id="heroLineAvatarFallback">LINE</div>
+            <!-- LINE Avatar: แยก wrapper ชัดเจน แก้บัค has-photo -->
+            <div class="line-avatar-wrap" id="heroLineAvatarWrap">
+              <div class="line-avatar-img-shell" id="heroAvatarShell">
+                <img id="heroLineAvatar" alt="รูปโปรไฟล์ LINE" loading="eager"
+                     referrerpolicy="no-referrer" crossorigin="anonymous"
+                     style="display:none;">
+                <span class="line-avatar-fallback-text" id="heroLineAvatarFallback">L</span>
+              </div>
+              <div class="line-badge">✓</div>
             </div>
             <div class="identity-copy">
-              <div class="hello">สวัสดีครับ</div>
-              <div class="tenant-name" id="heroTenantName">กำลังตรวจสอบ LINE...</div>
-              <div class="line-name-note" id="heroLineNameNote">ชื่อที่แสดงจาก LINE</div>
+              <div class="hello">สวัสดีครับ 👋</div>
+              <div class="tenant-name" id="heroTenantName">กำลังโหลด...</div>
+              <div class="line-name-note" id="heroLineNameNote">กำลังตรวจสอบ LINE</div>
             </div>
           </div>
           <div class="room-pill" id="heroRoomLabel">🔐 เชื่อมต่อบัญชีผู้เช่า</div>
@@ -279,7 +352,7 @@
         <div class="hero-panel hero-balance-panel">
           <div class="bill-label">ยอดคงเหลือรวม</div>
           <div class="bill-total" id="heroTotalOutstanding">-</div>
-          <div class="bill-status" id="heroStatus">กำลังโหลดข้อมูล</div>
+          <div class="bill-status" id="heroStatus">กำลังโหลด...</div>
         </div>
       </div>
     </section>
@@ -362,12 +435,10 @@
             <img src="promptpay-rent-qr.jpg" alt="QR PromptPay สำหรับชำระค่าเช่า" loading="lazy">
           </div>
           <div class="qr-footer-hint">บัญชีรับเงินตาม QR: นาย บุญรัตน์ ชลา</div>
-
           <button class="qr-return-chat-btn" type="button" onclick="returnToLineChatForSlip()">📤 โอนแล้ว กลับไปส่งสลิปในแชต LINE</button>
           <div class="qr-return-chat-hint">ปุ่มนี้จะปิดหน้า Portal แล้วพากลับไปยัง LINE เพื่อส่งสลิปต่อ</div>
         </div>
       </div>
-
     </section>
 
     <section class="section" id="meterPhotoSection" style="display:none;">
@@ -441,10 +512,7 @@
 
   <script>
     const TENANT_PORTAL_CONFIG = {
-      // ใส่ LIFF ID หลังสร้าง LIFF App ใน LINE Developers Console
       liffId: '2010080282-Fe44Yy7Z',
-
-      // Worker หลักของโปรแกรมห้องเช่า
       workerUrl: 'https://white-rice-cf72.joteboony.workers.dev',
     };
 
@@ -457,8 +525,8 @@
     const money = (value) => (Number(value || 0)).toLocaleString('th-TH') + ' ฿';
     const text = (value, fallback = '-') => String(value ?? '').trim() || fallback;
     const escapeHtml = (value = '') => String(value ?? '')
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
     function normalizeLinePictureUrl(value = '') {
       const raw = String(value || '').trim();
@@ -467,7 +535,7 @@
         const url = new URL(raw, window.location.href);
         if (url.protocol !== 'https:') return '';
         return url.href;
-      } catch (e) {
+      } catch(e) {
         return '';
       }
     }
@@ -498,20 +566,17 @@
       notice.textContent = message;
       section.style.display = 'block';
     }
-
     function hideNotice() {
       const section = $('systemNoticeSection');
       if (section) section.style.display = 'none';
     }
-
     function statusInfo(status = '') {
       const key = String(status || '');
-      if (key === 'paid') return { label: 'ชำระแล้ว', cls: 'paid', icon: '✅' };
-      if (key === 'partial') return { label: 'ชำระบางส่วน', cls: 'partial', icon: '🟠' };
-      if (key === 'vacant') return { label: 'ห้องว่าง', cls: 'vacant', icon: '🔑' };
-      return { label: 'ยังไม่ชำระ', cls: 'unpaid', icon: '🔴' };
+      if (key === 'paid') return { label:'ชำระแล้ว', cls:'paid', icon:'✅' };
+      if (key === 'partial') return { label:'ชำระบางส่วน', cls:'partial', icon:'🟠' };
+      if (key === 'vacant') return { label:'ห้องว่าง', cls:'vacant', icon:'🔑' };
+      return { label:'ยังไม่ชำระ', cls:'unpaid', icon:'🔴' };
     }
-
 
     function toggleTenantPaymentQr() {
       const panel = $('tenantPaymentQrPanel');
@@ -522,21 +587,83 @@
       if (label) label.textContent = willOpen ? 'ซ่อน QR ▴' : 'แสดง QR ▾';
     }
 
-
     function returnToLineChatForSlip() {
       try {
         if (window.liff && typeof liff.isInClient === 'function' && liff.isInClient() && typeof liff.closeWindow === 'function') {
           liff.closeWindow();
           return;
         }
-      } catch (e) {}
-      alert('หน้านี้เปิดอยู่นอก LIFF หรือไม่สามารถปิดหน้าต่างได้ กรุณากลับไปที่แชต LINE OA แล้วส่งสลิปได้เลยครับ');
+      } catch(e){}
+      alert('กรุณากลับไปที่แชต LINE OA แล้วส่งสลิปได้เลยครับ');
+    }
+
+    /* ── FIX: Avatar loader แยกออกมาชัดเจน ── */
+    function applyLineAvatar(pictureUrl, displayName) {
+      const img = $('heroLineAvatar');
+      const fallback = $('heroLineAvatarFallback');
+
+      // ตั้งค่า fallback ตัวอักษรแรก
+      const firstChar = Array.from(String(displayName || '').trim())[0] || 'L';
+      if (fallback) fallback.textContent = firstChar;
+
+      if (!img) return;
+
+      if (!pictureUrl) {
+        img.style.display = 'none';
+        if (fallback) fallback.style.display = '';
+        return;
+      }
+
+      // ซ่อน fallback ทันทีที่รู้ว่ามี URL
+      img.style.display = 'none';
+      if (fallback) fallback.style.display = '';
+
+      img.onload = function() {
+        img.style.display = 'block';
+        if (fallback) fallback.style.display = 'none';
+      };
+      img.onerror = function() {
+        // รูปโหลดไม่สำเร็จ → แสดง fallback ตัวอักษร
+        img.style.display = 'none';
+        if (fallback) fallback.style.display = '';
+        // ลอง reload โดยไม่มี crossorigin (บาง LINE CDN ไม่รองรับ CORS)
+        img.removeAttribute('crossorigin');
+        img.onerror = null; // กันวน
+      };
+
+      // ตั้ง src หลัง event listener
+      img.src = pictureUrl;
+    }
+
+    function renderLineProfileHeader() {
+      // ลำดับความสำคัญ: liff.getProfile() > portalData.user
+      const lineDisplayName = String(
+        portalLineProfile?.displayName || portalData?.user?.displayName || ''
+      ).trim();
+      const linePictureUrl = normalizeLinePictureUrl(
+        portalLineProfile?.pictureUrl ||
+        portalLineProfile?.picture ||
+        portalData?.user?.pictureUrl ||
+        portalData?.user?.picture ||
+        ''
+      );
+
+      $('heroTenantName').textContent = lineDisplayName || 'ผู้เช่า';
+
+      const nameNote = $('heroLineNameNote');
+      if (nameNote) {
+        nameNote.textContent = lineDisplayName
+          ? '✅ ยืนยันบัญชี LINE แล้ว'
+          : 'ไม่พบชื่อ LINE — แสดงข้อมูลผู้เช่าเท่าที่มี';
+      }
+
+      applyLineAvatar(linePictureUrl, lineDisplayName);
     }
 
     async function initTenantPortal() {
       try {
         if (!TENANT_PORTAL_CONFIG.liffId || TENANT_PORTAL_CONFIG.liffId === 'PASTE_LIFF_ID_HERE') {
-          setNotice('หน้านี้ยังไม่ได้ใส่ LIFF ID กรุณาตั้งค่า LIFF ID ก่อนเปิดใช้งานจริง', 'warn');
+          setNotice('หน้านี้ยังไม่ได้ใส่ LIFF ID กรุณาตั้งค่าก่อนใช้งานจริง', 'warn');
           $('heroTenantName').textContent = 'รอตั้งค่า LIFF ID';
           $('heroStatus').textContent = 'ยังไม่พร้อมใช้งาน';
           return;
@@ -551,18 +678,19 @@
           return;
         }
 
+        // ดึง profile ก่อน (แสดงชื่อ/รูปทันที ไม่รอ worker)
         let lineProfile = null;
         let decodedToken = null;
         try {
-          // ใช้สำหรับแสดงชื่อ/รูปบนหน้า Portal เท่านั้น
-          // การยืนยันสิทธิ์และจับคู่ห้องยังคงใช้ ID Token ที่ตรวจสอบจาก Worker ตามเดิม
           lineProfile = await liff.getProfile();
-        } catch (profileErr) {
+          // แสดงชื่อ/รูปทันทีที่ได้ profile
+        } catch(profileErr) {
         }
         try {
           decodedToken = typeof liff.getDecodedIDToken === 'function' ? liff.getDecodedIDToken() : null;
-        } catch (decodedErr) {}
+        } catch(decodedErr) {}
         portalLineProfile = mergeLineProfile(lineProfile, decodedToken);
+        renderLineProfileHeader();
 
         const idToken = liff.getIDToken();
         portalIdToken = String(idToken || '');
@@ -586,56 +714,11 @@
 
         portalData = data;
         renderPortal();
-      } catch (err) {
+      } catch(err) {
         setNotice('เปิด Tenant Portal ไม่สำเร็จ: ' + (err?.message || err), 'error');
         $('heroTenantName').textContent = 'โหลดข้อมูลไม่สำเร็จ';
         $('heroStatus').textContent = 'โปรดลองใหม่';
       }
-    }
-
-    function renderLineProfileHeader() {
-      const lineDisplayName = String(portalLineProfile?.displayName || portalData?.user?.displayName || '').trim();
-      const linePictureUrl = normalizeLinePictureUrl(
-        portalLineProfile?.pictureUrl ||
-        portalLineProfile?.picture ||
-        portalData?.user?.pictureUrl ||
-        portalData?.user?.picture ||
-        ''
-      );
-
-      $('heroTenantName').textContent = lineDisplayName || 'ผู้เช่า';
-      const nameNote = $('heroLineNameNote');
-      if (nameNote) {
-        nameNote.textContent = lineDisplayName
-          ? 'ชื่อที่แสดงจาก LINE'
-          : 'ไม่พบชื่อ LINE จึงแสดงข้อมูลผู้เช่าเท่าที่มี';
-      }
-
-      const avatarWrap = $('heroLineAvatarWrap');
-      const avatar = $('heroLineAvatar');
-      const fallback = $('heroLineAvatarFallback');
-
-      if (fallback) {
-        fallback.textContent = lineDisplayName
-          ? Array.from(lineDisplayName.trim())[0] || 'LINE'
-          : 'LINE';
-      }
-
-      if (!avatarWrap || !avatar) return;
-
-      if (!linePictureUrl) {
-        avatarWrap.classList.remove('has-photo');
-        avatar.removeAttribute('src');
-        return;
-      }
-
-      avatar.onload = () => avatarWrap.classList.add('has-photo');
-      avatar.onerror = () => {
-        avatarWrap.classList.remove('has-photo');
-        avatar.removeAttribute('src');
-      };
-      avatarWrap.classList.remove('has-photo');
-      avatar.src = linePictureUrl;
     }
 
     function renderPortal() {
@@ -644,6 +727,7 @@
         return;
       }
 
+      // อัปเดต header อีกครั้งหลัง portalData มา (อาจมี pictureUrl จาก server)
       renderLineProfileHeader();
       $('heroTotalOutstanding').textContent = money(portalData.totals?.totalOutstanding || 0);
 
@@ -661,7 +745,7 @@
 
       $('heroStatus').textContent = portalData.totals?.totalOutstanding > 0
         ? `คงเหลือ ${money(portalData.totals.totalOutstanding)}`
-        : 'ไม่มียอดค้าง';
+        : '✅ ไม่มียอดค้าง';
 
       selectedRoomNum = selectedRoomNum || String(portalData.rooms[0].roomNum);
       renderRoomSelector();
@@ -673,12 +757,7 @@
       const section = $('roomSelectorSection');
       const box = $('roomSelector');
       if (!section || !box || !portalData?.rooms) return;
-
-      if (portalData.rooms.length <= 1) {
-        section.style.display = 'none';
-        return;
-      }
-
+      if (portalData.rooms.length <= 1) { section.style.display = 'none'; return; }
       section.style.display = 'block';
       box.innerHTML = portalData.rooms.map(room => {
         const status = statusInfo(room.status);
@@ -708,9 +787,10 @@
       const meters = room.meters || {};
       const roomTenantName = String(room.tenantName || '').trim();
       const lineDisplayName = String(portalLineProfile?.displayName || portalData?.user?.displayName || '').trim();
+
+      // อัปเดตชื่อใน hero (ให้ LINE display name มีความสำคัญกว่า)
       $('heroTenantName').textContent = lineDisplayName || roomTenantName || 'ผู้เช่า';
 
-      // v15.4.2.68: ซ่อนฟอร์มแจ้งซ่อมใน Tenant Portal ไว้ก่อน แต่คงระบบ/โค้ดเดิมไว้ครบ
       ['overviewSection','currentBillSection','meterPhotoSection','arrearsSection','archiveSection','paymentSection'].forEach(id => {
         const el = $(id);
         if (el) el.style.display = 'block';
@@ -719,15 +799,15 @@
       $('overviewRoomNum').textContent = room.roomNum || '-';
       $('overviewBillingText').textContent = `รอบบิล ${text(billing.billingMonthText)} • รับชำระใน ${text(billing.paymentMonthText)}`;
       $('overviewStatusChip').textContent = status.icon + ' ' + status.label;
-      $('overviewWaterMeter').textContent = `${text(meters.wp, '0')} → ${text(meters.wc, '0')}`;
-      $('overviewElectricMeter').textContent = `${text(meters.ep, '0')} → ${text(meters.ec, '0')}`;
+      $('overviewWaterMeter').textContent = `${text(meters.wp,'0')} → ${text(meters.wc,'0')}`;
+      $('overviewElectricMeter').textContent = `${text(meters.ep,'0')} → ${text(meters.ec,'0')}`;
       $('overviewArrears').textContent = money(amounts.arrearsTotal || 0);
 
       $('billMetaText').textContent = `รอบบิล ${text(billing.billingMonthText)} • รับชำระใน ${text(billing.paymentMonthText)}`;
       $('billRent').textContent = money(amounts.rent || 0);
-      $('billWaterLabel').textContent = `💧 ค่าน้ำ ${Number(amounts.waterUnits || 0).toLocaleString('th-TH')} หน่วย × ${Number(amounts.waterRate || 35).toLocaleString('th-TH')}`;
+      $('billWaterLabel').textContent = `💧 ค่าน้ำ ${Number(amounts.waterUnits||0).toLocaleString('th-TH')} หน่วย × ${Number(amounts.waterRate||35).toLocaleString('th-TH')}`;
       $('billWater').textContent = money(amounts.waterAmount || 0);
-      $('billElectricLabel').textContent = `⚡ ค่าไฟ ${Number(amounts.electricUnits || 0).toLocaleString('th-TH')} หน่วย × ${Number(amounts.electricRate || 8).toLocaleString('th-TH')}`;
+      $('billElectricLabel').textContent = `⚡ ค่าไฟ ${Number(amounts.electricUnits||0).toLocaleString('th-TH')} หน่วย × ${Number(amounts.electricRate||8).toLocaleString('th-TH')}`;
       $('billElectric').textContent = money(amounts.electricAmount || 0);
       $('billTrash').textContent = money(amounts.trash || 0);
       $('billWifi').textContent = money(amounts.wifi || 0);
@@ -736,7 +816,7 @@
       $('billRemaining').textContent = `คงเหลือ ${money(amounts.currentRemaining || 0)}`;
 
       const pct = amounts.expected > 0
-        ? Math.max(0, Math.min(100, (Number(amounts.currentPaid || 0) / Number(amounts.expected || 1)) * 100))
+        ? Math.max(0, Math.min(100, (Number(amounts.currentPaid||0) / Number(amounts.expected||1)) * 100))
         : 0;
       $('billProgressBar').style.width = pct.toFixed(2) + '%';
 
@@ -756,17 +836,17 @@
         return;
       }
       box.innerHTML = rows.map(item => {
-        const isElectric = String(item.meterType || '') === 'electric';
+        const isElectric = String(item.meterType||'') === 'electric';
         const icon = isElectric ? '⚡' : '💧';
         const title = isElectric ? 'รูปมิเตอร์ไฟ' : 'รูปมิเตอร์น้ำ';
         const monthText = item.billingMonthText || item.billingMonthKey || '-';
-        const readings = `${Number(item.prevReading || 0).toLocaleString('th-TH')} → ${Number(item.currReading || 0).toLocaleString('th-TH')}`;
+        const readings = `${Number(item.prevReading||0).toLocaleString('th-TH')} → ${Number(item.currReading||0).toLocaleString('th-TH')}`;
         return `
           <div class="meter-photo-card">
             <div class="meter-photo-icon">${icon}</div>
             <div class="meter-photo-main">
               <div class="meter-photo-title">${title} • ${escapeHtml(monthText)}</div>
-              <div class="meter-photo-sub">เลขมิเตอร์ ${escapeHtml(readings)}<br>${escapeHtml(item.uploadedAtText || item.uploadedAt || '-')}</div>
+              <div class="meter-photo-sub">เลขมิเตอร์ ${escapeHtml(readings)}<br>${escapeHtml(item.uploadedAtText||item.uploadedAt||'-')}</div>
             </div>
             <a class="meter-photo-link" href="${escapeHtml(item.viewUrl)}" target="_blank" rel="noopener">ดูรูป</a>
           </div>
@@ -774,13 +854,12 @@
       }).join('');
     }
 
-
     function repairStatusInfo(status = '') {
       const key = String(status || 'open');
-      if (key === 'done') return { label: 'เสร็จแล้ว', cls: 'paid', icon: '✅' };
-      if (key === 'closed') return { label: 'ปิดงาน', cls: 'vacant', icon: '📁' };
-      if (key === 'in_progress') return { label: 'กำลังดำเนินการ', cls: 'partial', icon: '🟠' };
-      return { label: 'รอรับเรื่อง', cls: 'unpaid', icon: '🔴' };
+      if (key === 'done') return { label:'เสร็จแล้ว', cls:'paid', icon:'✅' };
+      if (key === 'closed') return { label:'ปิดงาน', cls:'vacant', icon:'📁' };
+      if (key === 'in_progress') return { label:'กำลังดำเนินการ', cls:'partial', icon:'🟠' };
+      return { label:'รอรับเรื่อง', cls:'unpaid', icon:'🔴' };
     }
 
     function renderRepairRequests(items) {
@@ -793,17 +872,17 @@
       }
       box.innerHTML = rows.map(item => {
         const status = repairStatusInfo(item.status);
-        const photoText = Number(item.photoCount || 0) > 0 ? `📷 แนบ ${Number(item.photoCount || 0).toLocaleString('th-TH')} รูป` : 'ไม่มีรูปแนบ';
+        const photoText = Number(item.photoCount||0) > 0 ? `📷 แนบ ${Number(item.photoCount||0).toLocaleString('th-TH')} รูป` : 'ไม่มีรูปแนบ';
         return `
           <div class="repair-card">
             <div class="repair-card-top">
               <div>
-                <div class="repair-title">${escapeHtml(item.category || 'แจ้งซ่อม')}</div>
-                <div class="repair-sub">${escapeHtml(item.createdAtText || item.createdAt || '-')}</div>
+                <div class="repair-title">${escapeHtml(item.category||'แจ้งซ่อม')}</div>
+                <div class="repair-sub">${escapeHtml(item.createdAtText||item.createdAt||'-')}</div>
               </div>
               <div class="status ${status.cls}">${status.icon} ${escapeHtml(status.label)}</div>
             </div>
-            <div class="repair-note">${escapeHtml(item.detail || '-')}</div>
+            <div class="repair-note">${escapeHtml(item.detail||'-')}</div>
             <div class="repair-files" style="margin-top:8px;">${escapeHtml(photoText)}</div>
             ${item.adminNote ? `<div class="repair-note">หมายเหตุเจ้าของ: ${escapeHtml(item.adminNote)}</div>` : ''}
           </div>
@@ -814,33 +893,32 @@
     function repairBlobToBase64(blob) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ''));
-        reader.onerror = () => reject(reader.error || new Error('อ่านไฟล์ไม่สำเร็จ'));
+        reader.onload = () => resolve(String(reader.result||''));
+        reader.onerror = () => reject(reader.error||new Error('อ่านไฟล์ไม่สำเร็จ'));
         reader.readAsDataURL(blob);
       });
     }
 
     async function compressRepairPhotoFile(file) {
       if (!file) return null;
-      if (!String(file.type || '').startsWith('image/')) throw new Error('รองรับเฉพาะรูปภาพ');
+      if (!String(file.type||'').startsWith('image/')) throw new Error('รองรับเฉพาะรูปภาพ');
       const img = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
           const image = new Image();
           image.onload = () => resolve(image);
           image.onerror = () => reject(new Error('เปิดรูปไม่สำเร็จ'));
-          image.src = String(reader.result || '');
+          image.src = String(reader.result||'');
         };
-        reader.onerror = () => reject(reader.error || new Error('อ่านรูปไม่สำเร็จ'));
+        reader.onerror = () => reject(reader.error||new Error('อ่านรูปไม่สำเร็จ'));
         reader.readAsDataURL(file);
       });
       const maxSide = 1600;
-      const ratio = Math.min(1, maxSide / Math.max(img.naturalWidth || img.width || 1, img.naturalHeight || img.height || 1));
-      const width = Math.max(1, Math.round((img.naturalWidth || img.width || 1) * ratio));
-      const height = Math.max(1, Math.round((img.naturalHeight || img.height || 1) * ratio));
+      const ratio = Math.min(1, maxSide / Math.max(img.naturalWidth||img.width||1, img.naturalHeight||img.height||1));
+      const width = Math.max(1, Math.round((img.naturalWidth||img.width||1)*ratio));
+      const height = Math.max(1, Math.round((img.naturalHeight||img.height||1)*ratio));
       const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = width; canvas.height = height;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('เตรียมรูปไม่สำเร็จ');
       ctx.drawImage(img, 0, 0, width, height);
@@ -850,64 +928,63 @@
       return {
         base64: await repairBlobToBase64(blob),
         mimeType: 'image/jpeg',
-        fileName: String(file.name || 'repair-photo').replace(/\.[^.]+$/, '') || 'repair-photo',
+        fileName: String(file.name||'repair-photo').replace(/\.[^.]+$/,'')||'repair-photo',
       };
     }
 
     async function submitRepairRequest() {
-      const room = (portalData?.rooms || []).find(item => String(item.roomNum) === String(selectedRoomNum));
+      const room = (portalData?.rooms||[]).find(item => String(item.roomNum)===String(selectedRoomNum));
       if (!room) return alert('ไม่พบห้องที่เลือก');
-      const category = String($('repairCategory')?.value || 'อื่น ๆ').trim();
-      const detail = String($('repairDetail')?.value || '').trim();
+      const category = String($('repairCategory')?.value||'อื่น ๆ').trim();
+      const detail = String($('repairDetail')?.value||'').trim();
       if (!detail) return alert('กรุณาระบุรายละเอียดการแจ้งซ่อม');
       const btn = $('repairSubmitBtn');
-      const rawFiles = [...($('repairPhotos')?.files || [])].slice(0, 3);
+      const rawFiles = [...($('repairPhotos')?.files||[])].slice(0,3);
       try {
-        if (btn) { btn.disabled = true; btn.textContent = 'กำลังส่งแจ้งซ่อม...'; }
+        if (btn) { btn.disabled=true; btn.textContent='กำลังส่งแจ้งซ่อม...'; }
         const photos = [];
         for (const file of rawFiles) photos.push(await compressRepairPhotoFile(file));
         const res = await fetch(TENANT_PORTAL_CONFIG.workerUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'createRepairRequest',
-            idToken: portalIdToken,
-            roomNum: room.roomNum,
-            tenantName: room.tenantName || portalData?.user?.displayName || '',
-            category,
-            detail,
-            photos,
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            action:'createRepairRequest',
+            idToken:portalIdToken,
+            roomNum:room.roomNum,
+            tenantName:room.tenantName||portalData?.user?.displayName||'',
+            category, detail, photos,
           }),
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || data.ok === false) throw new Error(data.error || ('HTTP ' + res.status));
+        const data = await res.json().catch(()=>({}));
+        if (!res.ok||data.ok===false) throw new Error(data.error||('HTTP '+res.status));
         if (data.request) {
-          room.repairRequests = [data.request, ...(Array.isArray(room.repairRequests) ? room.repairRequests : [])].slice(0, 12);
+          room.repairRequests = [data.request,...(Array.isArray(room.repairRequests)?room.repairRequests:[])].slice(0,12);
           renderRepairRequests(room.repairRequests);
         }
-        if ($('repairDetail')) $('repairDetail').value = '';
-        if ($('repairPhotos')) $('repairPhotos').value = '';
+        if ($('repairDetail')) $('repairDetail').value='';
+        if ($('repairPhotos')) $('repairPhotos').value='';
         alert('✅ ส่งแจ้งซ่อมเรียบร้อยแล้วครับ');
-      } catch (err) {
-        alert('ส่งแจ้งซ่อมไม่สำเร็จ: ' + (err?.message || err));
+      } catch(err) {
+        alert('ส่งแจ้งซ่อมไม่สำเร็จ: '+(err?.message||err));
       } finally {
-        if (btn) { btn.disabled = false; btn.textContent = '📨 ส่งแจ้งซ่อม'; }
+        if (btn) { btn.disabled=false; btn.textContent='📨 ส่งแจ้งซ่อม'; }
       }
     }
+
     function renderArrears(items) {
       const box = $('arrearsList');
       if (!box) return;
-      if (!Array.isArray(items) || !items.length) {
-        box.innerHTML = '<div class="empty">ไม่มีรายการยอดค้างเก่า</div>';
+      if (!Array.isArray(items)||!items.length) {
+        box.innerHTML='<div class="empty">ไม่มีรายการยอดค้างเก่า</div>';
         return;
       }
       box.innerHTML = items.map(item => `
         <div class="arrears-card">
           <div>
-            <div class="arrears-title">${escapeHtml(item.monthText || item.monthKey || 'ยอดค้าง')}</div>
-            <div class="arrears-sub">ยอดเดิม ${escapeHtml(money(item.originalAmount || 0))} • รับแล้ว ${escapeHtml(money(item.paidAmount || 0))}</div>
+            <div class="arrears-title">${escapeHtml(item.monthText||item.monthKey||'ยอดค้าง')}</div>
+            <div class="arrears-sub">ยอดเดิม ${escapeHtml(money(item.originalAmount||0))} • รับแล้ว ${escapeHtml(money(item.paidAmount||0))}</div>
           </div>
-          <div class="arrears-value">${escapeHtml(money(item.remaining || 0))}</div>
+          <div class="arrears-value">${escapeHtml(money(item.remaining||0))}</div>
         </div>
       `).join('');
     }
@@ -919,8 +996,8 @@
         ? `แสดงหลัง ${cutoffText} ตามวันเริ่มสัญญา/วันเข้าอยู่`
         : 'ยังไม่ตั้งวันเริ่มสัญญา/วันเข้าอยู่ จึงยังไม่แสดงประวัติย้อนหลังเพื่อความเป็นส่วนตัว';
       if (!box) return;
-      if (!Array.isArray(items) || !items.length) {
-        box.innerHTML = '<div class="empty">ยังไม่มีประวัติค่าเช่าย้อนหลังที่แสดงได้</div>';
+      if (!Array.isArray(items)||!items.length) {
+        box.innerHTML='<div class="empty">ยังไม่มีประวัติค่าเช่าย้อนหลังที่แสดงได้</div>';
         return;
       }
       box.innerHTML = items.map(item => {
@@ -929,8 +1006,8 @@
           <div class="history-card">
             <div class="history-icon">🗓️</div>
             <div>
-              <div class="history-title">${escapeHtml(item.billingMonthText || item.monthText || item.monthKey || '-')}</div>
-              <div class="history-sub">ยอดรวม ${escapeHtml(money(item.monthFullTotal || 0))} • รับแล้ว ${escapeHtml(money(item.received || 0))} • ค้าง ${escapeHtml(money(item.remaining || 0))}</div>
+              <div class="history-title">${escapeHtml(item.billingMonthText||item.monthText||item.monthKey||'-')}</div>
+              <div class="history-sub">ยอดรวม ${escapeHtml(money(item.monthFullTotal||0))} • รับแล้ว ${escapeHtml(money(item.received||0))} • ค้าง ${escapeHtml(money(item.remaining||0))}</div>
             </div>
             <div class="status ${status.cls}">${status.icon} ${escapeHtml(status.label)}</div>
           </div>
@@ -945,16 +1022,16 @@
         ? `รายการรับชำระหลัง ${cutoffText}`
         : 'ยังไม่ตั้งวันเริ่มสัญญา/วันเข้าอยู่ จึงยังไม่แสดงประวัติย้อนหลังเพื่อความเป็นส่วนตัว';
       if (!box) return;
-      if (!Array.isArray(items) || !items.length) {
-        box.innerHTML = '<div class="empty">ยังไม่มีประวัติการชำระที่แสดงได้</div>';
+      if (!Array.isArray(items)||!items.length) {
+        box.innerHTML='<div class="empty">ยังไม่มีประวัติการชำระที่แสดงได้</div>';
         return;
       }
       box.innerHTML = items.map(item => `
         <div class="history-card">
           <div class="history-icon">💸</div>
           <div>
-            <div class="history-title">รับชำระ ${escapeHtml(money(item.amount || 0))}</div>
-            <div class="history-sub">${escapeHtml(item.paidAtText || item.paidAt || '-')} • ${escapeHtml(item.methodText || item.method || item.source || '-')}</div>
+            <div class="history-title">รับชำระ ${escapeHtml(money(item.amount||0))}</div>
+            <div class="history-sub">${escapeHtml(item.paidAtText||item.paidAt||'-')} • ${escapeHtml(item.methodText||item.method||item.source||'-')}</div>
           </div>
           <div class="status paid">✅ บันทึกแล้ว</div>
         </div>
