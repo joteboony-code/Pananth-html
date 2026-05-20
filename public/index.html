@@ -6531,8 +6531,13 @@ body.dark .checklist-item.attn {
     </div>
     <div id="editExtraActions">
       <div class="modal-actions" style="margin-top:10px;">
-        <button class="action-btn line" id="editSendLineBtn" onclick="sendLineFromEdit()">🚀 ส่ง LINE โดยตรง</button>
+        <button class="action-btn line" id="editSendLineBtn" onclick="sendLineFromEdit()">📗 ส่ง Flex แจ้งค่าเช่า</button>
         <button class="action-btn img" onclick="openReceipt()">🧾 ใบแจ้งค่าเช่า</button>
+      </div>
+      <div style="margin-top:8px;">
+        <button id="editSendLineLongBtn" onclick="sendLineLongTextFromEdit()" style="width:100%;padding:10px;border:none;border-radius:10px;background:#64748b;color:white;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
+          📝 ส่งข้อความยาวฉุกเฉิน
+        </button>
       </div>
       <div style="margin-top:8px;">
         <button class="line-pair-full-btn" onclick="createLinePairQrForRoom(currentRoom)">📱 สร้าง QR จับคู่ LINE ผู้เช่าใหม่</button>
@@ -6623,8 +6628,11 @@ body.dark .checklist-item.attn {
       </button>
     </div>
     <div style="padding:12px 16px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <button class="action-btn line" onclick="sendLineAPI()" style="background:#00b900;">🚀 ส่ง LINE โดยตรง</button>
+      <button class="action-btn line" onclick="sendLineAPI()" style="background:#00b900;">📗 ส่ง Flex แจ้งค่าเช่า</button>
       <button class="action-btn img" onclick="saveReceiptPng()">⬇️ บันทึกรูป</button>
+    </div>
+    <div style="padding:8px 16px 0;display:grid;grid-template-columns:1fr;gap:10px;">
+      <button class="action-btn line" onclick="sendLineAPILongText()" style="background:#64748b;font-size:12px;">📝 ส่งข้อความยาวฉุกเฉิน</button>
     </div>
     <div style="padding:8px 16px 0;display:grid;grid-template-columns:1fr;gap:10px;">
       <button class="action-btn line" onclick="sendLine()" style="background:#06c755;font-size:12px;">📱 ส่ง LINE แบบ Share</button>
@@ -12574,7 +12582,111 @@ async function saveRoomMeter() {
 }
 
 // ===== SEND LINE จาก Edit Modal โดยตรง =====
+
 async function sendLineFromEdit() {
+  const r = currentRoom;
+  const cfg = loadConfig();
+
+  if (!cfg.worker) {
+    alert('กรุณาใส่ Worker URL ในหน้าตั้งค่าก่อนครับ ⚙️');
+    return;
+  }
+
+  const testRoom = isTestRoom(r);
+  const userId = cfg.userIds[r];
+  if (!testRoom && !userId) {
+    alert(`ยังไม่มี User ID ของห้อง ${r} ครับ\nไปตั้งค่าได้ที่ปุ่ม ⚙️ ตั้งค่า LINE`);
+    return;
+  }
+
+  const ep   = parseInt(document.getElementById('elecPrev').value) || 0;
+  const ec   = parseInt(document.getElementById('elecCurr').value) || 0;
+  const wp   = parseInt(document.getElementById('waterPrev').value) || 0;
+  const wc   = parseInt(document.getElementById('waterCurr').value) || 0;
+  const wifi = parseInt(document.getElementById('wifiAmt').value) || 0;
+  const rent = testRoom ? getRoomRentValue(r, rooms[r]) : (prorateRentOverride !== null ? prorateRentOverride : getRoomRentValue(r, rooms[r]));
+  const trash = getRoomTrashValue(r, rooms[r]);
+  const elecAmt  = (ec - ep) * ELEC_RATE;
+  const waterAmt = (wc - wp) * WATER_RATE;
+  const fullTotal = rent + elecAmt + waterAmt + trash + wifi;
+  const oldDebt = getTotalArrears(r);
+  const manualPaid = getRoomManualPaid(r);
+  const currentDue = Math.max(0, fullTotal - manualPaid);
+  const totalDue = oldDebt + currentDue;
+  const shop = loadShopInfo();
+  const bank = r <= 20 ? shop.bankTTB : shop.bankKSI;
+
+  let prorateDays = null;
+  if (prorateRentOverride !== null) {
+    const moveIn   = document.getElementById('prorateMoveIn').value;
+    const monthEnd = document.getElementById('prorateMonthEnd').value;
+    if (moveIn && monthEnd) {
+      const d1 = new Date(moveIn);
+      const d2 = new Date(monthEnd);
+      prorateDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+    }
+  }
+
+  const rentLabel = prorateDays ? `ค่าเช่า (${prorateDays} วัน)` : 'ค่าเช่า';
+  const tenantName = String(tenants?.[r]?.name || tenants?.[String(r)]?.name || '').trim();
+  const flexData = buildRentNoticeFlexPayloadFromValues({
+    room: r,
+    shopName: shop.name || 'ห้องเช่าป่านันท์',
+    tenantName,
+    billingMonth: getTenantBillingText(),
+    rentLabel,
+    rent,
+    waterAmount: waterAmt,
+    electricAmount: elecAmt,
+    trash,
+    wifi,
+    oldDebt,
+    manualPaid,
+    totalDue,
+    bank,
+  });
+
+  if (!confirm(testRoom ? 'ยืนยันส่ง Flex ทดสอบห้อง 99 ไปหาเจ้าของใช่ไหมครับ?' : `ยืนยันส่ง Flex แจ้งค่าเช่าห้อง ${r} ใช่ไหมครับ?`)) return;
+
+  const btn = document.getElementById('editSendLineBtn');
+  const originalText = btn?.textContent || '📗 ส่ง Flex แจ้งค่าเช่า';
+  if (btn) {
+    btn.textContent = '⏳ กำลังส่ง Flex...';
+    btn.disabled = true;
+  }
+
+  try {
+    const res = await fetch(cfg.worker, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(testRoom
+        ? { action: 'sendRentNoticeFlex', toOwner: true, roomNum: r, flexData }
+        : { action: 'sendRentNoticeFlex', userId, roomNum: r, flexData }),
+    });
+    const result = await res.json();
+    if (res.ok) {
+      if (btn) {
+        btn.textContent = '✅ ส่ง Flex แล้ว!';
+        btn.style.background = '#2e7d52';
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.background = '';
+          btn.disabled = false;
+        }, 3000);
+      }
+    } else {
+      throw new Error(result?.error || JSON.stringify(result));
+    }
+  } catch (err) {
+    alert('ส่ง Flex ไม่สำเร็จ: ' + err.message);
+    if (btn) {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+}
+
+async function sendLineLongTextFromEdit() {
   const r = currentRoom;
   const cfg = loadConfig();
 
@@ -12650,7 +12762,7 @@ async function sendLineFromEdit() {
 
   if (!confirm(testRoom ? 'ยืนยันส่ง LINE ทดสอบห้อง 99 ไปหาเจ้าของใช่ไหมครับ?' : `ยืนยันส่ง LINE แจ้งค่าเช่าห้อง ${r} ใช่ไหมครับ?`)) return;
 
-  const btn = document.getElementById('editSendLineBtn');
+  const btn = document.getElementById('editSendLineLongBtn');
   btn.textContent = '⏳ กำลังส่ง...';
   btn.disabled = true;
 
@@ -12665,7 +12777,7 @@ async function sendLineFromEdit() {
       btn.textContent = '✅ ส่งแล้ว!';
       btn.style.background = '#2e7d52';
       setTimeout(() => {
-        btn.textContent = '🚀 ส่ง LINE โดยตรง';
+        btn.textContent = '📝 ส่งข้อความยาวฉุกเฉิน';
         btn.style.background = '';
         btn.disabled = false;
       }, 3000);
@@ -12674,7 +12786,7 @@ async function sendLineFromEdit() {
     }
   } catch (err) {
     alert('ส่งไม่สำเร็จ: ' + err.message);
-    btn.textContent = '🚀 ส่ง LINE โดยตรง';
+    btn.textContent = '📝 ส่งข้อความยาวฉุกเฉิน';
     btn.disabled = false;
   }
 }
@@ -14881,7 +14993,7 @@ async function openBulkMonthlySend() {
       ${rowHtml || '<div style="padding:20px;text-align:center;color:var(--muted);">ไม่มีห้องค้างชำระที่ต้องส่ง</div>'}
     </div>
 
-    <button onclick="sendBulkMonthlySelected()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#e74c3c;color:white;font-weight:900;cursor:pointer;">🚀 ส่ง LINE ให้ห้องที่เลือก</button>
+    <button onclick="sendBulkMonthlySelected()" style="width:100%;padding:13px;border:none;border-radius:10px;background:#e74c3c;color:white;font-weight:900;cursor:pointer;">📗 ส่ง Flex แจ้งค่าเช่าให้ห้องที่เลือก</button>
   `;
 
   document.getElementById('alertPageContent').innerHTML = html;
@@ -14936,6 +15048,42 @@ function buildTenantMessage(roomNum) {
   });
 }
 
+
+function buildTenantRentFlexPayload(roomNum) {
+  const r = parseInt(roomNum, 10);
+  const d = rooms[r];
+  const shop = loadShopInfo();
+  if (!d) return null;
+
+  const oldDebt = getTotalArrears(r);
+  const fullTotal = calcFullTotal(r);
+  const manualPaid = getRoomManualPaid(r);
+  const currentDue = calcCurrentDue(r);
+  const totalDue = oldDebt + currentDue;
+  const elecAmt = (Number(d.ec || 0) - Number(d.ep || 0)) * ELEC_RATE;
+  const waterAmt = (Number(d.wc || 0) - Number(d.wp || 0)) * WATER_RATE;
+  const rent = getRoomRentValue(r, d);
+  const trash = getRoomTrashValue(r, d);
+  const wifi = Number(d.wifi || 0);
+  const tenantName = String(tenants?.[r]?.name || tenants?.[String(r)]?.name || '').trim();
+
+  return buildRentNoticeFlexPayloadFromValues({
+    room: r,
+    shopName: shop.name || 'ห้องเช่าป่านันท์',
+    tenantName,
+    billingMonth: getTenantBillingText(),
+    rent,
+    waterAmount: waterAmt,
+    electricAmount: elecAmt,
+    trash,
+    wifi,
+    oldDebt,
+    manualPaid,
+    totalDue,
+    bank: r <= 20 ? shop.bankTTB : shop.bankKSI,
+  });
+}
+
 async function sendBulkMonthlySelected() {
   const cfg = loadConfig();
   const selected = [...document.querySelectorAll('.bulk-send-check:checked')].map(x => parseInt(x.value, 10));
@@ -14947,7 +15095,7 @@ async function sendBulkMonthlySelected() {
 จำนวนห้องที่จะส่ง: ${selected.length} ห้อง
 ยอดคงเหลือรวม: ${totalSelectedDue.toLocaleString('th-TH')} บาท
 
-ระบบจะส่ง LINE จริงให้ผู้เช่าที่เลือก`;
+ระบบจะส่ง Flex แจ้งค่าเช่าจริงให้ผู้เช่าที่เลือก`;
   if (!confirm(confirmText)) return;
   const selectedWarningRooms = selected.filter(roomNum => getRoomPreBillWarnings(roomNum).length > 0);
   if (selectedWarningRooms.length) {
@@ -14964,12 +15112,13 @@ ${details}
   for (const r of selected) {
     const userId = cfg.userIds?.[r];
     if (!userId) { failed++; continue; }
-    const message = buildTenantMessage(r);
+    const flexData = buildTenantRentFlexPayload(r);
+    if (!flexData) { failed++; continue; }
     try {
       const res = await fetch(WORKER_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, message, roomNum: r, messageKind: 'rentNotice' }),
+        body: JSON.stringify({ action: 'sendRentNoticeFlex', userId, roomNum: r, flexData }),
       });
       if (!res.ok) throw new Error(await res.text());
       sent++;
@@ -16688,7 +16837,128 @@ function loadConfig() {
 }
 
 // ===== LINE API =====
+
+function buildRentNoticeFlexPayloadFromValues({
+  room,
+  shopName,
+  tenantName = '',
+  billingMonth = '',
+  rentLabel = 'ค่าเช่า',
+  rent = 0,
+  waterAmount = 0,
+  electricAmount = 0,
+  trash = 0,
+  wifi = 0,
+  oldDebt = 0,
+  manualPaid = 0,
+  totalDue = 0,
+  bank = '',
+} = {}) {
+  return {
+    room: Number(room || 0) || String(room || '-'),
+    shopName: String(shopName || 'ห้องเช่าป่านันท์').trim(),
+    tenantName: String(tenantName || '').trim(),
+    billingMonth: String(billingMonth || '-').trim(),
+    rentLabel: String(rentLabel || 'ค่าเช่า').trim(),
+    rent: Number(rent || 0),
+    waterAmount: Number(waterAmount || 0),
+    electricAmount: Number(electricAmount || 0),
+    trash: Number(trash || 0),
+    wifi: Number(wifi || 0),
+    oldDebt: Number(oldDebt || 0),
+    manualPaid: Number(manualPaid || 0),
+    totalDue: Number(totalDue || 0),
+    bank: String(bank || '').trim(),
+  };
+}
+
 async function sendLineAPI() {
+  const cfg = loadConfig();
+  if (!cfg.worker) {
+    alert('กรุณาใส่ Worker URL ในหน้าตั้งค่าก่อนครับ ⚙️');
+    return;
+  }
+
+  const r = receiptData.room;
+  const userId = cfg.userIds[r];
+  if (!userId) {
+    alert(`ยังไม่มี User ID ของห้อง ${r} ครับ\nไปตั้งค่าได้ที่ปุ่ม ⚙️ ตั้งค่า LINE`);
+    return;
+  }
+
+  const { ep, ec, wp, wc, wifi, rent, trash, bank, shopName } = receiptData;
+  const oldDebt = Number(receiptData.oldDebt || 0);
+  const manualPaid = Number(receiptData.manualPaid || 0);
+  const elecAmt  = (ec - ep) * ELEC_RATE;
+  const waterAmt = (wc - wp) * WATER_RATE;
+  const fullTotal = rent + elecAmt + waterAmt + trash + wifi;
+  const currentDue = Math.max(0, fullTotal - manualPaid);
+  const totalDue = oldDebt + currentDue;
+  const tenantName = String(tenants?.[r]?.name || tenants?.[String(r)]?.name || '').trim();
+
+  const flexData = buildRentNoticeFlexPayloadFromValues({
+    room: r,
+    shopName: shopName || 'ห้องเช่าป่านันท์',
+    tenantName,
+    billingMonth: getTenantBillingText(),
+    rent,
+    waterAmount: waterAmt,
+    electricAmount: elecAmt,
+    trash,
+    wifi,
+    oldDebt,
+    manualPaid,
+    totalDue,
+    bank,
+  });
+
+  if (!confirm(`ยืนยันส่ง Flex แจ้งค่าเช่าห้อง ${r} ใช่ไหมครับ?`)) return;
+
+  const btn = (typeof event !== 'undefined' && event?.target)
+    ? event.target
+    : document.querySelector('#receiptOverlay button[onclick="sendLineAPI()"]');
+  const originalText = btn?.textContent || '📗 ส่ง Flex แจ้งค่าเช่า';
+  if (btn) {
+    btn.textContent = '⏳ กำลังส่ง Flex...';
+    btn.disabled = true;
+  }
+
+  try {
+    const res = await fetch(cfg.worker, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'sendRentNoticeFlex',
+        userId,
+        roomNum: r,
+        flexData,
+      }),
+    });
+    const result = await res.json();
+
+    if (res.ok) {
+      if (btn) {
+        btn.textContent = '✅ ส่ง Flex แล้ว!';
+        btn.style.background = '#2e7d52';
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.background = '';
+          btn.disabled = false;
+        }, 3000);
+      }
+    } else {
+      throw new Error(result?.error || JSON.stringify(result));
+    }
+  } catch (err) {
+    alert('ส่ง Flex ไม่สำเร็จครับ: ' + err.message);
+    if (btn) {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+}
+
+async function sendLineAPILongText() {
   const cfg = loadConfig();
   if (!cfg.worker) {
     alert('กรุณาใส่ Worker URL ในหน้าตั้งค่าก่อนครับ ⚙️');
@@ -16756,7 +17026,7 @@ async function sendLineAPI() {
       btn.textContent = '✅ ส่งแล้ว!';
       btn.style.background = '#2e7d52';
       setTimeout(() => {
-        btn.textContent = '🚀 ส่ง LINE โดยตรง';
+        btn.textContent = '📝 ส่งข้อความยาวฉุกเฉิน';
         btn.style.background = '';
         btn.disabled = false;
       }, 3000);
@@ -16765,7 +17035,7 @@ async function sendLineAPI() {
     }
   } catch (err) {
     alert('ส่งไม่สำเร็จครับ: ' + err.message);
-    btn.textContent = '🚀 ส่ง LINE โดยตรง';
+    btn.textContent = '📝 ส่งข้อความยาวฉุกเฉิน';
     btn.disabled = false;
   }
 }
