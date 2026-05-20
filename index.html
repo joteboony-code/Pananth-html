@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.96</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.97</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -6314,13 +6314,13 @@ body.dark .checklist-item.attn {
 </div>
 
 <div class="month-action-row">
-  <button class="month-action-btn open-month" id="openCycleBtn" onclick="openNewBillingMonth()">
+  <button type="button" class="month-action-btn open-month" id="openCycleBtn" onclick="openNewBillingMonth()">
     <span style="font-size:20px;">🆕</span> เปิดรอบรับชำระใหม่
   </button>
-  <button class="month-action-btn meter" data-meter-cycle-action="1" onclick="openMeterPage()">
+  <button type="button" class="month-action-btn meter" data-meter-cycle-action="1" onclick="openMeterPage()">
     <span style="font-size:20px;">📝</span> จดมิเตอร์รอบบิลใหม่
   </button>
-  <button class="month-action-btn" onclick="openMeterOcrTestPage()" title="เปิดหน้า OCR เพื่อทดลองอ่านรูปมิเตอร์ได้ แม้ยังไม่ได้เปิดรอบรับชำระใหม่" style="background:linear-gradient(135deg,#eaf4ff,#dff7ff);color:#175cd3;border:1.5px solid #b9d8ff;">
+  <button type="button" class="month-action-btn" onclick="return openMeterOcrTestPage(event)" title="เปิดหน้า OCR เพื่อทดลองอ่านรูปมิเตอร์ได้ แม้ยังไม่ได้เปิดรอบรับชำระใหม่" style="background:linear-gradient(135deg,#eaf4ff,#dff7ff);color:#175cd3;border:1.5px solid #b9d8ff;">
     <span style="font-size:20px;">🔎</span> ทดสอบ OCR มิเตอร์
   </button>
 </div>
@@ -6346,8 +6346,8 @@ body.dark .checklist-item.attn {
       <div class="tool-button-list">
         <button class="ctrl-btn important" onclick="openArrearsPage()">💳 รับชำระ / ยอดค้าง</button>
         <button class="ctrl-btn important" onclick="openTenantOnboardingWizard()">🧍 รับผู้เช่าใหม่</button>
-        <button class="ctrl-btn important" data-meter-cycle-action="1" onclick="openMeterPage()">📝 จดมิเตอร์รอบบิลใหม่</button>
-        <button class="ctrl-btn outline" onclick="openMeterOcrTestPage()">🔎 ทดสอบ OCR มิเตอร์</button>
+        <button type="button" class="ctrl-btn important" data-meter-cycle-action="1" onclick="openMeterPage()">📝 จดมิเตอร์รอบบิลใหม่</button>
+        <button type="button" class="ctrl-btn outline" onclick="return openMeterOcrTestPage(event)">🔎 ทดสอบ OCR มิเตอร์</button>
         <button class="ctrl-btn danger" onclick="alertUnpaid()">🔔 แจ้งเตือนค้างชำระ</button>
         <button class="ctrl-btn purple" onclick="sendOwnerUnpaidSummary()">📋 สรุปค้างส่งเจ้าของ</button>
         <button class="ctrl-btn outline" onclick="openTenantBroadcastPage()">📢 ประกาศผู้เช่า</button>
@@ -12116,11 +12116,11 @@ document.getElementById('paidToggle').addEventListener('change', () => {
 function openMeterPage(opts = {}) {
   const forceOcrTestMode = opts && opts.ocrTestMode === true;
   const meterCanSave = canUseMeterEntryForCurrentCycle(null);
+  const page = document.getElementById('meterPage');
   const wrap = document.getElementById('meterTableWrap');
-  wrap.innerHTML = '';
-  for (const i of getManagedRoomNumbers()) {
-    wrap.appendChild(makeMeterCard(i));
-    if (hasRoomMeterForCurrentCycle(i)) updateMeterPreview(i);
+  if (!page || !wrap) {
+    alert('ไม่พบหน้าจดมิเตอร์ กรุณารีเฟรชหน้าเว็บแล้วลองใหม่อีกครั้ง');
+    return false;
   }
   const meterPageTitle = document.querySelector('#meterPage .page-header h2');
   if (meterPageTitle) meterPageTitle.textContent = forceOcrTestMode && !meterCanSave ? '🔎 ทดสอบ OCR มิเตอร์' : '📝 จดมิเตอร์รอบบิลใหม่';
@@ -12132,12 +12132,27 @@ function openMeterPage(opts = {}) {
     saveAllBtn.title = meterCanSave ? 'บันทึกมิเตอร์ทั้งหมด' : 'ทดสอบ OCR ได้ แต่ต้องเปิดรอบรับชำระใหม่ก่อนจึงบันทึกได้';
     saveAllBtn.textContent = meterCanSave ? 'บันทึกทั้งหมด ✓' : '🔒 เปิดรอบก่อนจึงบันทึก';
   }
-  document.getElementById('meterPage').classList.add('open'); refreshModalLockSafe();
-  pananthPushRoutePath('meter');
+  page.classList.add('open');
+  refreshModalLockSafe();
+  try {
+    wrap.innerHTML = '';
+    for (const i of getManagedRoomNumbers()) {
+      wrap.appendChild(makeMeterCard(i));
+      if (hasRoomMeterForCurrentCycle(i)) updateMeterPreview(i);
+    }
+  } catch (err) {
+    console.error('openMeterPage failed:', err);
+    wrap.innerHTML = `<div style="margin:16px;padding:14px;border-radius:10px;background:#fff1f2;color:#9f1239;font-weight:800;line-height:1.55;">เปิดหน้าทดสอบ OCR ไม่สำเร็จ<br><span style="font-weight:600;font-size:12px;">${escapeHtml(err && err.message ? err.message : String(err || 'unknown error'))}</span></div>`;
+  }
+  if (!forceOcrTestMode) pananthPushRoutePath('meter');
+  return false;
 }
 
-function openMeterOcrTestPage() {
+function openMeterOcrTestPage(event) {
+  if (event && typeof event.preventDefault === 'function') event.preventDefault();
+  if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
   openMeterPage({ ocrTestMode: true });
+  return false;
 }
 
 function closeMeterPage() {
@@ -17979,8 +17994,8 @@ function organizeMobileTools() {
           <div class="button-grid">
             <button class="ctrl-btn important" onclick="openArrearsPage()">💳 รับชำระ / ยอดค้าง</button>
             <button class="ctrl-btn important" onclick="openTenantOnboardingWizard()">🧍 รับผู้เช่าใหม่</button>
-            <button class="ctrl-btn important" data-meter-cycle-action="1" onclick="openMeterPage()">📝 จดมิเตอร์</button>
-            <button class="ctrl-btn outline" onclick="openMeterOcrTestPage()">🔎 ทดสอบ OCR</button>
+            <button type="button" class="ctrl-btn important" data-meter-cycle-action="1" onclick="openMeterPage()">📝 จดมิเตอร์</button>
+            <button type="button" class="ctrl-btn outline" onclick="return openMeterOcrTestPage(event)">🔎 ทดสอบ OCR</button>
             <button class="ctrl-btn danger" onclick="alertUnpaid()">🔔 แจ้งเตือนค้าง</button>
             <button class="ctrl-btn purple" onclick="sendOwnerUnpaidSummary()">📋 สรุปค้าง</button>
           </div>
