@@ -6925,7 +6925,7 @@ body.dark .checklist-item.attn {
     </div>
     <div style="background:var(--bg);border-radius:10px;padding:12px;margin:10px 0;border:1.5px solid var(--border);" id="rmPreview"></div>
     <div class="modal-btns">
-      <button class="modal-btn save" onclick="saveRoomMeter()">✓ บันทึก</button>
+      <button class="modal-btn save" id="rmSaveBtn" onclick="saveRoomMeter()">✓ บันทึก</button>
       <button class="modal-btn cancel" onclick="closeModal('roomMeterOverlay')">ยกเลิก</button>
     </div>
   </div>
@@ -7120,10 +7120,13 @@ body.dark .checklist-item.attn {
   <div class="page-header">
     <button class="back-btn" onclick="closeMeterPage()">←</button>
     <h2>📝 จดมิเตอร์รอบบิลใหม่</h2>
-    <button class="meter-save-btn" onclick="saveAllMeters()">บันทึกทั้งหมด ✓</button>
+    <button class="meter-save-btn" id="meterSaveAllBtn" onclick="saveAllMeters()">บันทึกทั้งหมด ✓</button>
   </div>
   <div style="background:#fff8e6;padding:10px 16px;font-size:12px;color:#7a5800;border-bottom:1px solid #f0d580;">
     💡 กรอกเฉพาะ <strong>ครั้งหลัง (ใหม่)</strong> — ค่าเก่าจะเป็นครั้งก่อนอัตโนมัติ
+  </div>
+  <div id="meterOcrTestBanner" style="display:none;background:#eaf4ff;padding:10px 16px;font-size:12px;color:#175cd3;border-bottom:1px solid #b9d8ff;font-weight:800;line-height:1.55;">
+    🔎 โหมดทดสอบ OCR: แนบรูปเพื่อทดลองอ่านเลขมิเตอร์ได้ทันที แต่ระบบยังไม่อนุญาตให้บันทึกมิเตอร์จนกว่าจะกด “เปิดรอบรับชำระใหม่”
   </div>
   <div class="meter-table-wrap" id="meterTableWrap"></div>
 </div>
@@ -9807,33 +9810,21 @@ async function markMeterCycleOpenedForMonth(monthKey) {
 
 function renderMeterCycleLockStatus() {
   const canMeter = canUseMeterEntryForCurrentCycle(null);
-  const lockedTitle = 'ต้องกด “เปิดรอบรับชำระใหม่” ก่อน จึงจะจดมิเตอร์ได้';
+  const lockedTitle = 'เปิดหน้าจดมิเตอร์เพื่อทดสอบ OCR ได้ แต่ยังบันทึกมิเตอร์ไม่ได้จนกว่าจะกด “เปิดรอบรับชำระใหม่”';
   document.querySelectorAll('[data-meter-cycle-action="1"]').forEach(btn => {
     if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
-    btn.disabled = !canMeter;
-    btn.setAttribute('aria-disabled', canMeter ? 'false' : 'true');
-    btn.classList.toggle('meter-cycle-disabled', !canMeter);
+    // v15.4.2.95: เปิดหน้า OCR ได้แม้ยังไม่เปิดรอบ เพื่อให้เทส Vision API ได้
+    // การบันทึกจริงยังถูกกันไว้ใน saveAllMeters/saveSingleMeter/saveRoomMeter เหมือนเดิม
+    btn.disabled = false;
+    btn.removeAttribute('aria-disabled');
+    btn.classList.remove('meter-cycle-disabled');
     btn.title = canMeter ? 'จดมิเตอร์รอบบิลใหม่' : lockedTitle;
-    btn.innerHTML = canMeter ? btn.dataset.originalHtml : '🔒 เปิดรอบก่อนจดมิเตอร์';
+    btn.innerHTML = canMeter ? btn.dataset.originalHtml : '📷 ทดสอบ OCR / จดมิเตอร์';
   });
 }
 
-// v15.4.2.34: ดักคลิกซ้ำแบบ capture เผื่อปุ่ม/เมนูบางจุดยังมี onclick เก่าหรือ browser ไม่ refresh disabled state ทัน
-(function installMeterCycleClickGuard() {
-  if (window.__pananthMeterCycleClickGuardInstalled) return;
-  window.__pananthMeterCycleClickGuardInstalled = true;
-  document.addEventListener('click', function(e) {
-    const target = e.target && e.target.closest ? e.target.closest('[data-meter-cycle-action="1"], [data-room-meter-action="1"]') : null;
-    if (!target) return;
-    if (!canUseMeterEntryForCurrentCycle(null)) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
-      alert(getMeterCycleBlockedMessage(null));
-      return false;
-    }
-  }, true);
-})();
+// v15.4.2.95: อนุญาตให้เปิดหน้าจดมิเตอร์/หน้าต่างรายห้องเพื่อทดสอบ OCR ได้แม้ยังไม่เปิดรอบ
+// การบันทึกจริงยังถูกบล็อกในฟังก์ชัน save* ด้วย requireMeterCycleOpenedForRoom() อยู่แล้ว
 
 
 // ===== v15.4.2.34: แก้ไขมิเตอร์ได้เฉพาะรอบปัจจุบัน =====
@@ -10875,12 +10866,17 @@ function makeCard(r) {
   const roomTrash = getRoomTrashValue(r, d);
   const meterEntryAllowed = canUseMeterEntryForCurrentCycle(r);
   const hasCurrentMeter = hasRoomMeterForCurrentCycle(r);
-  const meterBtnDisabled = !meterEntryAllowed;
-  const meterBtnTitle = meterBtnDisabled ? 'ต้องเปิดรอบรับชำระใหม่ก่อนจดมิเตอร์' : (hasCurrentMeter ? 'แก้ไขมิเตอร์รอบนี้' : 'จดมิเตอร์ห้องนี้');
-  const meterBtnText = meterBtnDisabled ? '🔒 เปิดรอบก่อน' : (hasCurrentMeter ? '✏️ แก้ไขมิเตอร์' : '📝 จดมิเตอร์');
-  const meterBtnStyle = meterBtnDisabled
-    ? 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:not-allowed;font-size:11px;font-weight:800;background:#d6d9de;color:#6b7280;box-shadow:none;white-space:nowrap;opacity:0.75;'
-    : 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:pointer;font-size:11px;font-weight:800;background:var(--accent);color:#1a2036;box-shadow:0 2px 6px rgba(232,160,32,0.28);white-space:nowrap;';
+  // v15.4.2.95: ห้องยังเปิดหน้ามิเตอร์ได้เพื่อทดสอบ OCR แม้ยังไม่เปิดรอบใหม่
+  const meterBtnDisabled = false;
+  const meterBtnTitle = meterEntryAllowed
+    ? (hasCurrentMeter ? 'แก้ไขมิเตอร์รอบนี้' : 'จดมิเตอร์ห้องนี้')
+    : 'ทดสอบ OCR ได้ แต่ยังบันทึกมิเตอร์ไม่ได้จนกว่าจะเปิดรอบรับชำระใหม่';
+  const meterBtnText = meterEntryAllowed
+    ? (hasCurrentMeter ? '✏️ แก้ไขมิเตอร์' : '📝 จดมิเตอร์')
+    : '📷 ทดสอบ OCR';
+  const meterBtnStyle = meterEntryAllowed
+    ? 'padding:7px 14px;border:1px solid var(--border);border-radius:16px;cursor:pointer;font-size:11px;font-weight:800;background:var(--accent);color:#1a2036;box-shadow:0 2px 6px rgba(232,160,32,0.28);white-space:nowrap;'
+    : 'padding:7px 14px;border:1px solid #b9d8ff;border-radius:16px;cursor:pointer;font-size:11px;font-weight:800;background:#eaf4ff;color:#175cd3;box-shadow:none;white-space:nowrap;';
 
   const portalState = portalOpenInfo(r);
   const paymentPromise = getPaymentPromiseInfo(r);
@@ -12114,12 +12110,20 @@ document.getElementById('paidToggle').addEventListener('change', () => {
 
 // ===== METER PAGE =====
 function openMeterPage() {
-  if (!requireMeterCycleOpenedForRoom(null)) return;
+  const meterCanSave = canUseMeterEntryForCurrentCycle(null);
   const wrap = document.getElementById('meterTableWrap');
   wrap.innerHTML = '';
   for (const i of getManagedRoomNumbers()) {
     wrap.appendChild(makeMeterCard(i));
     if (hasRoomMeterForCurrentCycle(i)) updateMeterPreview(i);
+  }
+  const banner = document.getElementById('meterOcrTestBanner');
+  if (banner) banner.style.display = meterCanSave ? 'none' : 'block';
+  const saveAllBtn = document.getElementById('meterSaveAllBtn');
+  if (saveAllBtn) {
+    saveAllBtn.disabled = !meterCanSave;
+    saveAllBtn.title = meterCanSave ? 'บันทึกมิเตอร์ทั้งหมด' : 'ทดสอบ OCR ได้ แต่ต้องเปิดรอบรับชำระใหม่ก่อนจึงบันทึกได้';
+    saveAllBtn.textContent = meterCanSave ? 'บันทึกทั้งหมด ✓' : '🔒 เปิดรอบก่อนจึงบันทึก';
   }
   document.getElementById('meterPage').classList.add('open'); refreshModalLockSafe();
   pananthPushRoutePath('meter');
@@ -12315,6 +12319,8 @@ function makeMeterCard(r) {
   const wcVal = isCorrection ? Number(d.wc || 0) : '';
   const modeBadge = isCorrection ? '<span class="meter-badge-correct">✏️ แก้ไขรอบนี้</span>' : '<span class="meter-badge-correct" style="background:#e8f7ef;color:#0b6154;border-color:#9ee6d0;">📝 จดใหม่</span>';
   const saveBtnText = isCorrection ? `✏️ แก้ไขมิเตอร์ห้อง ${r}` : `💾 บันทึกห้อง ${r}`;
+  const meterSaveAllowed = canUseMeterEntryForCurrentCycle(r);
+  const meterSaveBtnText = meterSaveAllowed ? saveBtnText : '🔒 เปิดรอบก่อนจึงบันทึก';
   const card = document.createElement('div');
   card.className = 'meter-room-card';
   card.id = `mc-${r}`;
@@ -12385,8 +12391,8 @@ function makeMeterCard(r) {
         <span class="lbl">ยอดรวมห้อง ${r}</span>
         <span class="val" id="mtpv-${r}">รอกรอกมิเตอร์</span>
       </div>
-      <button onclick="saveSingleMeter(${r})" style="width:100%;margin-top:8px;padding:9px;border:none;border-radius:8px;background:#e8a020;color:#1a2536;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">
-        ${saveBtnText}
+      <button onclick="saveSingleMeter(${r})" ${meterSaveAllowed ? '' : 'disabled'} title="${meterSaveAllowed ? 'บันทึกมิเตอร์ห้องนี้' : 'ทดสอบ OCR ได้ แต่ต้องเปิดรอบรับชำระใหม่ก่อนจึงบันทึกได้'}" style="width:100%;margin-top:8px;padding:9px;border:none;border-radius:8px;background:${meterSaveAllowed ? '#e8a020' : '#d6d9de'};color:${meterSaveAllowed ? '#1a2536' : '#6b7280'};font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:${meterSaveAllowed ? 'pointer' : 'not-allowed'};opacity:${meterSaveAllowed ? '1' : '.8'};">
+        ${meterSaveBtnText}
       </button>
     </div>`;
   return card;
@@ -12564,7 +12570,7 @@ async function saveAllMeters() {
 
 // ===== จดมิเตอร์รายห้อง (popup) =====
 function openRoomMeter(r) {
-  if (!requireMeterCycleOpenedForRoom(r)) return;
+  const meterCanSave = canUseMeterEntryForCurrentCycle(r);
   currentRoom = r;
   const d = rooms[r];
   const isCorrection = hasRoomMeterForCurrentCycle(r);
@@ -12581,7 +12587,20 @@ function openRoomMeter(r) {
   if (rmPhotoStatus) rmPhotoStatus.textContent = `เก็บแล้วรอบนี้: ⚡ ${meterPhotoCountForCurrentCycle(r, 'electric')} รูป • 💧 ${meterPhotoCountForCurrentCycle(r, 'water')} รูป`;
   setMeterOcrStatus(document.getElementById('rmOcrElectricStatus'), 'เลือกภาพแล้วระบบจะอ่านเลขให้', 'muted');
   setMeterOcrStatus(document.getElementById('rmOcrWaterStatus'), 'เลือกภาพแล้วระบบจะอ่านเลขให้', 'muted');
-  setMeterCorrectionNote('rmModeNote', r);
+  const rmSaveBtn = document.getElementById('rmSaveBtn');
+  if (rmSaveBtn) {
+    rmSaveBtn.disabled = !meterCanSave;
+    rmSaveBtn.title = meterCanSave ? 'บันทึกมิเตอร์ห้องนี้' : 'ทดสอบ OCR ได้ แต่ต้องเปิดรอบรับชำระใหม่ก่อนจึงบันทึกได้';
+    rmSaveBtn.textContent = meterCanSave ? '✓ บันทึก' : '🔒 เปิดรอบก่อนจึงบันทึก';
+  }
+  const rmModeNote = document.getElementById('rmModeNote');
+  if (!meterCanSave && rmModeNote) {
+    rmModeNote.style.display = 'block';
+    rmModeNote.className = 'meter-correction-note danger';
+    rmModeNote.innerHTML = '🔎 โหมดทดสอบ OCR: แนบรูปเพื่ออ่านเลขได้ แต่ยังบันทึกมิเตอร์ไม่ได้จนกว่าจะเปิดรอบรับชำระใหม่';
+  } else {
+    setMeterCorrectionNote('rmModeNote', r);
+  }
   document.getElementById('rmPreview').innerHTML = '— รอกรอกมิเตอร์';
   if (isCorrection) calcRoomMeterPreview();
   document.getElementById('roomMeterOverlay').classList.add('open'); refreshModalLockSafe();
