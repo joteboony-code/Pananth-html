@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.101</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.102</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -6203,6 +6203,10 @@ body.dark .checklist-item.attn {
       style="background:rgba(255,255,255,0.15);border:none;color:white;width:34px;height:34px;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
       💡
     </button>
+    <button onclick="lockScreenNow()" id="lockBtn" title="ล็อกหน้าจอทันที"
+      style="background:rgba(255,255,255,0.15);border:none;color:white;width:34px;height:34px;border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+      🔒
+    </button>
 
     <button id="pwaInstallBtn" onclick="installPananthApp()" title="ติดตั้งแอป"
       style="display:none;background:var(--accent);border:none;color:#1a2536;height:34px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;align-items:center;justify-content:center;padding:0 10px;white-space:nowrap;font-family:'Sarabun',sans-serif;">
@@ -12218,26 +12222,75 @@ function setMeterOcrStatus(el, text = '', tone = 'muted') {
   el.textContent = text || '';
 }
 
-function confirmMeterOcrReading({ roomNum, meterType, reading, candidates = [], prevReading = 0 } = {}) {
-  const label = String(meterType || '') === 'electric' ? 'ไฟฟ้า' : 'น้ำ';
-  const alt = candidates.filter(value => Number.isFinite(value) && value !== reading).slice(0, 5);
-  const warning = Number.isFinite(prevReading) && prevReading > 0 && Number.isFinite(reading) && reading < prevReading
-    ? `\n\n⚠️ เลขที่อ่านได้น้อยกว่าครั้งก่อน (${prevReading.toLocaleString()}) กรุณาตรวจรูปให้แน่ใจก่อนยืนยัน`
-    : '';
-  const raw = prompt(
-    `OCR อ่านเลขมิเตอร์${label} ห้อง ${roomNum} ได้: ${Number(reading).toLocaleString()}` +
-    `${alt.length ? `\nตัวเลือกอื่น: ${alt.map(v => Number(v).toLocaleString()).join(', ')}` : ''}` +
-    `${warning}\n\nถ้าถูกต้องให้กด OK หรือแก้เลขในช่องนี้ก่อนกด OK\nถ้าไม่แน่ใจให้กด Cancel แล้วกรอกเอง`,
-    String(reading)
-  );
-  if (raw === null) return null;
-  const cleaned = String(raw || '').replace(/[^\d]/g, '');
+let meterOcrConfirmResolver = null;
+
+function closeMeterOcrConfirmModal(value = null) {
+  const overlay = document.getElementById('meterOcrConfirmOverlay');
+  if (overlay) overlay.classList.remove('open');
+  refreshModalLockSafe();
+  if (meterOcrConfirmResolver) {
+    const resolve = meterOcrConfirmResolver;
+    meterOcrConfirmResolver = null;
+    resolve(value);
+  }
+}
+
+function setMeterOcrConfirmValue(value) {
+  const input = document.getElementById('meterOcrConfirmInput');
+  if (!input) return;
+  input.value = String(value || '').replace(/[^\d]/g, '');
+  input.focus();
+  input.select();
+}
+
+function submitMeterOcrConfirmModal() {
+  const input = document.getElementById('meterOcrConfirmInput');
+  const cleaned = String(input?.value || '').replace(/[^\d]/g, '');
   const confirmed = parseInt(cleaned, 10);
   if (!Number.isFinite(confirmed) || confirmed < 0) {
     alert('กรุณาใส่ตัวเลขมิเตอร์เป็นตัวเลขเท่านั้น');
-    return null;
+    return;
   }
-  return confirmed;
+  closeMeterOcrConfirmModal(confirmed);
+}
+
+function confirmMeterOcrReading({ roomNum, meterType, reading, candidates = [], prevReading = 0 } = {}) {
+  const label = String(meterType || '') === 'electric' ? 'ไฟฟ้า' : 'น้ำ';
+  const alt = candidates.filter(value => Number.isFinite(value) && value !== reading).slice(0, 5);
+  const overlay = document.getElementById('meterOcrConfirmOverlay');
+  const title = document.getElementById('meterOcrConfirmTitle');
+  const desc = document.getElementById('meterOcrConfirmDesc');
+  const input = document.getElementById('meterOcrConfirmInput');
+  const choices = document.getElementById('meterOcrConfirmChoices');
+  const warning = document.getElementById('meterOcrConfirmWarning');
+
+  if (!overlay || !title || !desc || !input || !choices || !warning) {
+    const raw = prompt(`OCR อ่านเลขมิเตอร์${label} ห้อง ${roomNum} ได้: ${Number(reading).toLocaleString()}\nแก้เลขได้ก่อนกด OK`, String(reading));
+    if (raw === null) return Promise.resolve(null);
+    const confirmed = parseInt(String(raw || '').replace(/[^\d]/g, ''), 10);
+    return Promise.resolve(Number.isFinite(confirmed) ? confirmed : null);
+  }
+
+  title.textContent = `ยืนยันเลขมิเตอร์${label} ห้อง ${roomNum}`;
+  desc.textContent = `OCR อ่านได้ ${Number(reading).toLocaleString()} กรุณาตรวจรูปก่อนยืนยัน`;
+  input.value = String(reading);
+  choices.innerHTML = [reading, ...alt].filter((value, idx, arr) => Number.isFinite(value) && arr.indexOf(value) === idx).map(value =>
+    `<button type="button" onclick="setMeterOcrConfirmValue(${Number(value)})" style="border:1.5px solid #b9d8ff;background:#eaf4ff;color:#175cd3;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer;">${Number(value).toLocaleString('th-TH')}</button>`
+  ).join('');
+  if (Number.isFinite(prevReading) && prevReading > 0 && Number.isFinite(reading) && reading < prevReading) {
+    warning.style.display = 'block';
+    warning.textContent = `⚠️ เลขที่อ่านได้น้อยกว่าครั้งก่อน (${prevReading.toLocaleString('th-TH')}) กรุณาตรวจรูปให้แน่ใจก่อนยืนยัน`;
+  } else {
+    warning.style.display = 'none';
+    warning.textContent = '';
+  }
+  overlay.classList.add('open');
+  refreshModalLockSafe();
+  setTimeout(() => { input.focus(); input.select(); }, 50);
+
+  return new Promise(resolve => {
+    meterOcrConfirmResolver = resolve;
+  });
 }
 
 async function runMeterPhotoOCR({ roomNum, meterType, file, prevReading = 0, inputEl = null, statusEl = null } = {}) {
@@ -12266,7 +12319,7 @@ async function runMeterPhotoOCR({ roomNum, meterType, file, prevReading = 0, inp
     if (Number.isFinite(reading) && reading >= 0) {
       const alt = candidates.filter(value => value !== reading).slice(0, 3);
       const confirmedReading = inputEl
-        ? confirmMeterOcrReading({ roomNum, meterType, reading, candidates, prevReading })
+        ? await confirmMeterOcrReading({ roomNum, meterType, reading, candidates, prevReading })
         : reading;
       if (inputEl && Number.isFinite(confirmedReading) && confirmedReading >= 0) {
         meterOcrState[meterOcrKey(roomNum, meterType)].confirmedReading = confirmedReading;
@@ -15082,6 +15135,7 @@ function getRoomPreBillWarnings(roomNum) {
   if (elecUnit >= 250) warnings.push({ key:'elec-high', level:'warn', label:`ไฟสูง ${elecUnit.toLocaleString('th-TH')} หน่วย` });
   if (waterUnit >= 40) warnings.push({ key:'water-high', level:'warn', label:`น้ำสูง ${waterUnit.toLocaleString('th-TH')} หน่วย` });
   if (getPendingSlipReview(r)) warnings.push({ key:'pending-slip', level:'warn', label:'รอตรวจสอบสลิป' });
+  if (!String(tenants?.[r]?.name || tenants?.[String(r)]?.name || '').trim()) warnings.push({ key:'tenant-name', level:'warn', label:'ยังไม่มีชื่อผู้เช่า' });
   return warnings;
 }
 
@@ -15257,10 +15311,14 @@ async function sendBulkMonthlySelected() {
   if (!confirm(confirmText)) return;
   const selectedWarningRooms = selected.filter(roomNum => getRoomPreBillWarnings(roomNum).length > 0);
   if (selectedWarningRooms.length) {
-    const details = selectedWarningRooms.map(roomNum => `ห้อง ${roomNum}: ` + getRoomPreBillWarnings(roomNum).map(w => w.label).join(', ')).join('\n');
+    const details = selectedWarningRooms
+      .slice(0, 12)
+      .map(roomNum => `ห้อง ${roomNum}: ` + getRoomPreBillWarnings(roomNum).map(w => w.label).join(', '))
+      .join('\n');
+    const more = selectedWarningRooms.length > 12 ? `\n...และอีก ${selectedWarningRooms.length - 12} ห้อง` : '';
     if (!confirm(`พบห้องที่มีจุดควรตรวจสอบก่อนส่ง ${selectedWarningRooms.length} ห้อง
 
-${details}
+${details}${more}
 
 ยังต้องการส่งต่อหรือไม่?`)) return;
   }
@@ -17609,6 +17667,18 @@ function lockPinByInactivity() {
   showPinScreenSafe();
 }
 
+function lockScreenNow() {
+  clearPinSession();
+  pinMode = pinHashedKV ? 'check' : 'set';
+  pinCurrent = '';
+  updatePinDots();
+  const subtitle = document.getElementById('pinSubtitle');
+  const errorEl = document.getElementById('pinError');
+  if (subtitle) subtitle.textContent = pinHashedKV ? 'ล็อกหน้าจอแล้ว กรุณากรอก PIN' : 'ตั้งรหัส PIN 6 หลักของคุณ';
+  if (errorEl) errorEl.textContent = '';
+  showPinScreenSafe();
+}
+
 function recordPinActivity() {
   const pinScreen = document.getElementById('pinScreen');
   const pinOpen = pinScreen && pinScreen.classList.contains('show') && !pinScreen.classList.contains('hide');
@@ -18468,6 +18538,24 @@ document.head.appendChild(s);
 })();
 </script>
 <!-- ===== END PANANTH v15.4.2.37 duplicate arrears repair ===== -->
+
+<!-- OCR ยืนยันเลขมิเตอร์ -->
+<div class="modal-overlay" id="meterOcrConfirmOverlay" onclick="ignoreBackdropClick(event)">
+  <div class="edit-modal" style="max-width:430px;">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="meterOcrConfirmTitle">ยืนยันเลขมิเตอร์</div>
+    <div id="meterOcrConfirmDesc" style="font-size:12px;color:var(--muted);font-weight:800;line-height:1.5;margin-bottom:10px;"></div>
+    <div id="meterOcrConfirmWarning" style="display:none;background:#fff7e6;border:1.5px solid #f0d06e;color:#8a5a00;border-radius:10px;padding:10px;font-size:12px;font-weight:900;line-height:1.45;margin-bottom:10px;"></div>
+    <label class="form-label">เลขที่จะใส่ในช่องมิเตอร์</label>
+    <input id="meterOcrConfirmInput" class="form-input" inputmode="numeric" pattern="[0-9]*" placeholder="กรอกเลขมิเตอร์" onkeydown="if(event.key==='Enter'){submitMeterOcrConfirmModal();}">
+    <div id="meterOcrConfirmChoices" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px;"></div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.45;margin:8px 0 14px;">เลือกเลขที่ระบบอ่านได้ หรือแก้เลขเองก่อนยืนยัน ถ้าไม่แน่ใจให้กดยกเลิกแล้วกรอกเอง</div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" type="button" onclick="closeMeterOcrConfirmModal(null)">ยกเลิก</button>
+      <button class="modal-btn save" type="button" onclick="submitMeterOcrConfirmModal()">ใช้เลขนี้</button>
+    </div>
+  </div>
+</div>
 
 <!-- QR จับคู่ LINE ผู้เช่าใหม่ -->
 <div class="modal-overlay" id="linePairQrOverlay">
