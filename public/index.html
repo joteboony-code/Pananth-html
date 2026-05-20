@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ห้องเช่าป่านันท์ v15.4.2.83</title>
+<title>ห้องเช่าป่านันท์ v15.4.2.96</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -6320,6 +6320,9 @@ body.dark .checklist-item.attn {
   <button class="month-action-btn meter" data-meter-cycle-action="1" onclick="openMeterPage()">
     <span style="font-size:20px;">📝</span> จดมิเตอร์รอบบิลใหม่
   </button>
+  <button class="month-action-btn" onclick="openMeterOcrTestPage()" title="เปิดหน้า OCR เพื่อทดลองอ่านรูปมิเตอร์ได้ แม้ยังไม่ได้เปิดรอบรับชำระใหม่" style="background:linear-gradient(135deg,#eaf4ff,#dff7ff);color:#175cd3;border:1.5px solid #b9d8ff;">
+    <span style="font-size:20px;">🔎</span> ทดสอบ OCR มิเตอร์
+  </button>
 </div>
 <div class="month-action-note" style="display:none;">
   <span id="openCycleLockNote" style="font-weight:800;color:var(--accent);"></span>
@@ -6344,6 +6347,7 @@ body.dark .checklist-item.attn {
         <button class="ctrl-btn important" onclick="openArrearsPage()">💳 รับชำระ / ยอดค้าง</button>
         <button class="ctrl-btn important" onclick="openTenantOnboardingWizard()">🧍 รับผู้เช่าใหม่</button>
         <button class="ctrl-btn important" data-meter-cycle-action="1" onclick="openMeterPage()">📝 จดมิเตอร์รอบบิลใหม่</button>
+        <button class="ctrl-btn outline" onclick="openMeterOcrTestPage()">🔎 ทดสอบ OCR มิเตอร์</button>
         <button class="ctrl-btn danger" onclick="alertUnpaid()">🔔 แจ้งเตือนค้างชำระ</button>
         <button class="ctrl-btn purple" onclick="sendOwnerUnpaidSummary()">📋 สรุปค้างส่งเจ้าของ</button>
         <button class="ctrl-btn outline" onclick="openTenantBroadcastPage()">📢 ประกาศผู้เช่า</button>
@@ -12109,7 +12113,8 @@ document.getElementById('paidToggle').addEventListener('change', () => {
 });
 
 // ===== METER PAGE =====
-function openMeterPage() {
+function openMeterPage(opts = {}) {
+  const forceOcrTestMode = opts && opts.ocrTestMode === true;
   const meterCanSave = canUseMeterEntryForCurrentCycle(null);
   const wrap = document.getElementById('meterTableWrap');
   wrap.innerHTML = '';
@@ -12117,8 +12122,10 @@ function openMeterPage() {
     wrap.appendChild(makeMeterCard(i));
     if (hasRoomMeterForCurrentCycle(i)) updateMeterPreview(i);
   }
+  const meterPageTitle = document.querySelector('#meterPage .page-header h2');
+  if (meterPageTitle) meterPageTitle.textContent = forceOcrTestMode && !meterCanSave ? '🔎 ทดสอบ OCR มิเตอร์' : '📝 จดมิเตอร์รอบบิลใหม่';
   const banner = document.getElementById('meterOcrTestBanner');
-  if (banner) banner.style.display = meterCanSave ? 'none' : 'block';
+  if (banner) banner.style.display = (!meterCanSave || forceOcrTestMode) ? 'block' : 'none';
   const saveAllBtn = document.getElementById('meterSaveAllBtn');
   if (saveAllBtn) {
     saveAllBtn.disabled = !meterCanSave;
@@ -12127,6 +12134,10 @@ function openMeterPage() {
   }
   document.getElementById('meterPage').classList.add('open'); refreshModalLockSafe();
   pananthPushRoutePath('meter');
+}
+
+function openMeterOcrTestPage() {
+  openMeterPage({ ocrTestMode: true });
 }
 
 function closeMeterPage() {
@@ -17969,6 +17980,7 @@ function organizeMobileTools() {
             <button class="ctrl-btn important" onclick="openArrearsPage()">💳 รับชำระ / ยอดค้าง</button>
             <button class="ctrl-btn important" onclick="openTenantOnboardingWizard()">🧍 รับผู้เช่าใหม่</button>
             <button class="ctrl-btn important" data-meter-cycle-action="1" onclick="openMeterPage()">📝 จดมิเตอร์</button>
+            <button class="ctrl-btn outline" onclick="openMeterOcrTestPage()">🔎 ทดสอบ OCR</button>
             <button class="ctrl-btn danger" onclick="alertUnpaid()">🔔 แจ้งเตือนค้าง</button>
             <button class="ctrl-btn purple" onclick="sendOwnerUnpaidSummary()">📋 สรุปค้าง</button>
           </div>
