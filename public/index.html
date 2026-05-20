@@ -6696,7 +6696,7 @@ body.dark .checklist-item.attn {
         <div style="padding-left:16px;">• จดหลายห้อง: กด <b>📝 จดมิเตอร์รอบบิลใหม่</b></div>
         <div style="padding-left:16px;">• จดรายห้อง: กดปุ่ม <b>📝 จดมิเตอร์</b> ที่การ์ดห้องนั้น</div>
         <div>3) กรอกเลขมิเตอร์ <b>ครั้งหลัง</b> ของไฟและน้ำ</div>
-        <div>4) แนบรูปมิเตอร์ไฟ/น้ำได้ ถ้าต้องการเก็บหลักฐาน</div>
+        <div>4) แนบรูปมิเตอร์ไฟ/น้ำได้ พร้อม OCR ช่วยอ่านตัวเลขและเก็บรูปเป็นหลักฐาน</div>
         <div>5) ดู Preview ยอด แล้วกด <b>✓ บันทึก</b></div>
         <div style="margin-top:8px;padding:10px;border-radius:10px;background:var(--bg);border:1px dashed var(--border);font-size:13px;">
           หลังบันทึก ระบบจะคำนวณค่าเช่าใหม่ และห้องนั้นจะกลับเป็นสถานะ <b>รอชำระ</b>
@@ -6911,12 +6911,14 @@ body.dark .checklist-item.attn {
       <div style="font-size:12px;font-weight:900;color:var(--primary);margin-bottom:6px;">📷 แนบรูปมิเตอร์ (ไม่บังคับ)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <label style="display:block;padding:8px;border-radius:8px;background:white;border:1px solid var(--border);font-size:11px;font-weight:800;color:var(--primary);cursor:pointer;">
-          ⚡ รูปไฟ
-          <input type="file" accept="image/*" capture="environment" id="rm_photo_electric" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+          ⚡ รูปไฟ + OCR
+          <input type="file" accept="image/*" capture="environment" id="rm_photo_electric" onchange="handleRoomMeterPopupPhotoSelection('electric', this.files && this.files[0])" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+          <div id="rmOcrElectricStatus" style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.35;">เลือกภาพแล้วระบบจะอ่านเลขให้</div>
         </label>
         <label style="display:block;padding:8px;border-radius:8px;background:white;border:1px solid var(--border);font-size:11px;font-weight:800;color:var(--primary);cursor:pointer;">
-          💧 รูปน้ำ
-          <input type="file" accept="image/*" capture="environment" id="rm_photo_water" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+          💧 รูปน้ำ + OCR
+          <input type="file" accept="image/*" capture="environment" id="rm_photo_water" onchange="handleRoomMeterPopupPhotoSelection('water', this.files && this.files[0])" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+          <div id="rmOcrWaterStatus" style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.35;">เลือกภาพแล้วระบบจะอ่านเลขให้</div>
         </label>
       </div>
       <div id="rmMeterPhotoStatus" style="font-size:10px;color:var(--muted);margin-top:7px;"></div>
@@ -7303,6 +7305,7 @@ let portalMessageState = {}; // { roomNum: last Portal prompt/opened state }
 let lineRoomMessages = {}; // { roomNum: LINE message history[] }
 let pendingSlipReviews = {}; // { roomNum: pending slip manual review }
 let meterPhotos = {}; // { roomNum: meter photo history[] }
+let meterOcrState = {}; // { 'roomNum:meterType': { reading, candidates, detectedAt, rawTextPreview } }
 let repairRequests = []; // tenant repair / maintenance requests
 try { portalMessageState = JSON.parse(localStorage.getItem('pananth_portal_message_state') || '{}') || {}; } catch(e) { portalMessageState = {}; }
 try { lineRoomMessages = JSON.parse(localStorage.getItem('pananth_line_room_messages') || '{}') || {}; } catch(e) { lineRoomMessages = {}; }
@@ -12171,9 +12174,85 @@ async function compressMeterPhotoFile(file) {
   };
 }
 
+function meterOcrKey(roomNum, meterType) {
+  return String(parseInt(roomNum || 0, 10) || roomNum || '') + ':' + String(meterType || '');
+}
+
+function getMeterOcrState(roomNum, meterType) {
+  return meterOcrState?.[meterOcrKey(roomNum, meterType)] || null;
+}
+
+function setMeterOcrStatus(el, text = '', tone = 'muted') {
+  if (!el) return;
+  const color = tone === 'ok' ? '#166534' : (tone === 'warn' ? '#b45309' : (tone === 'bad' ? '#b42318' : 'var(--muted)'));
+  el.style.color = color;
+  el.textContent = text || '';
+}
+
+async function runMeterPhotoOCR({ roomNum, meterType, file, prevReading = 0, inputEl = null, statusEl = null } = {}) {
+  if (!file) return null;
+  if (statusEl) setMeterOcrStatus(statusEl, '⏳ กำลังอ่านเลขจากรูป...', 'muted');
+  try {
+    const prepared = await compressMeterPhotoFile(file);
+    const data = await workerPost({
+      action: 'ocrMeterPhoto',
+      roomNum,
+      meterType,
+      mimeType: prepared.mimeType,
+      base64: prepared.base64,
+      prevReading,
+    });
+    const reading = data?.reading === null || data?.reading === undefined ? null : parseInt(data.reading, 10);
+    const candidates = Array.isArray(data?.candidates)
+      ? data.candidates.map(item => Number(item?.value ?? item)).filter(value => Number.isFinite(value) && value > 0).slice(0, 8)
+      : [];
+    meterOcrState[meterOcrKey(roomNum, meterType)] = {
+      reading: Number.isFinite(reading) ? reading : null,
+      candidates,
+      detectedAt: new Date().toISOString(),
+      rawTextPreview: String(data?.rawTextPreview || ''),
+    };
+    if (Number.isFinite(reading) && reading >= 0) {
+      if (inputEl) {
+        inputEl.value = String(reading);
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      const alt = candidates.filter(value => value !== reading).slice(0, 3);
+      setMeterOcrStatus(statusEl, `✅ OCR อ่านได้ ${reading.toLocaleString()}${alt.length ? ' • ตัวเลือกอื่น ' + alt.join(', ') : ''} — ตรวจทานก่อนบันทึก`, 'ok');
+    } else {
+      setMeterOcrStatus(statusEl, '⚠️ OCR ยังอ่านเลขไม่ชัด กรุณากรอกเองหรือถ่ายใหม่', 'warn');
+    }
+    return data;
+  } catch (err) {
+    setMeterOcrStatus(statusEl, '❌ OCR ไม่สำเร็จ: ' + (err?.message || err), 'bad');
+    return null;
+  }
+}
+
+async function handleMeterPhotoSelection(roomNum, meterType, file) {
+  if (!file) return;
+  const isElectric = String(meterType || '') === 'electric';
+  const prevEl = document.getElementById(`${isElectric ? 'ep' : 'wp'}-${roomNum}`);
+  const inputEl = document.getElementById(`${isElectric ? 'ec' : 'wc'}-${roomNum}`);
+  const statusEl = document.getElementById(`meter-ocr-status-${roomNum}-${meterType}`);
+  const prevReading = parseInt(prevEl?.value || '0', 10) || 0;
+  await runMeterPhotoOCR({ roomNum, meterType, file, prevReading, inputEl, statusEl });
+}
+
+async function handleRoomMeterPopupPhotoSelection(meterType, file) {
+  if (!file) return;
+  const isElectric = String(meterType || '') === 'electric';
+  const prevEl = document.getElementById(isElectric ? 'rm_ep' : 'rm_wp');
+  const inputEl = document.getElementById(isElectric ? 'rm_ec' : 'rm_wc');
+  const statusEl = document.getElementById(isElectric ? 'rmOcrElectricStatus' : 'rmOcrWaterStatus');
+  const prevReading = parseInt(prevEl?.value || '0', 10) || 0;
+  await runMeterPhotoOCR({ roomNum: currentRoom, meterType, file, prevReading, inputEl, statusEl });
+}
+
 async function uploadMeterPhotoForRoom(roomNum, meterType, file, prevReading, currReading) {
   if (!file) return null;
   const prepared = await compressMeterPhotoFile(file);
+  const ocrState = getMeterOcrState(roomNum, meterType);
   const data = await workerPost({
     action: 'uploadMeterPhoto',
     roomNum,
@@ -12183,6 +12262,9 @@ async function uploadMeterPhotoForRoom(roomNum, meterType, file, prevReading, cu
     base64: prepared.base64,
     prevReading,
     currReading,
+    ocrReading: ocrState?.reading ?? '',
+    ocrCandidates: Array.isArray(ocrState?.candidates) ? ocrState.candidates.join(',') : '',
+    ocrDetectedAt: ocrState?.detectedAt || '',
   });
   if (data?.meterPhotos) saveMeterPhotosLocal(data.meterPhotos);
   return data?.photo || null;
@@ -12286,12 +12368,14 @@ function makeMeterCard(r) {
         <div style="font-size:12px;font-weight:900;color:var(--primary);margin-bottom:6px;">📷 แนบรูปมิเตอร์ (ไม่บังคับ)</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <label style="display:block;padding:8px;border-radius:8px;background:white;border:1px solid var(--border);font-size:11px;font-weight:800;color:var(--primary);cursor:pointer;">
-            ⚡ รูปไฟ
-            <input type="file" accept="image/*" capture="environment" id="mp-electric-${r}" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+            ⚡ รูปไฟ + OCR
+            <input type="file" accept="image/*" capture="environment" id="mp-electric-${r}" onchange="handleMeterPhotoSelection(${r}, 'electric', this.files && this.files[0])" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+            <div id="meter-ocr-status-${r}-electric" style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.35;">เลือกภาพแล้วระบบจะอ่านเลขให้</div>
           </label>
           <label style="display:block;padding:8px;border-radius:8px;background:white;border:1px solid var(--border);font-size:11px;font-weight:800;color:var(--primary);cursor:pointer;">
-            💧 รูปน้ำ
-            <input type="file" accept="image/*" capture="environment" id="mp-water-${r}" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+            💧 รูปน้ำ + OCR
+            <input type="file" accept="image/*" capture="environment" id="mp-water-${r}" onchange="handleMeterPhotoSelection(${r}, 'water', this.files && this.files[0])" style="display:block;width:100%;margin-top:6px;font-size:10px;">
+            <div id="meter-ocr-status-${r}-water" style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.35;">เลือกภาพแล้วระบบจะอ่านเลขให้</div>
           </label>
         </div>
         <div id="meter-photo-status-${r}" style="font-size:10px;color:var(--muted);margin-top:7px;">เก็บแล้วรอบนี้: ⚡ ${meterPhotoCountForCurrentCycle(r, 'electric')} รูป • 💧 ${meterPhotoCountForCurrentCycle(r, 'water')} รูป</div>
@@ -12495,6 +12579,8 @@ function openRoomMeter(r) {
   if (rmWaterPhoto) rmWaterPhoto.value = '';
   const rmPhotoStatus = document.getElementById('rmMeterPhotoStatus');
   if (rmPhotoStatus) rmPhotoStatus.textContent = `เก็บแล้วรอบนี้: ⚡ ${meterPhotoCountForCurrentCycle(r, 'electric')} รูป • 💧 ${meterPhotoCountForCurrentCycle(r, 'water')} รูป`;
+  setMeterOcrStatus(document.getElementById('rmOcrElectricStatus'), 'เลือกภาพแล้วระบบจะอ่านเลขให้', 'muted');
+  setMeterOcrStatus(document.getElementById('rmOcrWaterStatus'), 'เลือกภาพแล้วระบบจะอ่านเลขให้', 'muted');
   setMeterCorrectionNote('rmModeNote', r);
   document.getElementById('rmPreview').innerHTML = '— รอกรอกมิเตอร์';
   if (isCorrection) calcRoomMeterPreview();
